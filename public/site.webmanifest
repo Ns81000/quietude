@@ -1,0 +1,17 @@
+{
+  "name": "Quietude",
+  "short_name": "Quietude",
+  "description": "Your calm, intelligent learning partner",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf7f3",
+  "theme_color": "#c26838",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

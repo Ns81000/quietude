@@ -1,0 +1,313 @@
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* ── Default: Morning Mist ── */
+  :root {
+    --bg: 30 50% 97%;
+    --bg-2: 30 35% 92%;
+    --surface: 0 0% 100%;
+    --border: 25 30% 84%;
+    --text: 20 40% 13%;
+    --text-soft: 20 22% 46%;
+    --text-muted: 25 18% 67%;
+    --accent: 18 55% 50%;
+    --accent-soft: 18 55% 85%;
+    --accent-text: 0 0% 100%;
+    --correct: 145 35% 36%;
+    --incorrect: 0 48% 49%;
+    --shadow: 20 40% 13%;
+
+    --font-display: 'Lora', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-2xl: 20px;
+    --radius-full: 9999px;
+
+    --duration-fast: 150ms;
+    --duration-normal: 250ms;
+    --duration-slow: 400ms;
+    --duration-theme: 700ms;
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+    --radius: 0.5rem;
+  }
+
+  /* ── Morning Mist (05:00–10:59) ── */
+  [data-theme="morning"] {
+    --bg: 30 50% 97%;
+    --bg-2: 30 35% 92%;
+    --surface: 0 0% 100%;
+    --border: 25 30% 84%;
+    --text: 20 40% 13%;
+    --text-soft: 20 22% 46%;
+    --text-muted: 25 18% 67%;
+    --accent: 18 55% 50%;
+    --accent-soft: 18 55% 85%;
+    --accent-text: 0 0% 100%;
+    --correct: 145 35% 36%;
+    --incorrect: 0 48% 49%;
+    --shadow: 20 40% 13%;
+  }
+
+  /* ── Afternoon Focus (11:00–15:59) ── */
+  [data-theme="afternoon"] {
+    --bg: 40 5% 96%;
+    --bg-2: 40 3% 92%;
+    --surface: 0 0% 100%;
+    --border: 40 3% 84%;
+    --text: 60 6% 10%;
+    --text-soft: 50 3% 43%;
+    --text-muted: 50 2% 67%;
+    --accent: 205 40% 40%;
+    --accent-soft: 205 40% 87%;
+    --accent-text: 0 0% 100%;
+    --correct: 145 35% 36%;
+    --incorrect: 0 48% 49%;
+    --shadow: 60 6% 10%;
+  }
+
+  /* ── Golden Hour (16:00–18:59) ── */
+  [data-theme="golden"] {
+    --bg: 38 65% 95%;
+    --bg-2: 38 50% 88%;
+    --surface: 0 0% 100%;
+    --border: 38 40% 80%;
+    --text: 30 60% 11%;
+    --text-soft: 35 50% 37%;
+    --text-muted: 35 30% 60%;
+    --accent: 35 72% 42%;
+    --accent-soft: 42 60% 82%;
+    --accent-text: 0 0% 100%;
+    --correct: 145 35% 36%;
+    --incorrect: 0 48% 49%;
+    --shadow: 30 60% 11%;
+  }
+
+  /* ── Evening Wind (19:00–21:59) ── */
+  [data-theme="evening"] {
+    --bg: 335 22% 96%;
+    --bg-2: 335 18% 92%;
+    --surface: 0 0% 100%;
+    --border: 335 12% 84%;
+    --text: 330 45% 11%;
+    --text-soft: 330 24% 45%;
+    --text-muted: 335 16% 70%;
+    --accent: 340 46% 42%;
+    --accent-soft: 340 46% 88%;
+    --accent-text: 0 0% 100%;
+    --correct: 145 35% 36%;
+    --incorrect: 0 48% 49%;
+    --shadow: 330 45% 11%;
+  }
+
+  /* ── Midnight Study (22:00–04:59) ── */
+  [data-theme="midnight"] {
+    --bg: 220 18% 8%;
+    --bg-2: 220 16% 12%;
+    --surface: 218 18% 15%;
+    --border: 218 16% 21%;
+    --text: 35 20% 88%;
+    --text-soft: 218 10% 58%;
+    --text-muted: 218 8% 35%;
+    --accent: 42 48% 55%;
+    --accent-soft: 42 30% 18%;
+    --accent-text: 220 18% 8%;
+    --correct: 145 32% 42%;
+    --incorrect: 0 55% 55%;
+    --shadow: 0 0% 0%;
+  }
+
+  /* ── Mood Overrides ── */
+  [data-mood="sage"] {
+    --bg: 105 18% 95%;
+    --bg-2: 105 15% 91%;
+    --surface: 0 0% 100%;
+    --border: 100 14% 82%;
+    --text: 105 20% 10%;
+    --text-soft: 105 18% 42%;
+    --text-muted: 105 12% 66%;
+    --accent: 105 36% 35%;
+    --accent-soft: 105 36% 84%;
+    --accent-text: 0 0% 100%;
+    --correct: 145 35% 36%;
+    --incorrect: 0 48% 49%;
+    --shadow: 105 20% 10%;
+  }
+
+  [data-mood="storm"] {
+    --bg: 218 14% 95%;
+    --bg-2: 218 12% 91%;
+    --surface: 0 0% 100%;
+    --border: 215 10% 83%;
+    --text: 220 20% 10%;
+    --text-soft: 218 12% 39%;
+    --text-muted: 218 10% 68%;
+    --accent: 218 54% 41%;
+    --accent-soft: 218 54% 87%;
+    --accent-text: 0 0% 100%;
+    --correct: 145 35% 36%;
+    --incorrect: 0 48% 49%;
+    --shadow: 220 20% 10%;
+  }
+
+  [data-mood="sand"] {
+    --bg: 35 30% 96%;
+    --bg-2: 32 24% 91%;
+    --surface: 0 0% 100%;
+    --border: 30 16% 83%;
+    --text: 28 28% 13%;
+    --text-soft: 28 18% 46%;
+    --text-muted: 28 12% 69%;
+    --accent: 30 38% 40%;
+    --accent-soft: 30 38% 83%;
+    --accent-text: 0 0% 100%;
+    --correct: 145 35% 36%;
+    --incorrect: 0 48% 49%;
+    --shadow: 28 28% 13%;
+  }
+
+  [data-mood="plum"] {
+    --bg: 290 14% 95%;
+    --bg-2: 290 12% 90%;
+    --surface: 0 0% 100%;
+    --border: 285 10% 82%;
+    --text: 290 50% 8%;
+    --text-soft: 288 14% 44%;
+    --text-muted: 288 10% 69%;
+    --accent: 285 40% 38%;
+    --accent-soft: 285 40% 88%;
+    --accent-text: 0 0% 100%;
+    --correct: 145 35% 36%;
+    --incorrect: 0 48% 49%;
+    --shadow: 290 50% 8%;
+  }
+
+  [data-mood="ink"] {
+    --bg: 40 10% 93%;
+    --bg-2: 40 8% 88%;
+    --surface: 0 0% 100%;
+    --border: 0 2% 80%;
+    --text: 30 20% 5%;
+    --text-soft: 25 8% 35%;
+    --text-muted: 25 5% 59%;
+    --accent: 30 30% 25%;
+    --accent-soft: 30 8% 82%;
+    --accent-text: 0 0% 100%;
+    --correct: 145 35% 36%;
+    --incorrect: 0 48% 49%;
+    --shadow: 30 20% 5%;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+    box-sizing: border-box;
+  }
+
+  html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: hsl(var(--bg));
+    color: hsl(var(--text));
+    font-family: var(--font-body);
+    font-weight: 400;
+    line-height: 1.6;
+    min-height: 100dvh;
+    margin: 0;
+    padding: 0;
+    transition:
+      background-color var(--duration-theme) var(--ease),
+      color var(--duration-theme) var(--ease);
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    line-height: 1.25;
+    color: hsl(var(--text));
+  }
+
+  h4, h5, h6, p, span, label, button, input, textarea, select {
+    font-family: var(--font-body);
+  }
+}
+
+/* ── Focus ring ── */
+:focus-visible {
+  outline: 2px solid hsl(var(--accent));
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: var(--radius-full); }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--text-muted)); }
+
+/* ── Themed transitions ── */
+.themed {
+  transition:
+    background-color var(--duration-theme) var(--ease),
+    border-color var(--duration-theme) var(--ease),
+    color var(--duration-theme) var(--ease),
+    box-shadow var(--duration-theme) var(--ease);
+}
+
+/* ── Skeleton shimmer ── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--bg-2)) 25%,
+    hsl(var(--border)) 50%,
+    hsl(var(--bg-2)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-md);
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-up {
+  animation: fadeUp var(--duration-slow) var(--ease) both;
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Print ── */
+@media print {
+  body { background: #fff; color: #000; }
+  nav, button { display: none; }
+}

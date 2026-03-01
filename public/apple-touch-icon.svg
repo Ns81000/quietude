@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#c26838"/>
+      <stop offset="100%" style="stop-color:#a85a32"/>
+    </linearGradient>
+  </defs>
+  <!-- Full square for apple touch icon -->
+  <rect width="180" height="180" rx="0" fill="url(#bg-gradient)"/>
+  <!-- Stylized Q letter representing Quietude -->
+  <text 
+    x="90" 
+    y="125" 
+    font-family="Georgia, serif" 
+    font-size="120" 
+    font-weight="500"
+    fill="#ffffff" 
+    text-anchor="middle"
+    font-style="italic"
+  >Q</text>
+  <!-- Decorative leaf/calm element -->
+  <path 
+    d="M125 125 Q135 115 132 100 Q125 108 118 108 Q110 115 125 125" 
+    fill="none" 
+    stroke="#ffffff" 
+    stroke-width="4" 
+    stroke-linecap="round"
+    opacity="0.85"
+  />
+</svg>
