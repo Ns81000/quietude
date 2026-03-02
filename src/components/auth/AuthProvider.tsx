@@ -390,17 +390,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         state.isOnboarded !== prevState.isOnboarded;
       
       if (profileChanged && isSupabaseConfigured()) {
-        // Get current userId from auth store (not stale closure value)
-        const currentUserId = useAuthStore.getState().userId;
-        if (currentUserId) {
-          updateUserProfile(currentUserId, {
-            name: state.name,
-            study_field: state.studyField,
-            learn_style: state.learnStyle,
-            study_time: state.studyTime,
-            is_onboarded: state.isOnboarded,
-          });
-        }
+        updateUserProfile(userId, {
+          name: state.name,
+          study_field: state.studyField,
+          learn_style: state.learnStyle,
+          study_time: state.studyTime,
+          is_onboarded: state.isOnboarded,
+        });
       }
     });
     
