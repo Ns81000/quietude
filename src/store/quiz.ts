@@ -119,6 +119,7 @@ const DEFAULT_CONFIG: QuizConfig = {
   count: 10,
   timeLimit: null,
   types: ['mcq', 'true_false', 'fill_blank'],
+  difficulty: 'intermediate',
 };
 
 const PENDING_ANSWERS_KEY = 'quietude:quiz:draft';

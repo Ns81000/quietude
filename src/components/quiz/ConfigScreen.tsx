@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useQuizStore } from '@/store/quiz';
-import type { QuestionType } from '@/types/quiz';
+import type { QuestionType, Difficulty } from '@/types/quiz';
 import { Slider } from '@/components/ui/slider';
 import { ArrowLeft } from 'lucide-react';
 
@@ -28,6 +28,12 @@ const QUESTION_TYPES: { value: QuestionType | 'mixed'; label: string }[] = [
   { value: 'fill_blank', label: 'Fill in Blank' },
 ];
 
+const DIFFICULTY_LEVELS: { value: Difficulty; label: string; description: string }[] = [
+  { value: 'foundation', label: 'Foundation', description: 'Straightforward, factual' },
+  { value: 'intermediate', label: 'Intermediate', description: 'Understanding & application' },
+  { value: 'advanced', label: 'Advanced', description: 'Analysis & synthesis' },
+];
+
 export function ConfigScreen({
   topicTitle,
   topicSummary,
@@ -41,6 +47,7 @@ export function ConfigScreen({
   const [questionTypes, setQuestionTypes] = useState<QuestionType | 'mixed'>(
     config.types.length >= 3 ? 'mixed' : config.types[0]
   );
+  const [difficulty, setDifficulty] = useState<Difficulty>(config.difficulty);
 
   const handleBegin = () => {
     const types: QuestionType[] =
@@ -53,6 +60,7 @@ export function ConfigScreen({
       count: questionCount,
       timeLimit,
       types,
+      difficulty,
     });
     
     // Proceed to quiz - Quiz.tsx will read latest config from store
@@ -154,6 +162,30 @@ export function ConfigScreen({
                 )}
               >
                 {type.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Difficulty level */}
+        <div>
+          <label className="text-sm text-text font-medium mb-3 block">
+            Difficulty level
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {DIFFICULTY_LEVELS.map((level) => (
+              <button
+                key={level.value}
+                onClick={() => setDifficulty(level.value)}
+                className={cn(
+                  'px-3 py-2.5 rounded-lg border text-sm transition-all duration-150 text-center',
+                  difficulty === level.value
+                    ? 'border-accent bg-accent-soft text-text font-medium'
+                    : 'border-border bg-surface text-text-soft hover:border-text-muted'
+                )}
+              >
+                <span className="block">{level.label}</span>
+                <span className="block text-xs text-text-muted mt-0.5">{level.description}</span>
               </button>
             ))}
           </div>

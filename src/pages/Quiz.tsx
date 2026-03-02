@@ -152,7 +152,7 @@ export default function QuizPage() {
           topicSummary,
           questionCount: latestConfig.count,
           types: latestConfig.types,
-          difficulty: 'intermediate',
+          difficulty: latestConfig.difficulty,
           isDigDeeper: false,
           isRetake: false,
           sourceContent: sourceContent?.slice(0, 15000),

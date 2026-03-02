@@ -65,6 +65,7 @@ export interface QuizConfig {
   count: number;
   timeLimit: number | null;
   types: QuestionType[];
+  difficulty: Difficulty;
 }
 
 // Question types
