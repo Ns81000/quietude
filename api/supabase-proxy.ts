@@ -21,9 +21,12 @@ const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPA
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Set CORS headers for all responses
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin || '*';
+  res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, apikey, Prefer, X-Client-Info');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, apikey, Prefer, X-Client-Info, Accept, Range');
+  res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Preference-Applied');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   
   // Handle preflight OPTIONS request
   if (req.method === 'OPTIONS') {
@@ -38,24 +41,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   
   try {
     // Get the path to proxy from query parameter
-    const { path, ...queryParams } = req.query;
+    const { path } = req.query;
     
     if (!path || typeof path !== 'string') {
       return res.status(400).json({ error: 'Missing path parameter' });
     }
     
-    // Build the full Supabase URL
-    // path format: "rest/v1/profiles" or "rest/v1/otp_codes?email=eq.test@test.com"
-    const targetUrl = new URL(path, SUPABASE_URL);
+    // The path comes URL-encoded and may contain query params
+    // e.g., "rest/v1/profiles?select=*&id=eq.xxx"
+    // We need to properly construct the full URL
     
-    // Add any additional query params (excluding 'path')
-    Object.entries(queryParams).forEach(([key, value]) => {
-      if (typeof value === 'string') {
-        targetUrl.searchParams.set(key, value);
-      } else if (Array.isArray(value)) {
-        value.forEach(v => targetUrl.searchParams.append(key, v));
-      }
-    });
+    // Ensure SUPABASE_URL doesn't have trailing slash
+    const baseUrl = SUPABASE_URL!.replace(/\/$/, '');
+    
+    // Construct full URL - path already contains query string if any
+    const targetUrl = `${baseUrl}/${path}`;
+    
+    console.log(`[Proxy] ${req.method} -> ${path.split('?')[0]}`);
     
     // Prepare headers for Supabase
     const headers: Record<string, string> = {
@@ -71,15 +73,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.headers['x-client-info']) {
       headers['X-Client-Info'] = req.headers['x-client-info'] as string;
     }
+    if (req.headers['accept']) {
+      headers['Accept'] = req.headers['accept'] as string;
+    }
+    if (req.headers['range']) {
+      headers['Range'] = req.headers['range'] as string;
+    }
     // If client sends their own Authorization (e.g., user-specific token), use it
     if (req.headers['authorization'] && !req.headers['authorization'].includes('undefined')) {
       headers['Authorization'] = req.headers['authorization'] as string;
     }
     
-    console.log(`[Proxy] ${req.method} ${targetUrl.pathname}${targetUrl.search}`);
-    
     // Make the request to Supabase
-    const supabaseResponse = await fetch(targetUrl.toString(), {
+    const supabaseResponse = await fetch(targetUrl, {
       method: req.method || 'GET',
       headers,
       body: req.method !== 'GET' && req.method !== 'HEAD' && req.body 

@@ -24,8 +24,8 @@ import { clearAllCaches } from '@/lib/pwa/sw-register';
 
 // Data version - increment this to force a reset of all local data for existing users
 // This is useful when breaking changes are made to the data structure
-// v5: Fresh deployment with Supabase proxy - clearing ALL data
-const DATA_VERSION = 5;
+// v6: Fix proxy + clear stale local- user sessions
+const DATA_VERSION = 6;
 const DATA_VERSION_KEY = 'quietude:data_version';
 // Re-export from knownUser module for backward compatibility
 // The new module provides multi-layer storage (localStorage + IndexedDB)
