@@ -80,7 +80,7 @@ export const useAuthStore = create<AuthState>()(
               isLoading: false,
               userId: result.userId,
               email,
-              sessionExpiresAt: getStoredSession()?.expiresAt || null,
+              sessionExpiresAt: null, // Firebase sessions don't expire like Supabase
             });
             
             return { success: true, userId: result.userId };
