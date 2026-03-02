@@ -2,18 +2,18 @@ import { registerSW } from 'virtual:pwa-register';
 
 export function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
-    const updateSW = registerSW({
+    registerSW({
       immediate: true,
       onNeedRefresh() {
-        if (confirm('New content available. Reload?')) {
-          updateSW(true);
-        }
+        // Auto-update silently - no prompt needed
+        console.log('[PWA] New content available, updating...');
       },
       onOfflineReady() {
         console.log('[PWA] App ready to work offline');
       },
       onRegistered(registration) {
         if (registration) {
+          // Check for updates every hour
           setInterval(() => {
             registration.update();
           }, 60 * 60 * 1000);

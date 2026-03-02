@@ -541,7 +541,7 @@ function ScrollIndicator() {
 // ─────────────────────────────────────────────────────────────
 // NAVIGATION
 // ─────────────────────────────────────────────────────────────
-function Navigation({ onGetStarted }: { onGetStarted: () => void }) {
+function Navigation({ onGetStarted, onPresentation }: { onGetStarted: () => void; onPresentation: () => void }) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -586,7 +586,7 @@ function Navigation({ onGetStarted }: { onGetStarted: () => void }) {
 
           <div className="flex items-center gap-3">
             <button
-              onClick={() => navigate('/presentation')}
+              onClick={onPresentation}
               className="hidden sm:flex px-4 py-2 rounded-lg border border-accent/50 text-accent text-sm font-medium
                          hover:bg-accent/10 transition-colors"
             >
@@ -649,7 +649,7 @@ export default function LandingPage() {
   return (
     <div className="relative min-h-screen overflow-x-hidden">
       <FloatingShapes />
-      <Navigation onGetStarted={goToLogin} />
+      <Navigation onGetStarted={goToLogin} onPresentation={() => navigate('/presentation')} />
 
       {/* ─────────────────────────────────────────────────────────── */}
       {/* HERO SECTION */}
