@@ -21,7 +21,7 @@ const architectureLayers = [
   },
   {
     name: 'Services',
-    tech: 'Gemini + Supabase',
+    tech: 'Gemini + Firebase',
     color: 'bg-orange-500',
     items: ['AI Engine', 'Sync', 'Auth'],
   },
@@ -29,7 +29,7 @@ const architectureLayers = [
     name: 'Storage',
     tech: 'Multi-layer',
     color: 'bg-green-500',
-    items: ['localStorage', 'IndexedDB', 'PostgreSQL'],
+    items: ['localStorage', 'IndexedDB', 'Firestore'],
   },
 ];
 
@@ -37,7 +37,7 @@ const techStack = [
   { category: 'Frontend', items: ['React 18', 'TypeScript', 'TailwindCSS', 'Framer Motion'] },
   { category: 'State', items: ['Zustand', 'Persist', 'Selectors'] },
   { category: 'AI', items: ['Gemini 2.5 Flash', 'Multi-modal', 'Prompt Engineering'] },
-  { category: 'Backend', items: ['Supabase', 'PostgreSQL', 'RLS', 'OTP Auth'] },
+  { category: 'Backend', items: ['Firebase', 'Firestore', 'Auth', 'OTP'] },
   { category: 'PWA', items: ['Workbox', 'IndexedDB', 'Service Worker'] },
 ];
 

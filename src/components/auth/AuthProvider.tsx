@@ -27,7 +27,7 @@ import { clearAllCaches } from '@/lib/pwa/sw-register';
 // v9: Firebase migration fixes + fresh start for all users
 // v10: Preserve known_user during reset so onboarding status survives
 // v11: Fix logout data deletion bug - ensures cross-device sync works
-const DATA_VERSION = 11;
+const DATA_VERSION = 12;
 const DATA_VERSION_KEY = 'quietude:data_version';
 
 // KnownUser types for local storage of remembered emails

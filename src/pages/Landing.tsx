@@ -1390,7 +1390,7 @@ export default function LandingPage() {
             />
             <FAQItem
               question="Is my data secure?"
-              answer="Your data is stored locally first using IndexedDB, and synced securely to Supabase when online. We use industry-standard encryption and never share your learning data with third parties. The AI processing happens through secure API calls to Google's Gemini."
+              answer="Your data is stored locally first using IndexedDB, and synced securely to Firebase when online. We use industry-standard encryption and never share your learning data with third parties. The AI processing happens through secure API calls to Google's Gemini."
               delay={0.5}
             />
           </div>
@@ -1420,7 +1420,7 @@ export default function LandingPage() {
               { icon: Code2, label: 'React 18', desc: 'UI Library' },
               { icon: Zap, label: 'Vite', desc: 'Build Tool' },
               { icon: Cpu, label: 'Gemini AI', desc: 'Intelligence' },
-              { icon: Database, label: 'Supabase', desc: 'Backend' },
+              { icon: Database, label: 'Firebase', desc: 'Backend' },
               { icon: Globe, label: 'PWA', desc: 'Offline-First' },
               { icon: Lock, label: 'TypeScript', desc: 'Type Safety' },
             ].map((tech, i) => (

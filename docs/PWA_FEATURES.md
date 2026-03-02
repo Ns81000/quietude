@@ -217,12 +217,12 @@ runtimeCaching: [
     }
   },
   
-  // Supabase API - NetworkFirst
+  // Firebase API - NetworkFirst
   {
-    urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+    urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*/i,
     handler: 'NetworkFirst',
     options: {
-      cacheName: 'supabase-api-cache',
+      cacheName: 'firebase-api-cache',
       networkTimeoutSeconds: 10,
       expiration: {
         maxEntries: 50,

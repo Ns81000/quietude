@@ -19,7 +19,7 @@
 
 ## System Overview
 
-Quietude follows a **layered architecture** pattern with clear separation of concerns. The application is built as a client-side React SPA with optional backend synchronization through Supabase.
+Quietude follows a **layered architecture** pattern with clear separation of concerns. The application is built as a client-side React SPA with optional backend synchronization through Firebase.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -60,10 +60,10 @@ Quietude follows a **layered architecture** pattern with clear separation of con
 │                            SERVICE LAYER                                    │
 │                                                                             │
 │  ┌───────────────────────┐  ┌───────────────────────┐  ┌─────────────────┐ │
-│  │    Gemini AI Engine   │  │   Supabase Client     │  │   PWA Services  │ │
+│  │    Gemini AI Engine   │  │   Firebase Client      │  │   PWA Services  │ │
 │  │                       │  │                       │  │                 │ │
 │  │  • Key Pool Manager   │  │  • Auth Service       │  │  • SW Register  │ │
-│  │  • Prompt Builder     │  │  • Sync Queue         │  │  • Offline DB   │ │
+│  │  • Prompt Builder     │  │  • Firestore Sync     │  │  • Offline DB   │ │
 │  │  • Response Parsers   │  │  • Data Fetcher       │  │  • Cache Mgmt   │ │
 │  │  • Cache Layer        │  │                       │  │                 │ │
 │  └───────────────────────┘  └───────────────────────┘  └─────────────────┘ │
@@ -74,8 +74,8 @@ Quietude follows a **layered architecture** pattern with clear separation of con
 │                         PERSISTENCE LAYER                                   │
 │                                                                             │
 │  ┌───────────────────┐  ┌───────────────────┐  ┌───────────────────┐       │
-│  │    localStorage   │  │     IndexedDB     │  │     Supabase      │       │
-│  │                   │  │    (idb-keyval)   │  │   (PostgreSQL)    │       │
+│  │    localStorage   │  │     IndexedDB     │  │      Firebase     │       │
+│  │                   │  │    (idb-keyval)   │  │    (Firestore)    │       │
 │  │  • Auth state     │  │                   │  │                   │       │
 │  │  • User prefs     │  │  • Sync queue     │  │  • User profiles  │       │
 │  │  • Theme mood     │  │  • Offline cache  │  │  • Learning paths │       │
@@ -205,14 +205,15 @@ gemini/
 - Response caching for repeated requests
 - Multimodal file processing (PDF, images, audio)
 
-#### Supabase Client (`lib/supabase/`)
+#### Firebase Client (`lib/firebase/`)
 
 ```
-supabase/
-├── client.ts          # Supabase client configuration
+firebase/
+├── client.ts          # Firebase client configuration
 ├── auth.ts            # OTP and session management
-├── sync.ts            # Offline-first sync queue
-├── database.types.ts  # TypeScript types from schema
+├── firestore.ts       # Firestore CRUD operations
+├── sync.ts            # Offline-first sync
+├── types.ts           # TypeScript types
 └── index.ts           # Re-exports
 ```
 
@@ -231,8 +232,8 @@ Data is persisted at multiple levels for reliability:
 | Storage | Use Case | Size Limit |
 |---------|----------|------------|
 | localStorage | Zustand stores, auth tokens, preferences | ~5-10 MB |
-| IndexedDB | Sync queue, offline cache, large data | ~50+ MB |
-| Supabase | Long-term storage, cross-device sync | Unlimited |
+| IndexedDB | Offline cache, large data | ~50+ MB |
+| Firebase | Long-term storage, cross-device sync | Unlimited |
 
 ---
 
@@ -269,7 +270,7 @@ User uploads file
          │
          ▼
 ┌───────────────────┐
-│  Sync to Supabase │ syncLearningPath()
+│  Sync to Firebase │ syncLearningPath()
 └───────────────────┘
 ```
 
@@ -321,7 +322,7 @@ User starts quiz
          │
          ▼
 ┌───────────────────┐
-│  Sync to Supabase │ syncQuizSession()
+│  Sync to Firebase │ syncQuizSession()
 └───────────────────┘
 ```
 
@@ -337,7 +338,7 @@ User starts quiz
 │                               processSyncQueue()              │
 │                                         │                     │
 │                                         ▼                     │
-│                               Supabase upsert/delete          │
+│                               Firestore set/delete            │
 └───────────────────────────────────────────────────────────────┘
 
 ┌───────────────────────────────────────────────────────────────┐
@@ -354,7 +355,7 @@ User starts quiz
 │                               processSyncQueue()              │
 │                                         │                     │
 │                                         ▼                     │
-│                               Supabase upsert/delete          │
+│                               Firestore set/delete            │
 └───────────────────────────────────────────────────────────────┘
 ```
 
@@ -388,7 +389,7 @@ quietude/
 │   │   ├── learningStyle.ts    # Learning style utils
 │   │   ├── gemini/             # AI integration
 │   │   ├── pwa/                # PWA utilities
-│   │   └── supabase/           # Database utilities
+│   │   └── firebase/           # Firebase utilities
 │   │
 │   ├── pages/                  # Route pages
 │   │   ├── Landing.tsx
@@ -417,20 +418,12 @@ quietude/
 │   └── types/                  # TypeScript definitions
 │       └── quiz.ts
 │
-├── supabase/
-│   ├── schema.sql              # Database schema
-│   └── migrations/             # Migration files
-│
 ├── docs/                       # Documentation
 │   ├── ARCHITECTURE.md         # This file
 │   ├── GEMINI_MECHANISM.md
 │   ├── THEME_SYSTEM.md
 │   ├── QUIZ_MECHANISM.md
-│   ├── STATE_MANAGEMENT.md
-│   ├── AUTHENTICATION.md
-│   ├── SYNC_MECHANISM.md
-│   ├── PWA_FEATURES.md
-│   └── DATABASE_SCHEMA.md
+│   └── PWA_FEATURES.md
 │
 ├── package.json
 ├── tsconfig.json
@@ -450,11 +443,11 @@ quietude/
 **Rationale:** 
 - Users can study anywhere without internet
 - Reduces API latency for better UX
-- Graceful degradation when Supabase is unavailable
+- Graceful degradation when Firebase is unavailable
 
 **Implementation:**
 - Zustand stores persist to localStorage immediately
-- Sync queue buffers changes for Supabase
+- Firestore handles offline persistence automatically
 - IndexedDB stores larger offline data
 
 ### 2. Multi-Key API Pool
@@ -520,9 +513,9 @@ quietude/
 | Document | Description |
 |----------|-------------|
 | [Gemini Mechanism](GEMINI_MECHANISM.md) | AI integration details |
-| [State Management](STATE_MANAGEMENT.md) | Zustand store patterns |
-| [Sync Mechanism](SYNC_MECHANISM.md) | Offline sync implementation |
-| [Database Schema](DATABASE_SCHEMA.md) | Supabase table design |
+| [Quiz Mechanism](QUIZ_MECHANISM.md) | Quiz flow and scoring |
+| [Theme System](THEME_SYSTEM.md) | CSS theming and moods |
+| [PWA Features](PWA_FEATURES.md) | Offline and PWA support |
 
 ---
 

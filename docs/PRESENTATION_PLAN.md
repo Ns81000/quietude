@@ -152,7 +152,7 @@ http://localhost:8080/presentation
 **Content - Architecture (4 layers):**
 ```
 Presentation → State → Services → Storage
-(React)      (Zustand)  (Gemini/Supabase)  (Local + Cloud)
+(React)      (Zustand)  (Gemini/Firebase)  (Local + Cloud)
 ```
 
 **Content - Tech Stack Grid:**
@@ -161,7 +161,7 @@ Presentation → State → Services → Storage
 | Frontend | React 18, TypeScript, TailwindCSS, Framer Motion |
 | State | Zustand with Persist middleware |
 | AI | Google Gemini 2.5 Flash |
-| Backend | Supabase (PostgreSQL), RLS, OTP Auth |
+| Backend | Firebase (Firestore), Auth, OTP |
 | PWA | Workbox, IndexedDB, Service Worker |
 
 **Visuals:**

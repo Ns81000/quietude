@@ -624,7 +624,7 @@ export interface Answer {
 │   COMPLETE SESSION                                                              │
 │   ┌─────────────────────────────────────────────────────────────────────┐      │
 │   │  useQuizStore.getState().completeSession();                         │      │
-│   │  // Sets phase to 'completed', syncs to Supabase                    │      │
+│   │  // Sets phase to 'completed', syncs to Firebase                     │      │
 │   └─────────────────────────────────────────────────────────────────────┘      │
 │                                                                                 │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -632,7 +632,7 @@ export interface Answer {
 
 ### Persistence and Sync
 
-Quiz sessions are persisted locally and synchronized with Supabase:
+Quiz sessions are persisted locally and synchronized with Firebase:
 
 ```typescript
 // src/store/quiz.ts
@@ -651,7 +651,7 @@ export const useQuizStore = create<QuizState>()(
           sessions: [...get().sessions, session]
         });
         
-        // Sync to Supabase
+        // Sync to Firebase
         await syncQuizSession(session);
       }
     }),
@@ -750,14 +750,14 @@ The Quietude quiz mechanism provides a **comprehensive learning assessment syste
 | Fuzzy Matching | Levenshtein distance | Typo tolerance |
 | 75% Pass Threshold | Score calculation | Clear goals |
 | Dig Deeper | Weakness targeting | Adaptive learning |
-| Session Persistence | localStorage + Supabase | Progress saving |
+| Session Persistence | localStorage + Firebase | Progress saving |
 
 ---
 
 **Related Documentation:**
 - [Gemini Mechanism](./GEMINI_MECHANISM.md) - AI question generation
-- [State Management](./STATE_MANAGEMENT.md) - Quiz store details
-- [Sync Mechanism](./SYNC_MECHANISM.md) - Session synchronization
+- [Architecture](./ARCHITECTURE.md) - System overview
+- [PWA Features](./PWA_FEATURES.md) - Offline capabilities
 
 ---
 

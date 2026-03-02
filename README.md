@@ -9,7 +9,7 @@
 [![Vite](https://img.shields.io/badge/Vite-5.4-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![TailwindCSS](https://img.shields.io/badge/Tailwind-3.4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![Gemini AI](https://img.shields.io/badge/Gemini-2.5_Flash-4285F4?style=flat-square&logo=google&logoColor=white)](https://ai.google.dev/)
-[![Supabase](https://img.shields.io/badge/Supabase-2.98-3FCF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Firebase](https://img.shields.io/badge/Firebase-12.x-FFCA28?style=flat-square&logo=firebase&logoColor=black)](https://firebase.google.com/)
 [![License](https://img.shields.io/badge/License-MIT-A855F7?style=flat-square)](LICENSE)
 [![PWA](https://img.shields.io/badge/PWA-Ready-5A0FC8?style=flat-square&logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
 
@@ -111,7 +111,7 @@ Study anywhere, even without internet:
 
 - Full PWA with service worker
 - IndexedDB local storage
-- Queue-based sync with Supabase
+- Automatic sync with Firebase
 - Automatic conflict resolution
 - Crash recovery for quizzes
 
@@ -161,8 +161,8 @@ Track your progress with detailed statistics:
 │   ┌─────────────────────────────────────────────────────────────────────┐  │
 │   │                     PERSISTENCE & SYNC LAYER                         │  │
 │   │  ┌───────────────┐    ┌───────────────┐    ┌───────────────┐        │  │
-│   │  │  localStorage │    │   IndexedDB   │    │   Supabase    │        │  │
-│   │  │   (Zustand)   │    │  (idb-keyval) │    │  (PostgreSQL) │        │  │
+│   │  │  localStorage │    │   IndexedDB   │    │   Firebase    │        │  │
+│   │  │   (Zustand)   │    │  (idb-keyval) │    │  (Firestore)  │        │  │
 │   │  └───────────────┘    └───────────────┘    └───────────────┘        │  │
 │   └─────────────────────────────────────────────────────────────────────┘  │
 │                                    │                                        │
@@ -265,7 +265,7 @@ Track your progress with detailed statistics:
 </tr>
 <tr>
 <td><strong>Backend</strong></td>
-<td>Supabase (PostgreSQL)</td>
+<td>Firebase (Firestore)</td>
 <td>Database, auth infrastructure, sync</td>
 </tr>
 <tr>
@@ -310,7 +310,7 @@ Track your progress with detailed statistics:
 
 - **Node.js** 18.x or higher
 - **pnpm** (recommended) or npm
-- **Supabase** account (free tier works)
+- **Firebase** project (free tier works)
 - **Google AI Studio** API keys
 - **EmailJS** account (for OTP emails)
 
@@ -333,9 +333,13 @@ cp .env.example .env
 Create a `.env` file with the following variables:
 
 ```env
-# Supabase Configuration
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
+# Firebase Configuration
+VITE_FIREBASE_API_KEY=your-firebase-api-key
+VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your-project-id
+VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
+VITE_FIREBASE_APP_ID=your-app-id
 
 # Gemini API Keys (supports up to 6 for load balancing)
 VITE_GEMINI_KEY_1=your-gemini-key-1
@@ -352,15 +356,6 @@ VITE_EMAILJS_PUBLIC_KEY=your-public-key
 
 # Security
 VITE_OTP_SALT=your-random-salt-string
-```
-
-### Database Setup
-
-Run the schema in your Supabase SQL Editor:
-
-```bash
-# The schema file is located at:
-supabase/schema.sql
 ```
 
 ### Development
@@ -425,14 +420,11 @@ quietude/
 │   ├── lib/               # Core utilities
 │   │   ├── gemini/        # AI integration
 │   │   ├── pwa/           # Service worker, offline
-│   │   └── supabase/      # Database client, sync
+│   │   └── firebase/      # Firestore client, sync
 │   ├── pages/             # Route pages
 │   ├── store/             # Zustand state stores
 │   ├── test/              # Test utilities
 │   └── types/             # TypeScript definitions
-├── supabase/
-│   ├── schema.sql         # Database schema
-│   └── migrations/        # Database migrations
 ├── docs/                   # Documentation
 └── package.json
 ```
