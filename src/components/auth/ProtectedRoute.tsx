@@ -1,8 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/auth';
 import { useUserStore } from '@/store/user';
-import { useAuthContext } from './AuthProvider';
-import { getKnownUserSync as getKnownUser } from '@/lib/supabase/knownUser';
+import { useAuthContext, getKnownUserSync as getKnownUser } from './AuthProvider';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -16,8 +15,8 @@ export function ProtectedRoute({ children, requireOnboarding = true }: Protected
   const location = useLocation();
   
   // Check known_user as fallback for onboarding status (unique per email)
-  const knownUser = getKnownUser(email);
-  const isKnownOnboarded = knownUser?.userId === userId && knownUser?.isOnboarded;
+  const knownUser = email ? getKnownUser(email) : null;
+  const isKnownOnboarded = knownUser !== null; // If we have a known user, they've logged in before
 
   if (!isInitialized || isLoading) {
     return (
@@ -53,8 +52,8 @@ export function PublicRoute({ children }: { children: React.ReactNode }) {
   const { isInitialized } = useAuthContext();
   
   // Check known_user as fallback for onboarding status (unique per email)
-  const knownUser = getKnownUser(email);
-  const isKnownOnboarded = knownUser?.userId === userId && knownUser?.isOnboarded;
+  const knownUser = email ? getKnownUser(email) : null;
+  const isKnownOnboarded = knownUser !== null; // If we have a known user, they've logged in before
 
   // Only gate on initial auth check at app boot.
   // Do NOT gate on isLoading — that toggles during verifyOTP/sendOTP and

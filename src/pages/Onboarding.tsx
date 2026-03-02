@@ -6,9 +6,9 @@ import { useAuthStore } from '@/store/auth';
 import { 
   setKnownUserWithBackup, 
   getKnownUserSync as getKnownUser 
-} from '@/lib/supabase/knownUser';
-import { updateUserProfile } from '@/lib/supabase/auth';
-import { isSupabaseConfigured } from '@/lib/supabase/client';
+} from '@/components/auth/AuthProvider';
+import { updateUserProfile } from '@/lib/firebase/auth';
+import { isFirebaseConfigured } from '@/lib/firebase/client';
 
 const STUDY_FIELDS = ['Science', 'Arts', 'Commerce', 'Engineering', 'Medicine', 'Law', 'Other'];
 const STUDY_TIMES = [
@@ -88,22 +88,22 @@ export default function OnboardingPage() {
     // Update known_user to mark as onboarded (multi-layer storage)
     const { userId, email } = useAuthStore.getState();
     if (userId && email) {
-      setKnownUserWithBackup({
+      setKnownUserWithBackup(email, {
         email,
-        userId,
-        isOnboarded: true,
+        name: profileData.name,
+        lastLogin: new Date().toISOString(),
       });
       
       // CRITICAL: Explicitly sync to server - don't rely on subscription
       // The subscription may not be active yet or may fail silently
-      if (isSupabaseConfigured()) {
+      if (isFirebaseConfigured()) {
         try {
           await updateUserProfile(userId, {
             name: profileData.name,
-            study_field: profileData.studyField,
-            learn_style: profileData.learnStyle,
-            study_time: profileData.studyTime,
-            is_onboarded: true,
+            studyField: profileData.studyField,
+            learnStyle: profileData.learnStyle,
+            studyTime: profileData.studyTime,
+            isOnboarded: true,
           });
           console.log('[Onboarding] Profile synced to server');
         } catch (err) {

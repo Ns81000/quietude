@@ -12,7 +12,7 @@ import { ResumeBar } from '@/components/quiz/ResumeBar';
 import { useQuizStore } from '@/store/quiz';
 import { usePathsStore, selectActivePath } from '@/store/paths';
 import { useSessionsStore } from '@/store/sessions';
-import { removeFromSyncQueueByPathId } from '@/lib/supabase/sync';
+import { removeFromSyncQueueByPathId } from '@/lib/firebase/sync';
 import { toast } from 'sonner';
 import { ChevronDown, BookOpen, Archive, Trash2, Plus, RotateCcw, Filter, Check, Trophy, Sparkles, Star } from 'lucide-react';
 import {

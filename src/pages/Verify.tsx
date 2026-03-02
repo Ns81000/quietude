@@ -2,9 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/auth';
 import { useUserStore } from '@/store/user';
-import { getUserProfile } from '@/lib/supabase/auth';
-import { isSupabaseConfigured } from '@/lib/supabase/client';
-import { fetchAllUserData, clearSyncQueue } from '@/lib/supabase/sync';
+import { getUserProfile } from '@/lib/firebase/auth';
+import { isFirebaseConfigured } from '@/lib/firebase/client';
+import { fetchAllUserData, clearSyncQueue } from '@/lib/firebase/sync';
 import { usePathsStore } from '@/store/paths';
 import { useSessionsStore } from '@/store/sessions';
 import { useNotesStore } from '@/store/notes';
@@ -14,7 +14,7 @@ import {
   getKnownUserWithFallback,
   setKnownUserSync as setKnownUser,
   getKnownUserSync as getKnownUser 
-} from '@/lib/supabase/knownUser';
+} from '@/components/auth/AuthProvider';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -152,29 +152,29 @@ export default function VerifyPage() {
         
         // Get known user as fallback (unique per email)
         const knownUser = getKnownUser(email);
-        const isKnownOnboardedUser = knownUser?.userId === result.userId && knownUser?.isOnboarded;
+        const isKnownOnboardedUser = knownUser !== null; // If we have a known user, they've logged in before
         
-        if (isSupabaseConfigured() && result.userId) {
+        if (isFirebaseConfigured() && result.userId) {
           try {
             setVerifyStatus('syncing');
             const serverProfile = await getUserProfile(result.userId);
             
-            if (serverProfile?.is_onboarded) {
+            if (serverProfile?.isOnboarded) {
               isOnboarded = true;
               setProfile({ 
                 isOnboarded: true,
                 name: serverProfile.name || null,
-                studyField: serverProfile.study_field || null,
-                learnStyle: serverProfile.learn_style || null,
-                studyTime: serverProfile.study_time || null,
+                studyField: serverProfile.studyField || null,
+                learnStyle: serverProfile.learnStyle || null,
+                studyTime: serverProfile.studyTime || null,
               });
               // Update known_user to reflect server-confirmed onboarding status
               // Use backup version for multi-layer storage (localStorage + IndexedDB)
               if (result.userId && email) {
-                setKnownUserWithBackup({
+                setKnownUserWithBackup(email, {
                   email,
-                  userId: result.userId,
-                  isOnboarded: true,
+                  name: serverProfile.name || undefined,
+                  lastLogin: new Date().toISOString(),
                 });
               }
             } else if (isKnownOnboardedUser) {
@@ -186,8 +186,8 @@ export default function VerifyPage() {
             }
             
             // Apply theme mood from server profile
-            if (serverProfile?.theme_mood) {
-              useUIStore.getState().setMood(serverProfile.theme_mood as any);
+            if (serverProfile?.themeMood) {
+              useUIStore.getState().setMood(serverProfile.themeMood as any);
             }
             
             // Pre-fetch user data before navigating to dashboard
@@ -241,7 +241,7 @@ export default function VerifyPage() {
             }
           }
         } else if (isKnownOnboardedUser) {
-          // Supabase not configured but we have local backup
+          // Firebase not configured but we have local backup
           isOnboarded = true;
           setProfile({ isOnboarded: true });
         }
@@ -253,10 +253,9 @@ export default function VerifyPage() {
         // Save known user for future fallback (after successful login)
         // Use backup version for multi-layer storage (localStorage + IndexedDB)
         if (result.userId && email) {
-          setKnownUserWithBackup({
+          setKnownUserWithBackup(email, {
             email,
-            userId: result.userId,
-            isOnboarded,
+            lastLogin: new Date().toISOString(),
           });
         }
         

@@ -5,7 +5,7 @@ import { usePathsStore } from '@/store/paths';
 import { useSessionsStore } from '@/store/sessions';
 import { useNotesStore } from '@/store/notes';
 import { useUIStore } from '@/store/ui';
-import { isSupabaseConfigured, getSupabase } from '@/lib/supabase/client';
+import { isFirebaseConfigured } from '@/lib/firebase/client';
 import { 
   fetchAllUserData, 
   syncLearningPath, 
@@ -18,25 +18,75 @@ import {
   clearSyncQueue,
   removeFromSyncQueueByPathId,
   clearAllIndexedDB,
-} from '@/lib/supabase/sync';
-import { getUserProfile, updateUserProfile } from '@/lib/supabase/auth';
+} from '@/lib/firebase/sync';
+import { getUserProfile, updateUserProfile } from '@/lib/firebase/auth';
 import { clearAllCaches } from '@/lib/pwa/sw-register';
 
 // Data version - increment this to force a reset of all local data for existing users
 // This is useful when breaking changes are made to the data structure
-// v7: Fix otp_codes undefined ID bug + prevent local- user creation
-const DATA_VERSION = 7;
+// v8: Firebase migration - completely new backend
+const DATA_VERSION = 8;
 const DATA_VERSION_KEY = 'quietude:data_version';
-// Re-export from knownUser module for backward compatibility
-// The new module provides multi-layer storage (localStorage + IndexedDB)
-export { 
-  getKnownUserSync as getKnownUser, 
-  setKnownUserSync as setKnownUser,
-  getKnownUserWithFallback,
-  setKnownUserWithBackup,
-  getAllKnownUsersSync as getAllKnownUsers,
-  type KnownUser 
-} from '@/lib/supabase/knownUser';
+
+// KnownUser types for local storage of remembered emails
+export interface KnownUser {
+  email: string;
+  name?: string;
+  lastLogin?: string;
+}
+
+// Get known user from localStorage
+export function getKnownUser(email: string): KnownUser | null {
+  try {
+    const stored = localStorage.getItem(`quietude:known_user:${email}`);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+}
+
+// Set known user in localStorage
+export function setKnownUser(email: string, user: KnownUser): void {
+  try {
+    localStorage.setItem(`quietude:known_user:${email}`, JSON.stringify(user));
+  } catch {
+    console.warn('[KnownUser] Failed to save to localStorage');
+  }
+}
+
+// Alias functions for compatibility
+export const getKnownUserSync = getKnownUser;
+export const setKnownUserSync = setKnownUser;
+
+// Async versions with fallback
+export async function getKnownUserWithFallback(email: string): Promise<KnownUser | null> {
+  return getKnownUser(email);
+}
+
+export async function setKnownUserWithBackup(email: string, user: KnownUser): Promise<void> {
+  setKnownUser(email, user);
+}
+
+// Get all known users
+export function getAllKnownUsers(): KnownUser[] {
+  const users: KnownUser[] = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith('quietude:known_user:')) {
+        const stored = localStorage.getItem(key);
+        if (stored) {
+          users.push(JSON.parse(stored));
+        }
+      }
+    }
+  } catch {
+    // Ignore errors
+  }
+  return users;
+}
+
+export const getAllKnownUsersSync = getAllKnownUsers;
 
 async function checkAndResetDataVersion(): Promise<boolean> {
   const storedVersion = localStorage.getItem(DATA_VERSION_KEY);
@@ -202,27 +252,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return;
       }
       
-      // MIGRATION: If user has a local- prefix ID and we're online, try to migrate
-      if (userId.startsWith('local-') && navigator.onLine && isSupabaseConfigured() && email) {
-        console.log('[AuthProvider] Detected local-only user, attempting migration...');
-        try {
-          const supabase = getSupabase();
-          const { data: existingUser } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('email', email)
-            .single();
-          
-          if (existingUser) {
-            // User exists on server - need to re-login to get proper ID
-            console.log('[AuthProvider] User exists on server, please re-login for full sync');
-          }
-        } catch (err) {
-          console.warn('[AuthProvider] Migration check failed:', err);
-        }
-      }
-      
-      if (!isSupabaseConfigured() || !navigator.onLine) {
+      if (!isFirebaseConfigured() || !navigator.onLine) {
         syncedRef.current = true;
         return;
       }
@@ -234,31 +264,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (profile) {
           // If locally onboarded but server says not, the local state wins
           // and we should sync it to the server
-          const shouldBeOnboarded = localIsOnboarded || profile.is_onboarded;
+          const shouldBeOnboarded = localIsOnboarded || profile.isOnboarded;
           
           userStore.setProfile({
             name: profile.name || userStore.name || null,
             email: profile.email,
-            studyField: profile.study_field || userStore.studyField || null,
-            learnStyle: profile.learn_style || userStore.learnStyle || null,
-            studyTime: profile.study_time || userStore.studyTime || null,
+            studyField: profile.studyField || userStore.studyField || null,
+            learnStyle: profile.learnStyle || userStore.learnStyle || null,
+            studyTime: profile.studyTime || userStore.studyTime || null,
             isOnboarded: shouldBeOnboarded,
             isAuthenticated: true,
           });
           
           // Sync local onboarded state to server if it wasn't saved before
-          if (localIsOnboarded && !profile.is_onboarded) {
+          if (localIsOnboarded && !profile.isOnboarded) {
             updateUserProfile(userId, {
               name: userStore.name,
-              study_field: userStore.studyField,
-              learn_style: userStore.learnStyle,
-              study_time: userStore.studyTime,
-              is_onboarded: true,
+              studyField: userStore.studyField,
+              learnStyle: userStore.learnStyle,
+              studyTime: userStore.studyTime,
+              isOnboarded: true,
             });
           }
           
-          if (profile.theme_mood) {
-            uiStore.setMood(profile.theme_mood as any);
+          if (profile.themeMood) {
+            uiStore.setMood(profile.themeMood as any);
           }
         } else {
           userStore.setProfile({
@@ -455,21 +485,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
         state.studyTime !== prevState.studyTime ||
         state.isOnboarded !== prevState.isOnboarded;
       
-      if (profileChanged && isSupabaseConfigured()) {
+      if (profileChanged && isFirebaseConfigured()) {
         updateUserProfile(userId, {
           name: state.name,
-          study_field: state.studyField,
-          learn_style: state.learnStyle,
-          study_time: state.studyTime,
-          is_onboarded: state.isOnboarded,
+          studyField: state.studyField,
+          learnStyle: state.learnStyle,
+          studyTime: state.studyTime,
+          isOnboarded: state.isOnboarded,
         });
       }
     });
     
     const unsubUI = useUIStore.subscribe((state, prevState) => {
-      if (state.activeMood !== prevState.activeMood && isSupabaseConfigured()) {
+      if (state.activeMood !== prevState.activeMood && isFirebaseConfigured()) {
         updateUserProfile(userId, {
-          theme_mood: state.activeMood,
+          themeMood: state.activeMood,
         });
       }
     });

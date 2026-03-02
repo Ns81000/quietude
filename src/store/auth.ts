@@ -4,26 +4,19 @@ import {
   sendOTP,
   verifyOTP,
   validateSession,
-  refreshSession,
   logout as authLogout,
   getStoredSession,
-  getUserProfile,
-  updateUserProfile,
-  type StoredSession,
-} from '@/lib/supabase/auth';
+  isFirebaseConfigured,
+  forceSync,
+  processSyncQueue,
+  clearSyncQueue,
+  type SyncStatus,
+  subscribeSyncStatus,
+} from '@/lib/firebase';
 import { useUserStore } from './user';
 import { usePathsStore } from './paths';
 import { useSessionsStore } from './sessions';
 import { useNotesStore } from './notes';
-import { isSupabaseConfigured } from '@/lib/supabase/client';
-import {
-  forceSync,
-  processSyncQueue,
-  fetchAllUserData,
-  clearSyncQueue,
-  type SyncStatus,
-  subscribeSyncStatus,
-} from '@/lib/supabase/sync';
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -115,13 +108,7 @@ export const useAuthStore = create<AuthState>()(
           return false;
         }
         
-        if (result.needsRefresh) {
-          await refreshSession();
-          const newSession = getStoredSession();
-          if (newSession) {
-            set({ sessionExpiresAt: newSession.expiresAt });
-          }
-        }
+        // Firebase sessions don't need manual refresh - handled automatically
         
         set({
           isAuthenticated: true,
@@ -191,7 +178,7 @@ export const useAuthStore = create<AuthState>()(
         
         const isValid = await get().validateAndRefreshSession();
         
-        if (isValid && session.userId && navigator.onLine && isSupabaseConfigured()) {
+        if (isValid && session.userId && navigator.onLine && isFirebaseConfigured()) {
           processSyncQueue();
         }
         
