@@ -402,6 +402,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
     
     const unsubPaths = usePathsStore.subscribe((state, prevState) => {
+      // CRITICAL: Don't sync deletes during logout (when ALL paths are being cleared)
+      // This prevents deleting user data from server during logout
+      const isBeingCleared = state.paths.length === 0 && prevState.paths.length > 0;
+      
       if (state.paths !== prevState.paths) {
         const newPaths = state.paths.filter(
           p => !prevState.paths.find(pp => pp.id === p.id)
@@ -415,20 +419,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
           safeSync(() => syncLearningPath(path, userId));
         });
         
-        const deletedPaths = prevState.paths.filter(
-          p => !state.paths.find(sp => sp.id === p.id)
-        );
-        deletedPaths.forEach(path => {
-          safeSync(() => syncDelete('learning_paths', path.id, userId));
-          // Clean up any orphaned quiz sessions in the sync queue for this path
-          safeSync(() => removeFromSyncQueueByPathId(path.id));
-        });
+        // Only sync deletes if NOT being cleared (logout)
+        if (!isBeingCleared) {
+          const deletedPaths = prevState.paths.filter(
+            p => !state.paths.find(sp => sp.id === p.id)
+          );
+          deletedPaths.forEach(path => {
+            safeSync(() => syncDelete('learning_paths', path.id, userId));
+            // Clean up any orphaned quiz sessions in the sync queue for this path
+            safeSync(() => removeFromSyncQueueByPathId(path.id));
+          });
+        } else {
+          console.log('[AuthProvider] Paths being cleared (logout), skipping server delete');
+        }
         
         getPendingSyncCount().then(setPendingSyncCount);
       }
     });
     
     const unsubSessions = useSessionsStore.subscribe((state, prevState) => {
+      // CRITICAL: Don't sync deletes during logout (when ALL sessions are being cleared)
+      const isBeingCleared = state.sessions.length === 0 && prevState.sessions.length > 0;
+      
       if (state.sessions !== prevState.sessions) {
         const newSessions = state.sessions.filter(
           s => !prevState.sessions.find(ps => ps.id === s.id)
@@ -442,18 +454,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
           safeSync(() => syncQuizSession(session, userId));
         });
         
-        const deletedSessions = prevState.sessions.filter(
-          s => !state.sessions.find(ss => ss.id === s.id)
-        );
-        deletedSessions.forEach(session => {
-          safeSync(() => syncDelete('quiz_sessions', session.id, userId));
-        });
+        // Only sync deletes if NOT being cleared (logout)
+        if (!isBeingCleared) {
+          const deletedSessions = prevState.sessions.filter(
+            s => !state.sessions.find(ss => ss.id === s.id)
+          );
+          deletedSessions.forEach(session => {
+            safeSync(() => syncDelete('quiz_sessions', session.id, userId));
+          });
+        } else {
+          console.log('[AuthProvider] Sessions being cleared (logout), skipping server delete');
+        }
         
         getPendingSyncCount().then(setPendingSyncCount);
       }
     });
     
     const unsubNotes = useNotesStore.subscribe((state, prevState) => {
+      // CRITICAL: Don't sync deletes during logout (when ALL notes are being cleared)
+      const isBeingCleared = state.notes.length === 0 && prevState.notes.length > 0;
+      
       if (state.notes !== prevState.notes) {
         const newNotes = state.notes.filter(
           n => !prevState.notes.find(pn => pn.id === n.id)
@@ -467,12 +487,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
           safeSync(() => syncNote(note, userId));
         });
         
-        const deletedNotes = prevState.notes.filter(
-          n => !state.notes.find(sn => sn.id === n.id)
-        );
-        deletedNotes.forEach(note => {
-          safeSync(() => syncDelete('notes', note.id, userId));
-        });
+        // Only sync deletes if NOT being cleared (logout)
+        if (!isBeingCleared) {
+          const deletedNotes = prevState.notes.filter(
+            n => !state.notes.find(sn => sn.id === n.id)
+          );
+          deletedNotes.forEach(note => {
+            safeSync(() => syncDelete('notes', note.id, userId));
+          });
+        } else {
+          console.log('[AuthProvider] Notes being cleared (logout), skipping server delete');
+        }
         
         getPendingSyncCount().then(setPendingSyncCount);
       }
