@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { getTimeTheme, type TimedTheme } from '@/lib/theme';
+import { getTimeTheme, applyTheme, type TimedTheme, type MoodTheme, type AnyTheme, THEME_LABELS } from '@/lib/theme';
+import { useUIStore } from '@/store/ui';
 import {
   Upload,
   Brain,
@@ -38,6 +39,8 @@ import {
   Globe,
   Lock,
   MessageCircleQuestion,
+  Menu,
+  X,
 } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────
@@ -539,10 +542,94 @@ function ScrollIndicator() {
 }
 
 // ─────────────────────────────────────────────────────────────
+// LANDING THEME SELECTOR (self-contained for landing page)
+// ─────────────────────────────────────────────────────────────
+const MOOD_THEMES: MoodTheme[] = ['sage', 'storm', 'sand', 'plum', 'ink'];
+
+function LandingThemeSelector() {
+  const { activeMood, setMood } = useUIStore();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleSelect = (mood: MoodTheme | null) => {
+    setMood(mood);
+    if (!mood) {
+      // Reset to time-based theme
+      const timeTheme = getTimeTheme();
+      applyTheme(timeTheme);
+    }
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-md text-sm text-text-soft
+                   hover:bg-surface/50 transition-colors duration-150"
+        aria-label="Select theme"
+      >
+        <Palette className="w-4 h-4" />
+        <span className="hidden sm:inline">{activeMood ? THEME_LABELS[activeMood] : 'Auto'}</span>
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            {/* Backdrop */}
+            <div 
+              className="fixed inset-0 z-40" 
+              onClick={() => setIsOpen(false)} 
+            />
+            {/* Dropdown */}
+            <motion.div
+              initial={{ opacity: 0, y: -4, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -4, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="absolute right-0 top-full mt-2 z-50 bg-surface border border-border
+                         rounded-lg shadow-lg p-1.5 min-w-[140px] sm:min-w-[160px]"
+            >
+              <button
+                onClick={() => handleSelect(null)}
+                className={cn(
+                  'w-full text-left px-3 py-2 rounded-md text-sm transition-colors duration-150 flex items-center gap-2',
+                  !activeMood 
+                    ? 'bg-accent/10 text-text' 
+                    : 'text-text-soft hover:bg-surface hover:text-text'
+                )}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>Auto</span>
+              </button>
+              <div className="h-px bg-border my-1" />
+              {MOOD_THEMES.map((mood) => (
+                <button
+                  key={mood}
+                  onClick={() => handleSelect(mood)}
+                  className={cn(
+                    'w-full text-left px-3 py-2 rounded-md text-sm transition-colors duration-150',
+                    activeMood === mood 
+                      ? 'bg-accent/10 text-text' 
+                      : 'text-text-soft hover:bg-surface hover:text-text'
+                  )}
+                >
+                  {THEME_LABELS[mood]}
+                </button>
+              ))}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 // NAVIGATION
 // ─────────────────────────────────────────────────────────────
 function Navigation({ onGetStarted, onPresentation }: { onGetStarted: () => void; onPresentation: () => void }) {
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -550,59 +637,167 @@ function Navigation({ onGetStarted, onPresentation }: { onGetStarted: () => void
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Close mobile menu on resize to desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) setMobileMenuOpen(false);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileMenuOpen]);
+
   const scrollToSection = (id: string) => {
+    setMobileMenuOpen(false);
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  return (
-    <motion.nav
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      className={cn(
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
-        scrolled ? 'bg-bg/80 backdrop-blur-lg border-b border-border/50' : 'bg-transparent'
-      )}
-    >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <span className="font-display text-xl text-text">quietude</span>
-          
-          <div className="hidden md:flex items-center gap-8">
-            {[
-              { label: 'Features', id: 'features' },
-              { label: 'How it Works', id: 'workflow' },
-              { label: 'Themes', id: 'themes' },
-              { label: 'Why Quietude', id: 'why' },
-            ].map((item) => (
-              <button
-                key={item.id}
-                onClick={() => scrollToSection(item.id)}
-                className="text-sm text-text-soft hover:text-text transition-colors"
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
+  const navItems = [
+    { label: 'Features', id: 'features' },
+    { label: 'How it Works', id: 'workflow' },
+    { label: 'Themes', id: 'themes' },
+    { label: 'Why Quietude', id: 'why' },
+  ];
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onPresentation}
-              className="hidden sm:flex px-4 py-2 rounded-lg border border-accent/50 text-accent text-sm font-medium
-                         hover:bg-accent/10 transition-colors"
-            >
-              Presentation
-            </button>
-            <button
-              onClick={onGetStarted}
-              className="px-4 py-2 rounded-lg bg-accent text-accent-text text-sm font-medium
-                         hover:opacity-90 transition-opacity"
-            >
-              Get Started
-            </button>
+  return (
+    <>
+      <motion.nav
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        className={cn(
+          'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
+          scrolled || mobileMenuOpen ? 'bg-bg/95 backdrop-blur-lg border-b border-border/50' : 'bg-transparent'
+        )}
+      >
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <span className="font-display text-xl text-text">quietude</span>
+            
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-8">
+              {navItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => scrollToSection(item.id)}
+                  className="text-sm text-text-soft hover:text-text transition-colors"
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Desktop Actions */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Theme Selector - visible on all screens */}
+              <LandingThemeSelector />
+              
+              {/* Presentation button - hidden on very small screens */}
+              <button
+                onClick={onPresentation}
+                className="hidden sm:flex px-3 lg:px-4 py-2 rounded-lg border border-accent/50 text-accent text-sm font-medium
+                           hover:bg-accent/10 transition-colors"
+              >
+                <span className="hidden lg:inline">Presentation</span>
+                <span className="lg:hidden">Demo</span>
+              </button>
+              
+              {/* Get Started button */}
+              <button
+                onClick={onGetStarted}
+                className="hidden sm:flex px-3 lg:px-4 py-2 rounded-lg bg-accent text-accent-text text-sm font-medium
+                           hover:opacity-90 transition-opacity"
+              >
+                <span className="hidden lg:inline">Get Started</span>
+                <span className="lg:hidden">Start</span>
+              </button>
+
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden p-2 rounded-lg text-text hover:bg-surface/50 transition-colors"
+                aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </motion.nav>
+      </motion.nav>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-40 md:hidden"
+          >
+            {/* Backdrop */}
+            <div 
+              className="absolute inset-0 bg-black/20 backdrop-blur-sm" 
+              onClick={() => setMobileMenuOpen(false)} 
+            />
+            
+            {/* Menu Content */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2 }}
+              className="absolute top-16 left-0 right-0 bg-surface border-b border-border shadow-lg"
+            >
+              <div className="max-w-6xl mx-auto px-4 py-4 space-y-1">
+                {navItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => scrollToSection(item.id)}
+                    className="w-full text-left px-4 py-3 rounded-lg text-text-soft hover:text-text 
+                               hover:bg-bg-2 transition-colors text-base"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+                
+                <div className="h-px bg-border my-2" />
+                
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onPresentation();
+                  }}
+                  className="w-full text-left px-4 py-3 rounded-lg text-accent hover:bg-accent/10 
+                             transition-colors text-base font-medium"
+                >
+                  View Presentation
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onGetStarted();
+                  }}
+                  className="w-full px-4 py-3 rounded-lg bg-accent text-accent-text 
+                             hover:opacity-90 transition-opacity text-base font-medium text-center"
+                >
+                  Get Started
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
@@ -616,25 +811,32 @@ export default function LandingPage() {
   const [currentTimeTheme, setCurrentTimeTheme] = useState<TimedTheme>(getTimeTheme());
   const { scrollYProgress } = useScroll();
   const heroRef = useRef<HTMLDivElement>(null);
+  
+  // Get active mood from store to react to theme selector changes
+  const activeMood = useUIStore((s) => s.activeMood);
 
   const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 0.15], [1, 0.95]);
 
-  // Apply time-based theme to landing page
+  // Apply theme to landing page (respects mood theme if set, otherwise time-based)
   useEffect(() => {
     const updateTheme = () => {
-      const theme = getTimeTheme();
-      setCurrentTimeTheme(theme);
-      document.documentElement.setAttribute('data-theme', theme);
-      document.documentElement.removeAttribute('data-mood');
+      // If a mood theme is selected, use it; otherwise use time-based theme
+      if (activeMood) {
+        applyTheme(activeMood);
+      } else {
+        const theme = getTimeTheme();
+        setCurrentTimeTheme(theme);
+        applyTheme(theme);
+      }
     };
 
     updateTheme();
     
-    // Update theme every minute
+    // Update theme every minute (only matters when using auto/time-based theme)
     const interval = setInterval(updateTheme, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [activeMood]);
 
   const goToLogin = () => navigate('/login');
 
