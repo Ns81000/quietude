@@ -188,24 +188,6 @@ export function ScoreChart({
             transition={{ duration: 1, ease: "easeOut" }}
           />
 
-          {/* Data points - only show if more than 1 point */}
-          {filteredData.length > 1 && filteredData.map((d, i) => {
-            const x = (i / (filteredData.length - 1 || 1)) * (chartWidth - 10) + 5;
-            const y = 100 - ((d.score - minScore) / (maxScore - minScore)) * 80 - 10;
-            
-            return (
-              <motion.circle
-                key={i}
-                cx={x}
-                cy={y}
-                r="2"
-                fill="hsl(var(--accent))"
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.5 + i * 0.05, duration: 0.2 }}
-              />
-            );
-          })}
         </svg>
 
         {/* Y-axis labels */}
