@@ -20,6 +20,7 @@ import {
   forceSync,
   processSyncQueue,
   fetchAllUserData,
+  clearSyncQueue,
   type SyncStatus,
   subscribeSyncStatus,
 } from '@/lib/supabase/sync';
@@ -151,6 +152,9 @@ export const useAuthStore = create<AuthState>()(
         usePathsStore.getState().clearAll();
         useSessionsStore.getState().clearAll();
         useNotesStore.getState().clearAll();
+        
+        // Clear sync queue to prevent old user's pending operations from syncing
+        await clearSyncQueue();
         
         set({
           isAuthenticated: false,

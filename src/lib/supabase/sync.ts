@@ -149,10 +149,12 @@ export async function processSyncQueue(): Promise<void> {
         console.error(`[Sync] Failed to process item:`, item, err);
         
         if (item.retries < 3) {
+          // Exponential backoff: 5s, 25s, 125s
+          const backoffMs = Math.pow(5, item.retries + 1) * 1000;
           failedItems.push({
             ...item,
             retries: item.retries + 1,
-            timestamp: Date.now(),
+            timestamp: Date.now() + backoffMs,
           });
         }
       }
@@ -364,6 +366,19 @@ export async function getLastSyncTime(): Promise<number | null> {
 export async function getPendingSyncCount(): Promise<number> {
   const queue = await getSyncQueue();
   return queue.length;
+}
+
+/**
+ * Clear the entire sync queue. Used when logging out or switching accounts
+ * to prevent old user's data from syncing to new user's account.
+ */
+export async function clearSyncQueue(): Promise<void> {
+  try {
+    await setSyncQueue([]);
+    console.log('[Sync] Sync queue cleared');
+  } catch (err) {
+    console.error('[Sync] Failed to clear sync queue:', err);
+  }
 }
 
 if (typeof window !== 'undefined') {

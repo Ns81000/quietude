@@ -15,6 +15,8 @@ import {
   processSyncQueue,
   getLastSyncTime,
   getPendingSyncCount,
+  clearSyncQueue,
+  removeFromSyncQueueByPathId,
 } from '@/lib/supabase/sync';
 import { getUserProfile, updateUserProfile } from '@/lib/supabase/auth';
 
@@ -55,6 +57,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const syncedRef = useRef(false);
   const setupCompleteRef = useRef(false);
+  const prevUserIdRef = useRef<string | null>(null);
+  const unsubscribersRef = useRef<Array<() => void>>([]);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -68,6 +72,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  // Reset refs and cleanup subscriptions when userId changes (logout/account switch)
+  useEffect(() => {
+    if (prevUserIdRef.current !== userId) {
+      // User changed - reset sync state
+      if (prevUserIdRef.current !== null && userId !== prevUserIdRef.current) {
+        console.log('[AuthProvider] User changed, resetting sync state');
+        syncedRef.current = false;
+        setupCompleteRef.current = false;
+        
+        // Cleanup old subscriptions
+        unsubscribersRef.current.forEach(unsub => unsub());
+        unsubscribersRef.current = [];
+      }
+      prevUserIdRef.current = userId;
+    }
+  }, [userId]);
 
   useEffect(() => {
     const init = async () => {
@@ -257,6 +278,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         );
         deletedPaths.forEach(path => {
           syncDelete('learning_paths', path.id);
+          // Clean up any orphaned quiz sessions in the sync queue for this path
+          removeFromSyncQueueByPathId(path.id);
         });
         
         getPendingSyncCount().then(setPendingSyncCount);
@@ -340,12 +363,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     });
     
+    // Store unsubscribers for cleanup on user change
+    unsubscribersRef.current = [unsubPaths, unsubSessions, unsubNotes, unsubUser, unsubUI];
+    
     return () => {
       unsubPaths();
       unsubSessions();
       unsubNotes();
       unsubUser();
       unsubUI();
+      unsubscribersRef.current = [];
     };
   }, [isInitialized, isAuthenticated, userId]);
 

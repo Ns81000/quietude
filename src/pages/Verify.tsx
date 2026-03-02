@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/auth';
 import { useUserStore } from '@/store/user';
 import { getUserProfile } from '@/lib/supabase/auth';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
-import { fetchAllUserData } from '@/lib/supabase/sync';
+import { fetchAllUserData, clearSyncQueue } from '@/lib/supabase/sync';
 import { usePathsStore } from '@/store/paths';
 import { useSessionsStore } from '@/store/sessions';
 import { useNotesStore } from '@/store/notes';
@@ -123,6 +123,8 @@ export default function VerifyPage() {
           usePathsStore.getState().clearAll();
           useSessionsStore.getState().clearAll();
           useNotesStore.getState().clearAll();
+          // Clear sync queue to prevent old user's pending operations
+          await clearSyncQueue();
         }
         
         setProfile({ isAuthenticated: true });
