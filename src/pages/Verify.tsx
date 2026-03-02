@@ -114,6 +114,17 @@ export default function VerifyPage() {
         sessionStorage.setItem('quietude:login-in-progress', 'true');
         
         setVerifyStatus('success');
+        
+        // ACCOUNT SWITCH DETECTION: Clear all local data if different user is logging in
+        const previousUserId = useAuthStore.getState().userId;
+        if (previousUserId && previousUserId !== result.userId) {
+          console.log('[Verify] Account switch detected, clearing local data');
+          useUserStore.getState().clear();
+          usePathsStore.getState().clearAll();
+          useSessionsStore.getState().clearAll();
+          useNotesStore.getState().clearAll();
+        }
+        
         setProfile({ isAuthenticated: true });
         
         // Check server profile first to determine if user has completed onboarding

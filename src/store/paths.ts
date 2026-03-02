@@ -12,6 +12,7 @@ interface PathsStore {
   deletePath: (id: string) => void;
   setActivePath: (id: string | null) => void;
   archivePath: (id: string) => void;
+  clearAll: () => void;
 
   // Getters
   getActivePath: () => LearningPath | null;
@@ -87,6 +88,8 @@ export const usePathsStore = create<PathsStore>()(
         const { paths } = get();
         return paths.filter((p) => p.status === 'archived');
       },
+
+      clearAll: () => set({ paths: [], activePathId: null }),
     }),
     {
       name: 'quietude:paths',

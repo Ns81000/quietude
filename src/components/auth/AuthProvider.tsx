@@ -148,6 +148,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const serverData = await fetchAllUserData(userId);
         
         if (serverData) {
+          // ACCOUNT SWITCH DETECTION: Check if local data belongs to a different user
+          // by comparing user_id on existing paths (if any exist)
+          const existingPaths = usePathsStore.getState().paths;
+          const hasLocalDataFromDifferentUser = existingPaths.some(p => p.user_id && p.user_id !== userId);
+          
+          if (hasLocalDataFromDifferentUser) {
+            console.log('[AuthProvider] Detected local data from different user, clearing stores');
+            pathsStore.clearAll();
+            sessionsStore.clearAll();
+            notesStore.clearAll();
+          }
+          
           // Merge server paths with local - always get fresh state to avoid duplicates
           serverData.paths.forEach(serverPath => {
             const currentPaths = usePathsStore.getState().paths;

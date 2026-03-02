@@ -26,6 +26,7 @@ interface NotesStore {
   // Generation state
   setGenerating: (isGenerating: boolean) => void;
   setError: (error: string | null) => void;
+  clearAll: () => void;
   
   // Getters
   getNotesBySubject: () => Record<string, Note[]>;
@@ -70,6 +71,8 @@ export const useNotesStore = create<NotesStore>()(
       setGenerating: (isGenerating) => set({ isGenerating }),
       
       setError: (error) => set({ error }),
+
+      clearAll: () => set({ notes: [], selectedNote: null, isGenerating: false, error: null }),
 
       getNotesBySubject: () => {
         const { notes } = get();

@@ -11,6 +11,7 @@ interface SessionsStore {
   deleteSession: (id: string) => void;
   deleteSessionsByPathId: (pathId: string) => void;
   clearAllSessions: () => void;
+  clearAll: () => void;
   importSessions: (sessions: QuizSession[]) => void;
   
   // Getters
@@ -69,6 +70,8 @@ export const useSessionsStore = create<SessionsStore>()(
         })),
 
       clearAllSessions: () => set({ sessions: [] }),
+
+      clearAll: () => set({ sessions: [] }),
 
       importSessions: (sessions) =>
         set((state) => {

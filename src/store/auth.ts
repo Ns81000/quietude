@@ -11,6 +11,10 @@ import {
   updateUserProfile,
   type StoredSession,
 } from '@/lib/supabase/auth';
+import { useUserStore } from './user';
+import { usePathsStore } from './paths';
+import { useSessionsStore } from './sessions';
+import { useNotesStore } from './notes';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 import {
   forceSync,
@@ -141,6 +145,12 @@ export const useAuthStore = create<AuthState>()(
         }
         
         await authLogout();
+        
+        // Clear all user data stores to prevent data bleeding between accounts
+        useUserStore.getState().clear();
+        usePathsStore.getState().clearAll();
+        useSessionsStore.getState().clearAll();
+        useNotesStore.getState().clearAll();
         
         set({
           isAuthenticated: false,
