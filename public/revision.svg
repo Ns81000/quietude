@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Dark background tile -->
+  <rect width="512" height="512" rx="128" fill="#0A0F1E"/>
+  <rect x="8" y="8" width="496" height="496" rx="120" stroke="white" stroke-opacity="0.1" stroke-width="8"/>
+  <!-- Bold white "R" letter -->
+  <text x="256" y="380" text-anchor="middle" font-family="'Space Grotesk', 'Inter', system-ui, sans-serif" font-weight="700" font-size="340" fill="#FFFFFF">R</text>
+</svg>

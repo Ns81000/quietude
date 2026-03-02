@@ -14,6 +14,7 @@ import {
   WifiOff,
   Shield,
   Zap,
+  FileText,
 } from 'lucide-react';
 
 interface SlideProps {
@@ -59,9 +60,9 @@ const competitors = [
     features: {
       aiFromYourContent: false,
       customQuizGeneration: false,
+      notesGeneration: true,
       timeAwareTheming: false,
       offlineFirst: false,
-      noAccount: false,
       calmDesign: false,
     },
     cons: ['Pre-made content only', 'Subscription required', 'Ads in free tier'],
@@ -73,9 +74,9 @@ const competitors = [
     features: {
       aiFromYourContent: false,
       customQuizGeneration: false,
+      notesGeneration: false,
       timeAwareTheming: false,
       offlineFirst: true,
-      noAccount: true,
       calmDesign: false,
     },
     cons: ['Steep learning curve', 'Manual card creation', 'Outdated UI'],
@@ -87,12 +88,12 @@ const competitors = [
     features: {
       aiFromYourContent: false,
       customQuizGeneration: false,
+      notesGeneration: true,
       timeAwareTheming: false,
-      offlineFirst: false,
-      noAccount: false,
+      offlineFirst: true,
       calmDesign: true,
     },
-    cons: ['Not study-focused', 'No quiz generation', 'Requires internet'],
+    cons: ['Not study-focused', 'No quiz generation', 'Limited offline'],
   },
   {
     id: 'kahoot',
@@ -101,30 +102,44 @@ const competitors = [
     features: {
       aiFromYourContent: false,
       customQuizGeneration: false,
+      notesGeneration: false,
       timeAwareTheming: false,
       offlineFirst: false,
-      noAccount: false,
       calmDesign: false,
     },
     cons: ['Gamification overload', 'Group-focused only', 'No personal study'],
+  },
+  {
+    id: 'revision',
+    name: 'Re-vision',
+    logoImage: '/revision.svg',
+    features: {
+      aiFromYourContent: true,
+      customQuizGeneration: true,
+      notesGeneration: false,
+      timeAwareTheming: false,
+      offlineFirst: false,
+      calmDesign: false,
+    },
+    cons: ['Requires account', 'No offline support', 'Gamification (confetti)'],
   },
 ];
 
 const features = [
   { key: 'aiFromYourContent', label: 'AI from YOUR content', icon: Brain },
   { key: 'customQuizGeneration', label: 'Custom Quiz Generation', icon: Zap },
+  { key: 'notesGeneration', label: 'AI Notes Generation', icon: FileText },
   { key: 'timeAwareTheming', label: 'Time-Aware Theming', icon: Palette },
   { key: 'offlineFirst', label: 'Offline-First PWA', icon: WifiOff },
-  { key: 'noAccount', label: 'Works without account', icon: Shield },
   { key: 'calmDesign', label: 'Calm, focused design', icon: Sparkles },
 ];
 
 const quietudeFeatures = {
   aiFromYourContent: true,
   customQuizGeneration: true,
+  notesGeneration: true,
   timeAwareTheming: true,
   offlineFirst: true,
-  noAccount: true,
   calmDesign: true,
 };
 
@@ -214,9 +229,9 @@ export default function Slide8Closing({ registerNavHandler }: SlideProps) {
 
             {/* Comparison Table */}
             <div className="overflow-x-auto">
-              <div className="min-w-[800px]">
+              <div className="min-w-[1100px]">
                 {/* Table Header */}
-                <div className="grid grid-cols-6 gap-2 mb-4">
+                <div className="grid grid-cols-7 gap-2 mb-4">
                   <div className="col-span-1" /> {/* Feature column */}
                   
                   {/* Quietude Column Header */}
@@ -261,7 +276,7 @@ export default function Slide8Closing({ registerNavHandler }: SlideProps) {
                       transition={{ delay: i * 0.1 }}
                       onMouseEnter={() => setHighlightedFeature(feature.key)}
                       onMouseLeave={() => setHighlightedFeature(null)}
-                      className={`grid grid-cols-6 gap-2 py-3 px-4 rounded-xl mb-2 transition-all ${
+                      className={`grid grid-cols-7 gap-2 py-3 px-4 rounded-xl mb-2 transition-all ${
                         isHighlighted ? 'bg-accent/5' : ''
                       }`}
                     >
@@ -320,7 +335,7 @@ export default function Slide8Closing({ registerNavHandler }: SlideProps) {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.8 }}
-                  className="grid grid-cols-6 gap-2 py-4 px-4 mt-4 rounded-xl bg-surface border border-border"
+                  className="grid grid-cols-7 gap-2 py-4 px-4 mt-4 rounded-xl bg-surface border border-border"
                 >
                   <div className="col-span-1 flex items-center">
                     <span className="text-sm font-medium text-text">Total Features</span>
@@ -343,21 +358,6 @@ export default function Slide8Closing({ registerNavHandler }: SlideProps) {
                 </motion.div>
               </div>
             </div>
-
-            {/* Key Differentiator */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1 }}
-              className="mt-8 text-center"
-            >
-              <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-accent/10 border border-accent/30">
-                <Sparkles className="w-5 h-5 text-accent" />
-                <span className="text-text">
-                  <strong className="text-accent">Only Quietude</strong> combines AI-powered personalization with calm, offline-first design
-                </span>
-              </div>
-            </motion.div>
           </motion.div>
         ) : (
           <motion.div
