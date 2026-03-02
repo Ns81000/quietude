@@ -5,13 +5,25 @@ export type AnyTheme = TimedTheme | MoodTheme;
 const TIME_THEMES: TimedTheme[] = ['morning', 'afternoon', 'golden', 'evening', 'midnight'];
 const MOOD_THEMES: MoodTheme[] = ['sage', 'storm', 'sand', 'plum', 'ink'];
 
+// Skip night owl theme (evening/midnight) on March 2-3, 2026
+export function isNightOwlSkipDate(): boolean {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth(); // 0-indexed, so March = 2
+  const day = now.getDate();
+  return year === 2026 && month === 2 && (day === 2 || day === 3);
+}
+
 export function getTimeTheme(): TimedTheme {
   const hour = new Date().getHours();
+  const skipNightOwl = isNightOwlSkipDate();
+
   if (hour >= 5 && hour < 11) return 'morning';
   if (hour >= 11 && hour < 16) return 'afternoon';
   if (hour >= 16 && hour < 19) return 'golden';
-  if (hour >= 19 && hour < 22) return 'evening';
-  return 'midnight';
+  // Skip evening and midnight themes on March 2-3, 2026 - fallback to golden hour
+  if (hour >= 19 && hour < 22) return skipNightOwl ? 'golden' : 'evening';
+  return skipNightOwl ? 'golden' : 'midnight';
 }
 
 export function applyTheme(theme: AnyTheme, target: HTMLElement = document.documentElement): void {
