@@ -271,10 +271,13 @@ export async function validateSession(): Promise<{
         .single();
 
       if (error || !serverSession) {
-        if (navigator.onLine) {
+        // Only invalidate if we got a clear "not found" response, not a network/CORS error
+        // PGRST116 = "not found" which means session was explicitly deleted/doesn't exist
+        if (navigator.onLine && error?.code === 'PGRST116') {
           localStorage.removeItem('quietude:session');
           return { valid: false };
         }
+        // For other errors (network, CORS, etc.) - trust the local session
         return { valid: true, userId: session.userId, email: session.email, needsRefresh };
       }
 
