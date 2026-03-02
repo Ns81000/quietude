@@ -24,8 +24,8 @@ import { clearAllCaches } from '@/lib/pwa/sw-register';
 
 // Data version - increment this to force a reset of all local data for existing users
 // This is useful when breaking changes are made to the data structure
-// v8: Firebase migration - completely new backend
-const DATA_VERSION = 8;
+// v9: Firebase migration fixes + fresh start for all users
+const DATA_VERSION = 9;
 const DATA_VERSION_KEY = 'quietude:data_version';
 
 // KnownUser types for local storage of remembered emails
@@ -418,7 +418,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           p => !state.paths.find(sp => sp.id === p.id)
         );
         deletedPaths.forEach(path => {
-          safeSync(() => syncDelete('learning_paths', path.id));
+          safeSync(() => syncDelete('learning_paths', path.id, userId));
           // Clean up any orphaned quiz sessions in the sync queue for this path
           safeSync(() => removeFromSyncQueueByPathId(path.id));
         });
@@ -445,7 +445,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           s => !state.sessions.find(ss => ss.id === s.id)
         );
         deletedSessions.forEach(session => {
-          safeSync(() => syncDelete('quiz_sessions', session.id));
+          safeSync(() => syncDelete('quiz_sessions', session.id, userId));
         });
         
         getPendingSyncCount().then(setPendingSyncCount);
@@ -470,7 +470,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           n => !state.notes.find(sn => sn.id === n.id)
         );
         deletedNotes.forEach(note => {
-          safeSync(() => syncDelete('notes', note.id));
+          safeSync(() => syncDelete('notes', note.id, userId));
         });
         
         getPendingSyncCount().then(setPendingSyncCount);

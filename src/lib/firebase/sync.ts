@@ -126,9 +126,10 @@ export async function syncNote(note: AppNote, userId: string): Promise<void> {
 export async function syncDelete(
   table: 'learning_paths' | 'quiz_sessions' | 'notes',
   id: string,
-  userId: string
+  userId?: string
 ): Promise<void> {
-  if (!isFirebaseConfigured() || !navigator.onLine) {
+  // Guard against undefined userId (happens during logout)
+  if (!userId || !isFirebaseConfigured() || !navigator.onLine) {
     return;
   }
   

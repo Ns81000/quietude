@@ -110,7 +110,7 @@ export async function saveLearningPath(userId: string, path: AppLearningPath): P
  * Delete a learning path and all related data
  */
 export async function deleteLearningPath(userId: string, pathId: string): Promise<boolean> {
-  if (!isFirebaseConfigured()) return false;
+  if (!isFirebaseConfigured() || !userId || !pathId) return false;
   
   try {
     const db = getFirebaseDb();
@@ -221,7 +221,7 @@ export async function saveQuizSession(userId: string, session: AppQuizSession): 
  * Delete a quiz session
  */
 export async function deleteQuizSession(userId: string, sessionId: string): Promise<boolean> {
-  if (!isFirebaseConfigured()) return false;
+  if (!isFirebaseConfigured() || !userId || !sessionId) return false;
   
   try {
     const db = getFirebaseDb();
@@ -309,7 +309,7 @@ export async function saveNote(userId: string, note: AppNote): Promise<boolean> 
  * Delete a note
  */
 export async function deleteNote(userId: string, noteId: string): Promise<boolean> {
-  if (!isFirebaseConfigured()) return false;
+  if (!isFirebaseConfigured() || !userId || !noteId) return false;
   
   try {
     const db = getFirebaseDb();

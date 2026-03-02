@@ -13,8 +13,9 @@ import {
   type Auth 
 } from 'firebase/auth';
 import { 
-  getFirestore, 
-  enableIndexedDbPersistence,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   type Firestore 
 } from 'firebase/firestore';
 
@@ -48,7 +49,6 @@ if (!hasValidConfig) {
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
-let persistenceEnabled = false;
 
 if (hasValidConfig) {
   // Check if app already initialized (for HMR)
@@ -59,31 +59,21 @@ if (hasValidConfig) {
   }
   
   auth = getAuth(app);
-  db = getFirestore(app);
+  
+  // Initialize Firestore with persistent local cache (new API, replaces deprecated enableIndexedDbPersistence)
+  // This enables offline persistence with multi-tab support
+  db = initializeFirestore(app, {
+    localCache: persistentLocalCache({
+      tabManager: persistentMultipleTabManager()
+    })
+  });
+  
+  console.log('[Firebase] Initialized with offline persistence (multi-tab)');
   
   // Set auth persistence to local storage (survives browser close)
   setPersistence(auth, browserLocalPersistence).catch((err) => {
     console.warn('[Firebase] Failed to set auth persistence:', err);
   });
-  
-  // Enable Firestore offline persistence
-  // This must be called before any other Firestore operations
-  if (!persistenceEnabled) {
-    enableIndexedDbPersistence(db).then(() => {
-      persistenceEnabled = true;
-      console.log('[Firebase] Offline persistence enabled');
-    }).catch((err) => {
-      if (err.code === 'failed-precondition') {
-        // Multiple tabs open, persistence can only be enabled in one tab at a time
-        console.warn('[Firebase] Persistence failed: Multiple tabs open');
-      } else if (err.code === 'unimplemented') {
-        // The current browser doesn't support persistence
-        console.warn('[Firebase] Persistence not supported in this browser');
-      } else {
-        console.error('[Firebase] Persistence error:', err);
-      }
-    });
-  }
 }
 
 /**
