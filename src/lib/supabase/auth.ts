@@ -106,7 +106,13 @@ export async function verifyOTP(email: string, otp: string): Promise<{
         .eq('email', email)
         .single();
 
-      if (!fetchError && otpRecord) {
+      // Validate that otpRecord is a real OTP record with required fields
+      // (Proxy errors may return {message, code} objects that are truthy but not valid records)
+      const isValidOtpRecord = !fetchError && otpRecord && 
+        typeof otpRecord.id === 'string' && 
+        typeof otpRecord.code_hash === 'string';
+        
+      if (isValidOtpRecord) {
         if (otpRecord.attempts >= MAX_OTP_ATTEMPTS) {
           return { success: false, error: 'Too many attempts. Please request a new code.' };
         }
@@ -205,8 +211,12 @@ export async function verifyOTP(email: string, otp: string): Promise<{
               }
             }
             
-            // Only use local- prefix as absolute last resort when truly offline
-            userId = userId || `local-${crypto.randomUUID()}`;
+            // CRITICAL: Never create local- users - they cause cascade failures
+            // If server is unreachable, fail the verification and ask user to retry
+            if (!userId) {
+              console.error('[Auth] Cannot create user - server unreachable');
+              return { success: false, error: 'Server connection failed. Please check your internet and try again.' };
+            }
             localStorage.removeItem('quietude:pending_otp');
           }
         }
@@ -223,7 +233,8 @@ export async function verifyOTP(email: string, otp: string): Promise<{
   const sessionToken = generateSessionToken();
   const expiresAt = new Date(Date.now() + SESSION_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
 
-  if (isSupabaseConfigured() && userId) {
+  // Only create server session for valid server user IDs (not local- prefixed)
+  if (isSupabaseConfigured() && userId && !userId.startsWith('local-')) {
     try {
       const supabase = getSupabase();
       await supabase.from('user_sessions').insert({
@@ -388,6 +399,12 @@ export async function logout(): Promise<void> {
 
 export async function getUserProfile(userId: string): Promise<Profile | null> {
   if (!isSupabaseConfigured()) return null;
+  
+  // Never fetch profile for local-only users from server
+  if (userId.startsWith('local-')) {
+    console.warn('[Auth] Cannot fetch server profile for local-only user');
+    return null;
+  }
 
   try {
     // Use retry mechanism for resilient fetching
@@ -413,6 +430,12 @@ export async function updateUserProfile(
   updates: Partial<Omit<Profile, 'id' | 'email' | 'created_at'>>
 ): Promise<boolean> {
   if (!isSupabaseConfigured()) return false;
+  
+  // Never update profile for local-only users on server
+  if (userId.startsWith('local-')) {
+    console.warn('[Auth] Cannot update server profile for local-only user');
+    return false;
+  }
 
   try {
     // Use retry mechanism for resilient updates

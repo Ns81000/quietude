@@ -94,6 +94,12 @@ export async function addToSyncQueue(item: Omit<SyncQueueItem, 'id' | 'timestamp
   if (!isSupabaseConfigured()) {
     return;
   }
+  
+  // Never sync data with local- user IDs to server (they don't exist there)
+  if (item.data.user_id && typeof item.data.user_id === 'string' && item.data.user_id.startsWith('local-')) {
+    console.warn('[Sync] Skipping sync for local-only user data:', item.table);
+    return;
+  }
 
   const queue = await getSyncQueue();
   
@@ -281,6 +287,12 @@ export async function fetchAllUserData(userId: string): Promise<{
   notes: Note[];
 } | null> {
   if (!isSupabaseConfigured() || !navigator.onLine) {
+    return null;
+  }
+  
+  // Never fetch data for local-only users from server
+  if (userId.startsWith('local-')) {
+    console.warn('[Sync] Cannot fetch server data for local-only user');
     return null;
   }
   
