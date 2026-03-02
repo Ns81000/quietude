@@ -15,6 +15,7 @@ import {
   Shield,
   Zap,
   FileText,
+  Youtube,
 } from 'lucide-react';
 
 interface SlideProps {
@@ -59,9 +60,9 @@ const competitors = [
     logoImage: '/quizlet.png',
     features: {
       aiFromYourContent: false,
+      youtubeTranscript: false,
       customQuizGeneration: false,
       notesGeneration: true,
-      timeAwareTheming: false,
       offlineFirst: false,
       calmDesign: false,
     },
@@ -73,9 +74,9 @@ const competitors = [
     logoImage: '/anki.png',
     features: {
       aiFromYourContent: false,
+      youtubeTranscript: false,
       customQuizGeneration: false,
       notesGeneration: false,
-      timeAwareTheming: false,
       offlineFirst: true,
       calmDesign: false,
     },
@@ -87,9 +88,9 @@ const competitors = [
     logoImage: '/Notion.png',
     features: {
       aiFromYourContent: false,
+      youtubeTranscript: false,
       customQuizGeneration: false,
       notesGeneration: true,
-      timeAwareTheming: false,
       offlineFirst: true,
       calmDesign: true,
     },
@@ -101,9 +102,9 @@ const competitors = [
     logoImage: '/kahoot.png',
     features: {
       aiFromYourContent: false,
+      youtubeTranscript: false,
       customQuizGeneration: false,
       notesGeneration: false,
-      timeAwareTheming: false,
       offlineFirst: false,
       calmDesign: false,
     },
@@ -115,9 +116,9 @@ const competitors = [
     logoImage: '/revision.svg',
     features: {
       aiFromYourContent: true,
+      youtubeTranscript: true,
       customQuizGeneration: true,
       notesGeneration: false,
-      timeAwareTheming: false,
       offlineFirst: false,
       calmDesign: false,
     },
@@ -127,18 +128,18 @@ const competitors = [
 
 const features = [
   { key: 'aiFromYourContent', label: 'AI from YOUR content', icon: Brain },
+  { key: 'youtubeTranscript', label: 'YouTube Learning', icon: Youtube },
   { key: 'customQuizGeneration', label: 'Custom Quiz Generation', icon: Zap },
   { key: 'notesGeneration', label: 'AI Notes Generation', icon: FileText },
-  { key: 'timeAwareTheming', label: 'Time-Aware Theming', icon: Palette },
   { key: 'offlineFirst', label: 'Offline-First PWA', icon: WifiOff },
   { key: 'calmDesign', label: 'Calm, focused design', icon: Sparkles },
 ];
 
 const quietudeFeatures = {
   aiFromYourContent: true,
+  youtubeTranscript: true,
   customQuizGeneration: true,
   notesGeneration: true,
-  timeAwareTheming: true,
   offlineFirst: true,
   calmDesign: true,
 };

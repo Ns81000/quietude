@@ -9,6 +9,7 @@ import {
   BarChart3,
   ArrowRight,
   CheckCircle2,
+  Youtube,
 } from 'lucide-react';
 
 interface SlideProps {
@@ -23,6 +24,13 @@ const steps = [
     description: 'Drop your study materials',
     detail: 'PDF, Images, Audio, or Text',
     color: '#4a6fa5',
+  },
+  {
+    icon: Youtube,
+    title: 'YouTube',
+    description: 'Paste any video link',
+    detail: 'Auto-extracts transcript',
+    color: '#ff0000',
   },
   {
     icon: Brain,
@@ -147,7 +155,7 @@ export default function Slide3HowItWorks({}: SlideProps) {
         {/* Connection Line */}
         <div className="absolute top-16 left-8 right-8 h-0.5 bg-border hidden lg:block" />
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
           {steps.map((step, i) => {
             const Icon = step.icon;
             const isActive = i === activeStep;
