@@ -162,6 +162,8 @@ export async function getQuizSessions(userId: string): Promise<AppQuizSession[]>
     const q = query(sessionsRef, orderBy('startedAt', 'desc'));
     const snapshot = await getDocs(q);
     
+    console.log('[Firestore] getQuizSessions:', { userId, count: snapshot.docs.length });
+    
     return snapshot.docs.map(doc => 
       firestoreSessionToApp(doc.id, userId, doc.data() as FirestoreQuizSession)
     );

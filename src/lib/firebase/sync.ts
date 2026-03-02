@@ -89,12 +89,15 @@ export async function syncLearningPath(path: AppLearningPath, userId: string): P
  */
 export async function syncQuizSession(session: AppQuizSession, userId: string): Promise<void> {
   if (!isFirebaseConfigured() || !navigator.onLine) {
+    console.log('[Sync] Skipping quiz session sync (offline or not configured)');
     return;
   }
   
   try {
     notifySyncStatus('syncing');
+    console.log('[Sync] Syncing quiz session to server:', { sessionId: session.id, userId });
     await saveQuizSession(userId, session);
+    console.log('[Sync] Quiz session synced successfully');
     notifySyncStatus('idle');
   } catch (err) {
     console.error('[Sync] Failed to sync quiz session:', err);

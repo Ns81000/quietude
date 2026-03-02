@@ -210,7 +210,13 @@ export default function VerifyPage() {
             // Pre-fetch user data before navigating to dashboard
             if (isOnboarded) {
               destination = '/dashboard';
+              console.log('[Verify] Fetching user data from server...');
               const serverData = await fetchAllUserData(result.userId);
+              console.log('[Verify] Server data fetched:', {
+                paths: serverData?.paths?.length ?? 0,
+                sessions: serverData?.sessions?.length ?? 0,
+                notes: serverData?.notes?.length ?? 0,
+              });
               if (serverData) {
                 // Replace local data with server data to prevent duplicates
                 const pathsStore = usePathsStore.getState();
