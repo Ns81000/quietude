@@ -51,6 +51,14 @@ export default function VerifyPage() {
   const { verifyOTP, sendOTP, error, clearError } = useAuthStore();
   const { email, setProfile } = useUserStore();
 
+  // Redirect to login if email is missing (e.g., direct navigation to /verify)
+  useEffect(() => {
+    if (!email) {
+      toast.error('Please enter your email first');
+      navigate('/login', { replace: true });
+    }
+  }, [email, navigate]);
+
   useEffect(() => {
     inputsRef.current[0]?.focus();
     clearError();

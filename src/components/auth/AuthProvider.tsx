@@ -20,6 +20,43 @@ import {
 } from '@/lib/supabase/sync';
 import { getUserProfile, updateUserProfile } from '@/lib/supabase/auth';
 
+// Data version - increment this to force a reset of all local data for existing users
+// This is useful when breaking changes are made to the data structure
+const DATA_VERSION = 2; // Bumped from 1 to 2 to clear old buggy data
+const DATA_VERSION_KEY = 'quietude:data_version';
+
+function checkAndResetDataVersion(): boolean {
+  const storedVersion = localStorage.getItem(DATA_VERSION_KEY);
+  const currentVersion = storedVersion ? parseInt(storedVersion, 10) : 0;
+  
+  if (currentVersion < DATA_VERSION) {
+    console.log(`[DataVersion] Upgrading from v${currentVersion} to v${DATA_VERSION}, clearing local data...`);
+    
+    // Clear all localStorage keys for this app
+    const keysToRemove = Object.keys(localStorage).filter(key => 
+      key.startsWith('quietude:') || 
+      key.startsWith('paths-') ||
+      key.startsWith('sessions-') ||
+      key.startsWith('notes-') ||
+      key.startsWith('user-') ||
+      key.startsWith('auth-') ||
+      key.startsWith('ui-')
+    );
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    
+    // Clear IndexedDB sync queue
+    clearSyncQueue().catch(console.error);
+    
+    // Set new version
+    localStorage.setItem(DATA_VERSION_KEY, DATA_VERSION.toString());
+    
+    console.log(`[DataVersion] Cleared ${keysToRemove.length} localStorage keys`);
+    return true; // Data was reset
+  }
+  
+  return false; // No reset needed
+}
+
 interface AuthContextValue {
   isInitialized: boolean;
   isOnline: boolean;
@@ -92,6 +129,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     const init = async () => {
+      // Check data version and clear old data if needed
+      const wasReset = checkAndResetDataVersion();
+      if (wasReset) {
+        // Force page reload to reinitialize stores with clean state
+        window.location.reload();
+        return;
+      }
+      
       await initialize();
       setIsInitialized(true);
       

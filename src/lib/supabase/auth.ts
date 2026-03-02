@@ -173,6 +173,38 @@ export async function verifyOTP(email: string, otp: string): Promise<{
 
           if (pending.hash === submittedHash) {
             isValid = true;
+            
+            // Try to get or create a server user ID instead of using local-
+            if (!userId && isSupabaseConfigured()) {
+              try {
+                const supabase = getSupabase();
+                const { data: existingUser } = await supabase
+                  .from('profiles')
+                  .select('id')
+                  .eq('email', email)
+                  .single();
+
+                if (existingUser) {
+                  userId = existingUser.id;
+                } else {
+                  // Create new user on server
+                  const newUserId = crypto.randomUUID();
+                  const { error: createError } = await supabase.from('profiles').insert({
+                    id: newUserId,
+                    email,
+                    is_onboarded: false,
+                  });
+                  
+                  if (!createError) {
+                    userId = newUserId;
+                  }
+                }
+              } catch (err) {
+                console.warn('[Auth] Failed to create server user from local fallback:', err);
+              }
+            }
+            
+            // Only use local- prefix as absolute last resort when truly offline
             userId = userId || `local-${crypto.randomUUID()}`;
             localStorage.removeItem('quietude:pending_otp');
           }

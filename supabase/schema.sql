@@ -204,14 +204,55 @@ CREATE TRIGGER update_notes_updated_at
   BEFORE UPDATE ON public.notes
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Function to clean up expired sessions
+-- Function to clean up expired sessions and OTPs
 CREATE OR REPLACE FUNCTION cleanup_expired_sessions()
 RETURNS void AS $$
+DECLARE
+  deleted_sessions INTEGER;
+  deleted_otps INTEGER;
 BEGIN
-  DELETE FROM public.user_sessions WHERE expires_at < now();
-  DELETE FROM public.otp_codes WHERE expires_at < now();
+  -- Delete expired sessions and count
+  WITH deleted AS (
+    DELETE FROM public.user_sessions WHERE expires_at < now() RETURNING 1
+  )
+  SELECT COUNT(*) INTO deleted_sessions FROM deleted;
+  
+  -- Delete expired OTPs and count
+  WITH deleted AS (
+    DELETE FROM public.otp_codes WHERE expires_at < now() RETURNING 1
+  )
+  SELECT COUNT(*) INTO deleted_otps FROM deleted;
+  
+  -- Log cleanup results (visible in Supabase logs)
+  RAISE NOTICE 'Cleanup completed: % sessions, % OTPs deleted', deleted_sessions, deleted_otps;
 END;
 $$ LANGUAGE plpgsql;
+
+-- =====================================================
+-- SCHEDULED CLEANUP (pg_cron)
+-- =====================================================
+-- To enable automatic cleanup, run this in Supabase SQL Editor:
+-- 
+-- 1. First, enable pg_cron extension (requires Supabase Pro plan or self-hosted):
+--    CREATE EXTENSION IF NOT EXISTS pg_cron;
+--
+-- 2. Schedule the cleanup to run every hour:
+--    SELECT cron.schedule(
+--      'cleanup-expired-auth',           -- job name
+--      '0 * * * *',                       -- every hour at minute 0
+--      'SELECT cleanup_expired_sessions()'
+--    );
+--
+-- 3. To verify the job was created:
+--    SELECT * FROM cron.job;
+--
+-- 4. To remove the job if needed:
+--    SELECT cron.unschedule('cleanup-expired-auth');
+--
+-- Alternative: If pg_cron is not available, call this function from:
+-- - A Supabase Edge Function on a schedule
+-- - An external cron job via Supabase REST API
+-- - Manually: SELECT cleanup_expired_sessions();
 
 -- =====================================================
 -- GRANTS
