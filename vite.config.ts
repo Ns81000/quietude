@@ -109,5 +109,7 @@ export default defineConfig(({ mode }) => ({
         },
       },
     },
+    // Ensure assets are properly cached
+    assetsInlineLimit: 0, // Don't inline assets, better caching
   },
 }));

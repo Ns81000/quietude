@@ -20,6 +20,7 @@ const Stats = lazy(() => import("./pages/Stats"));
 const Quiz = lazy(() => import("./pages/Quiz"));
 const Learn = lazy(() => import("./pages/Learn"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Presentation = lazy(() => import("./presentation/Presentation"));
 
 // Loading fallback component
 function PageLoader() {
@@ -67,6 +68,9 @@ const App = () => (
                 <Route path="/learn" element={<ProtectedRoute><Learn /></ProtectedRoute>} />
                 <Route path="/learn/:pathId" element={<ProtectedRoute><Learn /></ProtectedRoute>} />
                 <Route path="/learn/:pathId/:topicId/quiz" element={<ProtectedRoute><Quiz /></ProtectedRoute>} />
+                
+                {/* Presentation - public access for hackathon demo */}
+                <Route path="/presentation" element={<Presentation />} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>

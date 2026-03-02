@@ -18,13 +18,4 @@
     text-anchor="middle"
     font-style="italic"
   >Q</text>
-  <!-- Decorative leaf/calm element -->
-  <path 
-    d="M125 125 Q135 115 132 100 Q125 108 118 108 Q110 115 125 125" 
-    fill="none" 
-    stroke="#ffffff" 
-    stroke-width="4" 
-    stroke-linecap="round"
-    opacity="0.85"
-  />
 </svg>

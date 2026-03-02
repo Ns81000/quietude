@@ -1,0 +1,9 @@
+export { default as Slide1Title } from './Slide1Title';
+export { default as Slide2Problem } from './Slide2Problem';
+export { default as Slide3HowItWorks } from './Slide3HowItWorks';
+export { default as Slide4QuizExperience } from './Slide3QuizExperience';
+export { default as Slide5Theming } from './Slide4Theming';
+export { default as Slide6OfflineSecurity } from './Slide5OfflineSecurity';
+export { default as Slide7Architecture } from './Slide6Architecture';
+export { default as Slide8ProductShowcase } from './Slide7ProductShowcase';
+export { default as Slide9Closing } from './Slide8Closing';
