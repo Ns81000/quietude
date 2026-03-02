@@ -120,28 +120,6 @@ function SlideIndicator({
   );
 }
 
-// Theme indicator
-function ThemeIndicator({ theme }: { theme: TimedTheme }) {
-  const themeLabels: Record<TimedTheme, string> = {
-    morning: 'Morning Mist',
-    afternoon: 'Afternoon Focus',
-    golden: 'Golden Hour',
-    evening: 'Evening Wind',
-    midnight: 'Midnight Study',
-  };
-
-  return (
-    <div className="fixed top-6 left-6 z-50">
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface/80 
-                      backdrop-blur-sm border border-border/50 text-xs">
-        <div className="w-2 h-2 rounded-full bg-correct animate-pulse" />
-        <span className="text-text-muted">Live:</span>
-        <span className="text-text font-medium">{themeLabels[theme]}</span>
-      </div>
-    </div>
-  );
-}
-
 // Navigation controls
 function NavigationControls({
   onPrev,
@@ -441,9 +419,6 @@ export default function Presentation() {
 
       {/* Hide background shapes on full-screen slides */}
       {!isFullScreenSlide && <FloatingShapes />}
-      
-      {/* Hide theme indicator on theming slide */}
-      {!isFullScreenSlide && <ThemeIndicator theme={currentTheme} />}
       
       <NavigationControls
         onPrev={prevSlide}
