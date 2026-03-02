@@ -14,7 +14,7 @@ import {
   type User,
   type Unsubscribe,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, getDocFromServer, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { getFirebaseAuth, getFirebaseDb, isFirebaseConfigured } from './client';
 import type { FirestoreUser, AppUser } from './types';
 import { firestoreUserToApp } from './types';
@@ -399,7 +399,18 @@ export async function getUserProfile(userId: string): Promise<AppUser | null> {
   try {
     const db = getFirebaseDb();
     const userRef = doc(db, 'users', userId);
-    const userSnap = await getDoc(userRef);
+    
+    // Try to get fresh data from server first to avoid stale cache issues
+    // This is critical for onboarding status which may have just been updated
+    let userSnap;
+    try {
+      userSnap = await getDocFromServer(userRef);
+      console.log('[Firebase] Got user profile from server');
+    } catch (serverErr) {
+      // Server fetch failed (offline or blocked), fall back to cache
+      console.log('[Firebase] Server fetch failed, using cache:', serverErr);
+      userSnap = await getDoc(userRef);
+    }
     
     if (!userSnap.exists()) return null;
     

@@ -154,10 +154,23 @@ export default function VerifyPage() {
         const knownUser = getKnownUser(email);
         const isKnownOnboardedUser = knownUser !== null; // If we have a known user, they've logged in before
         
+        console.log('[Verify] Checking onboarding status:', { 
+          email, 
+          localIsOnboarded: isOnboarded,
+          knownUserExists: knownUser !== null,
+          knownUser 
+        });
+        
         if (isFirebaseConfigured() && result.userId) {
           try {
             setVerifyStatus('syncing');
             const serverProfile = await getUserProfile(result.userId);
+            
+            console.log('[Verify] Server profile:', { 
+              exists: serverProfile !== null,
+              isOnboarded: serverProfile?.isOnboarded,
+              name: serverProfile?.name
+            });
             
             if (serverProfile?.isOnboarded) {
               isOnboarded = true;
