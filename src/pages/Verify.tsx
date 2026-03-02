@@ -9,7 +9,12 @@ import { usePathsStore } from '@/store/paths';
 import { useSessionsStore } from '@/store/sessions';
 import { useNotesStore } from '@/store/notes';
 import { useUIStore } from '@/store/ui';
-import { setKnownUser, getKnownUser } from '@/components/auth/AuthProvider';
+import { 
+  setKnownUserWithBackup, 
+  getKnownUserWithFallback,
+  setKnownUserSync as setKnownUser,
+  getKnownUserSync as getKnownUser 
+} from '@/lib/supabase/knownUser';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -115,6 +120,9 @@ export default function VerifyPage() {
     setVerifyStatus('verifying');
     clearError();
     
+    // IMPORTANT: Capture previous userId BEFORE verifyOTP changes it
+    const previousUserId = useAuthStore.getState().userId;
+    
     try {
       const result = await verifyOTP(email, fullCode);
       
@@ -125,7 +133,6 @@ export default function VerifyPage() {
         setVerifyStatus('success');
         
         // ACCOUNT SWITCH DETECTION: Clear all local data if different user is logging in
-        const previousUserId = useAuthStore.getState().userId;
         if (previousUserId && previousUserId !== result.userId) {
           console.log('[Verify] Account switch detected, clearing local data');
           useUserStore.getState().clear();
@@ -143,8 +150,8 @@ export default function VerifyPage() {
         let isOnboarded = useUserStore.getState().isOnboarded;
         let destination: '/dashboard' | '/onboarding' = '/onboarding';
         
-        // Get known user as fallback
-        const knownUser = getKnownUser();
+        // Get known user as fallback (unique per email)
+        const knownUser = getKnownUser(email);
         const isKnownOnboardedUser = knownUser?.userId === result.userId && knownUser?.isOnboarded;
         
         if (isSupabaseConfigured() && result.userId) {
@@ -161,10 +168,19 @@ export default function VerifyPage() {
                 learnStyle: serverProfile.learn_style || null,
                 studyTime: serverProfile.study_time || null,
               });
+              // Update known_user to reflect server-confirmed onboarding status
+              // Use backup version for multi-layer storage (localStorage + IndexedDB)
+              if (result.userId && email) {
+                setKnownUserWithBackup({
+                  email,
+                  userId: result.userId,
+                  isOnboarded: true,
+                });
+              }
             } else if (isKnownOnboardedUser) {
               // Server didn't confirm but we know this user was onboarded before
               // Trust the local backup
-              console.log('[Verify] Using known_user fallback for onboarded status');
+              console.log('[Verify] Using known_user fallback for onboarding status');
               isOnboarded = true;
               setProfile({ isOnboarded: true });
             }
@@ -235,8 +251,9 @@ export default function VerifyPage() {
         }
         
         // Save known user for future fallback (after successful login)
+        // Use backup version for multi-layer storage (localStorage + IndexedDB)
         if (result.userId && email) {
-          setKnownUser({
+          setKnownUserWithBackup({
             email,
             userId: result.userId,
             isOnboarded,

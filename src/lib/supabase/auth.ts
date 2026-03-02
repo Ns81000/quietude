@@ -1,4 +1,5 @@
 import { getSupabase, isSupabaseConfigured } from './client';
+import { withRetry } from './retry';
 import type { Profile } from './database.types';
 import emailjs from '@emailjs/browser';
 
@@ -389,16 +390,20 @@ export async function getUserProfile(userId: string): Promise<Profile | null> {
   if (!isSupabaseConfigured()) return null;
 
   try {
-    const supabase = getSupabase();
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    // Use retry mechanism for resilient fetching
+    return await withRetry(async () => {
+      const supabase = getSupabase();
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-    if (error) return null;
-    return data;
-  } catch {
+      if (error) throw error;
+      return data;
+    }, { maxRetries: 3, baseDelayMs: 500 });
+  } catch (err) {
+    console.warn('[Auth] getUserProfile failed after retries:', err);
     return null;
   }
 }
@@ -410,14 +415,19 @@ export async function updateUserProfile(
   if (!isSupabaseConfigured()) return false;
 
   try {
-    const supabase = getSupabase();
-    const { error } = await supabase
-      .from('profiles')
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', userId);
+    // Use retry mechanism for resilient updates
+    return await withRetry(async () => {
+      const supabase = getSupabase();
+      const { error } = await supabase
+        .from('profiles')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', userId);
 
-    return !error;
-  } catch {
+      if (error) throw error;
+      return true;
+    }, { maxRetries: 2, baseDelayMs: 500 });
+  } catch (err) {
+    console.warn('[Auth] updateUserProfile failed after retries:', err);
     return false;
   }
 }

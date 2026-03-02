@@ -3,7 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useUserStore } from '@/store/user';
 import { useAuthStore } from '@/store/auth';
-import { setKnownUser, getKnownUser } from '@/components/auth/AuthProvider';
+import { 
+  setKnownUserWithBackup, 
+  getKnownUserSync as getKnownUser 
+} from '@/lib/supabase/knownUser';
+import { updateUserProfile } from '@/lib/supabase/auth';
+import { isSupabaseConfigured } from '@/lib/supabase/client';
 
 const STUDY_FIELDS = ['Science', 'Arts', 'Commerce', 'Engineering', 'Medicine', 'Law', 'Other'];
 const STUDY_TIMES = [
@@ -66,25 +71,46 @@ export default function OnboardingPage() {
     setTimeout(advance, 200);
   };
 
-  const handleStyleSelect = (s: string) => {
+  const handleStyleSelect = async (s: string) => {
     setLearnStyle(s);
-    // Save and go to welcome
-    setProfile({
+    
+    const profileData = {
       name: name.trim(),
       studyField: field,
       studyTime,
       learnStyle: s,
       isOnboarded: true,
-    });
+    };
     
-    // Update known_user to mark as onboarded
+    // Save locally first
+    setProfile(profileData);
+    
+    // Update known_user to mark as onboarded (multi-layer storage)
     const { userId, email } = useAuthStore.getState();
     if (userId && email) {
-      setKnownUser({
+      setKnownUserWithBackup({
         email,
         userId,
         isOnboarded: true,
       });
+      
+      // CRITICAL: Explicitly sync to server - don't rely on subscription
+      // The subscription may not be active yet or may fail silently
+      if (isSupabaseConfigured()) {
+        try {
+          await updateUserProfile(userId, {
+            name: profileData.name,
+            study_field: profileData.studyField,
+            learn_style: profileData.learnStyle,
+            study_time: profileData.studyTime,
+            is_onboarded: true,
+          });
+          console.log('[Onboarding] Profile synced to server');
+        } catch (err) {
+          console.warn('[Onboarding] Failed to sync profile to server:', err);
+          // Local known_user will serve as fallback
+        }
+      }
     }
     
     setTimeout(advance, 200);

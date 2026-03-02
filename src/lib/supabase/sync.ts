@@ -1,4 +1,5 @@
 import { getSupabase, isSupabaseConfigured } from './client';
+import { withRetry } from './retry';
 import { get, set, del, keys, clear } from 'idb-keyval';
 import type { LearningPath as DBLearningPath, QuizSession as DBQuizSession, Note as DBNote } from './database.types';
 import type { LearningPath } from '@/types/quiz';
@@ -284,76 +285,74 @@ export async function fetchAllUserData(userId: string): Promise<{
   }
   
   try {
-    const supabase = getSupabase();
-    const [pathsRes, sessionsRes, notesRes] = await Promise.all([
-      supabase.from('learning_paths').select('*').eq('user_id', userId),
-      supabase.from('quiz_sessions').select('*').eq('user_id', userId),
-      supabase.from('notes').select('*').eq('user_id', userId),
-    ]);
-    
-    if (pathsRes.error || sessionsRes.error || notesRes.error) {
-      console.error('[Sync] Failed to fetch user data:', {
-        paths: pathsRes.error,
-        sessions: sessionsRes.error,
-        notes: notesRes.error,
-      });
-      return null;
-    }
-    
-    const paths: LearningPath[] = (pathsRes.data || []).map(p => ({
-      id: p.id,
-      user_id: p.user_id,
-      title: p.title || undefined,
-      subject: p.subject,
-      education_level: p.education_level || '',
-      topic_type: p.topic_type || '',
-      source_type: p.source_type as any,
-      source_url: p.source_url,
-      source_text: p.source_text || undefined,
-      source_file_name: p.source_file_name || undefined,
-      topic_map: p.topic_map as any,
-      topics: (p.topics as any) || [],
-      needs_study_plan: p.needs_study_plan,
-      status: p.status as 'active' | 'completed' | 'archived',
-      current_topic_id: p.current_topic_id,
-      created_at: p.created_at,
-    }));
-    
-    const sessions: QuizSession[] = (sessionsRes.data || []).map(s => ({
-      id: s.id,
-      user_id: s.user_id,
-      topic_id: s.topic_id,
-      path_id: s.path_id,
-      subject: s.subject || '',
-      is_dig_deeper: s.is_dig_deeper,
-      is_retake: s.is_retake,
-      config: s.config as any,
-      questions: s.questions as any,
-      answers: s.answers as any,
-      score: s.score,
-      total: s.total,
-      score_pct: s.score_pct,
-      passed: s.passed,
-      started_at: s.started_at,
-      submitted_at: s.submitted_at,
-      time_taken_secs: s.time_taken_secs,
-    }));
-    
-    const notes: Note[] = (notesRes.data || []).map(n => ({
-      id: n.id,
-      topic_id: n.topic_id,
-      topic_title: n.topic_title,
-      subject: n.subject,
-      content_html: n.content_html,
-      session_id: n.session_id || undefined,
-      created_at: n.created_at,
-    }));
-    
-    await set(LAST_SYNC_KEY, Date.now());
-    
-    return { paths, sessions, notes };
+    // Use retry mechanism for resilient data fetching
+    return await withRetry(async () => {
+      const supabase = getSupabase();
+      const [pathsRes, sessionsRes, notesRes] = await Promise.all([
+        supabase.from('learning_paths').select('*').eq('user_id', userId),
+        supabase.from('quiz_sessions').select('*').eq('user_id', userId),
+        supabase.from('notes').select('*').eq('user_id', userId),
+      ]);
+      
+      if (pathsRes.error || sessionsRes.error || notesRes.error) {
+        throw new Error(`Failed to fetch: paths=${pathsRes.error?.message}, sessions=${sessionsRes.error?.message}, notes=${notesRes.error?.message}`);
+      }
+      
+      const paths: LearningPath[] = (pathsRes.data || []).map(p => ({
+        id: p.id,
+        user_id: p.user_id,
+        title: p.title || undefined,
+        subject: p.subject,
+        education_level: p.education_level || '',
+        topic_type: p.topic_type || '',
+        source_type: p.source_type as any,
+        source_url: p.source_url,
+        source_text: p.source_text || undefined,
+        source_file_name: p.source_file_name || undefined,
+        topic_map: p.topic_map as any,
+        topics: (p.topics as any) || [],
+        needs_study_plan: p.needs_study_plan,
+        status: p.status as 'active' | 'completed' | 'archived',
+        current_topic_id: p.current_topic_id,
+        created_at: p.created_at,
+      }));
+      
+      const sessions: QuizSession[] = (sessionsRes.data || []).map(s => ({
+        id: s.id,
+        user_id: s.user_id,
+        topic_id: s.topic_id,
+        path_id: s.path_id,
+        subject: s.subject || '',
+        is_dig_deeper: s.is_dig_deeper,
+        is_retake: s.is_retake,
+        config: s.config as any,
+        questions: s.questions as any,
+        answers: s.answers as any,
+        score: s.score,
+        total: s.total,
+        score_pct: s.score_pct,
+        passed: s.passed,
+        started_at: s.started_at,
+        submitted_at: s.submitted_at,
+        time_taken_secs: s.time_taken_secs,
+      }));
+      
+      const notes: Note[] = (notesRes.data || []).map(n => ({
+        id: n.id,
+        topic_id: n.topic_id,
+        topic_title: n.topic_title,
+        subject: n.subject,
+        content_html: n.content_html,
+        session_id: n.session_id || undefined,
+        created_at: n.created_at,
+      }));
+      
+      await set(LAST_SYNC_KEY, Date.now());
+      
+      return { paths, sessions, notes };
+    }, { maxRetries: 3, baseDelayMs: 1000 });
   } catch (err) {
-    console.error('[Sync] Failed to fetch all user data:', err);
+    console.error('[Sync] Failed to fetch all user data after retries:', err);
     return null;
   }
 }

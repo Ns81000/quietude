@@ -5,7 +5,7 @@ import { usePathsStore } from '@/store/paths';
 import { useSessionsStore } from '@/store/sessions';
 import { useNotesStore } from '@/store/notes';
 import { useUIStore } from '@/store/ui';
-import { isSupabaseConfigured } from '@/lib/supabase/client';
+import { isSupabaseConfigured, getSupabase } from '@/lib/supabase/client';
 import { 
   fetchAllUserData, 
   syncLearningPath, 
@@ -24,48 +24,33 @@ import { clearAllCaches } from '@/lib/pwa/sw-register';
 
 // Data version - increment this to force a reset of all local data for existing users
 // This is useful when breaking changes are made to the data structure
-// v3: Major auth/sync fixes - clearing all data for fresh start
-const DATA_VERSION = 3;
+// v4: Complete reset - clearing ALL data including known_user for fresh deployment
+const DATA_VERSION = 4;
 const DATA_VERSION_KEY = 'quietude:data_version';
-// Key for storing known user identity that survives data version resets
-const KNOWN_USER_KEY = 'quietude:known_user';
-
-export interface KnownUser {
-  email: string;
-  userId: string;
-  isOnboarded: boolean;
-}
-
-export function getKnownUser(): KnownUser | null {
-  try {
-    const stored = localStorage.getItem(KNOWN_USER_KEY);
-    return stored ? JSON.parse(stored) : null;
-  } catch {
-    return null;
-  }
-}
-
-export function setKnownUser(user: KnownUser): void {
-  localStorage.setItem(KNOWN_USER_KEY, JSON.stringify(user));
-}
-
-export function clearKnownUser(): void {
-  localStorage.removeItem(KNOWN_USER_KEY);
-}
+// Re-export from knownUser module for backward compatibility
+// The new module provides multi-layer storage (localStorage + IndexedDB)
+export { 
+  getKnownUserSync as getKnownUser, 
+  setKnownUserSync as setKnownUser,
+  getKnownUserWithFallback,
+  setKnownUserWithBackup,
+  getAllKnownUsersSync as getAllKnownUsers,
+  type KnownUser 
+} from '@/lib/supabase/knownUser';
 
 async function checkAndResetDataVersion(): Promise<boolean> {
   const storedVersion = localStorage.getItem(DATA_VERSION_KEY);
   const currentVersion = storedVersion ? parseInt(storedVersion, 10) : 0;
   
   if (currentVersion < DATA_VERSION) {
-    console.log(`[DataVersion] Upgrading from v${currentVersion} to v${DATA_VERSION}, clearing all data...`);
+    console.log(`[DataVersion] Upgrading from v${currentVersion} to v${DATA_VERSION}, clearing ALL data for fresh start...`);
     
-    // Preserve known user identity before clearing
-    const knownUser = getKnownUser();
+    // v4: Complete reset - clear EVERYTHING including known_user for fresh deployment
+    // This ensures all users start fresh after major server-side data reset
     
-    // Clear all localStorage keys for this app EXCEPT known_user
+    // Clear ALL localStorage keys for this app (including known_user this time)
     const keysToRemove = Object.keys(localStorage).filter(key => 
-      (key.startsWith('quietude:') && key !== KNOWN_USER_KEY) || 
+      key.startsWith('quietude:') || 
       key.startsWith('paths-') ||
       key.startsWith('sessions-') ||
       key.startsWith('notes-') ||
@@ -75,21 +60,16 @@ async function checkAndResetDataVersion(): Promise<boolean> {
     );
     keysToRemove.forEach(key => localStorage.removeItem(key));
     
-    // Clear all IndexedDB databases
+    // Clear all IndexedDB databases (including known_user backups)
     await clearAllIndexedDB();
     
     // Clear all service worker caches
     await clearAllCaches();
     
-    // Restore known user identity
-    if (knownUser) {
-      setKnownUser(knownUser);
-    }
-    
-    // Set new version
+    // Set new version AFTER clearing (so quietude: prefix removal doesn't clear it)
     localStorage.setItem(DATA_VERSION_KEY, DATA_VERSION.toString());
     
-    console.log(`[DataVersion] Cleared ${keysToRemove.length} localStorage keys, IndexedDB, and caches`);
+    console.log(`[DataVersion] Complete reset: cleared ${keysToRemove.length} localStorage keys, all IndexedDB, and all caches`);
     return true; // Data was reset
   }
   
@@ -143,9 +123,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
     
+    // Bug 2 fix: Listen for storage changes from other tabs (account switches)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'quietude:auth-state' && e.newValue) {
+        try {
+          const newState = JSON.parse(e.newValue);
+          const currentUserId = useAuthStore.getState().userId;
+          
+          // If another tab changed the user, reload this tab to sync state
+          if (newState.state?.userId !== currentUserId) {
+            console.log('[AuthProvider] Account change detected in another tab, reloading...');
+            window.location.reload();
+          }
+        } catch {
+          // Ignore parse errors
+        }
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 
@@ -199,6 +200,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
         sessionStorage.removeItem('quietude:sync-done');
         syncedRef.current = true;
         return;
+      }
+      
+      // MIGRATION: If user has a local- prefix ID and we're online, try to migrate
+      if (userId.startsWith('local-') && navigator.onLine && isSupabaseConfigured() && email) {
+        console.log('[AuthProvider] Detected local-only user, attempting migration...');
+        try {
+          const supabase = getSupabase();
+          const { data: existingUser } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('email', email)
+            .single();
+          
+          if (existingUser) {
+            // User exists on server - need to re-login to get proper ID
+            console.log('[AuthProvider] User exists on server, please re-login for full sync');
+          }
+        } catch (err) {
+          console.warn('[AuthProvider] Migration check failed:', err);
+        }
       }
       
       if (!isSupabaseConfigured() || !navigator.onLine) {
@@ -339,6 +360,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     
     setupCompleteRef.current = true;
     
+    // Helper to safely sync with error handling
+    const safeSync = async (syncFn: () => Promise<void>) => {
+      try {
+        await syncFn();
+      } catch (err) {
+        console.error('[AuthProvider] Sync operation failed:', err);
+        // Don't throw - allow app to continue working
+      }
+    };
+    
     const unsubPaths = usePathsStore.subscribe((state, prevState) => {
       if (state.paths !== prevState.paths) {
         const newPaths = state.paths.filter(
@@ -350,16 +381,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
         
         [...newPaths, ...updatedPaths].forEach(path => {
-          syncLearningPath(path, userId);
+          safeSync(() => syncLearningPath(path, userId));
         });
         
         const deletedPaths = prevState.paths.filter(
           p => !state.paths.find(sp => sp.id === p.id)
         );
         deletedPaths.forEach(path => {
-          syncDelete('learning_paths', path.id);
+          safeSync(() => syncDelete('learning_paths', path.id));
           // Clean up any orphaned quiz sessions in the sync queue for this path
-          removeFromSyncQueueByPathId(path.id);
+          safeSync(() => removeFromSyncQueueByPathId(path.id));
         });
         
         getPendingSyncCount().then(setPendingSyncCount);
@@ -377,14 +408,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
         
         [...newSessions, ...updatedSessions].forEach(session => {
-          syncQuizSession(session, userId);
+          safeSync(() => syncQuizSession(session, userId));
         });
         
         const deletedSessions = prevState.sessions.filter(
           s => !state.sessions.find(ss => ss.id === s.id)
         );
         deletedSessions.forEach(session => {
-          syncDelete('quiz_sessions', session.id);
+          safeSync(() => syncDelete('quiz_sessions', session.id));
         });
         
         getPendingSyncCount().then(setPendingSyncCount);
@@ -402,14 +433,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
         
         [...newNotes, ...updatedNotes].forEach(note => {
-          syncNote(note, userId);
+          safeSync(() => syncNote(note, userId));
         });
         
         const deletedNotes = prevState.notes.filter(
           n => !state.notes.find(sn => sn.id === n.id)
         );
         deletedNotes.forEach(note => {
-          syncDelete('notes', note.id);
+          safeSync(() => syncDelete('notes', note.id));
         });
         
         getPendingSyncCount().then(setPendingSyncCount);

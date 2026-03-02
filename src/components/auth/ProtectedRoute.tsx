@@ -1,7 +1,8 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/auth';
 import { useUserStore } from '@/store/user';
-import { useAuthContext, getKnownUser } from './AuthProvider';
+import { useAuthContext } from './AuthProvider';
+import { getKnownUserSync as getKnownUser } from '@/lib/supabase/knownUser';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -9,13 +10,13 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireOnboarding = true }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, userId } = useAuthStore();
+  const { isAuthenticated, isLoading, userId, email } = useAuthStore();
   const { isOnboarded } = useUserStore();
   const { isInitialized } = useAuthContext();
   const location = useLocation();
   
-  // Check known_user as fallback for onboarding status
-  const knownUser = getKnownUser();
+  // Check known_user as fallback for onboarding status (unique per email)
+  const knownUser = getKnownUser(email);
   const isKnownOnboarded = knownUser?.userId === userId && knownUser?.isOnboarded;
 
   if (!isInitialized || isLoading) {
@@ -47,12 +48,12 @@ export function ProtectedRoute({ children, requireOnboarding = true }: Protected
 }
 
 export function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, userId } = useAuthStore();
+  const { isAuthenticated, userId, email } = useAuthStore();
   const { isOnboarded } = useUserStore();
   const { isInitialized } = useAuthContext();
   
-  // Check known_user as fallback for onboarding status
-  const knownUser = getKnownUser();
+  // Check known_user as fallback for onboarding status (unique per email)
+  const knownUser = getKnownUser(email);
   const isKnownOnboarded = knownUser?.userId === userId && knownUser?.isOnboarded;
 
   // Only gate on initial auth check at app boot.
