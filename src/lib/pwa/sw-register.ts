@@ -1,22 +1,37 @@
 import { registerSW } from 'virtual:pwa-register';
 
+let updateSW: ((reloadPage?: boolean) => Promise<void>) | null = null;
+
 export function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
-    registerSW({
+    updateSW = registerSW({
       immediate: true,
       onNeedRefresh() {
-        // Auto-update silently - no prompt needed
-        console.log('[PWA] New content available, updating...');
+        // Auto-update silently in background - no user prompt
+        console.log('[PWA] New content available, auto-updating...');
+        // Trigger the actual update immediately
+        if (updateSW) {
+          updateSW(true).catch(err => {
+            console.error('[PWA] Auto-update failed:', err);
+          });
+        }
       },
       onOfflineReady() {
         console.log('[PWA] App ready to work offline');
       },
       onRegistered(registration) {
         if (registration) {
-          // Check for updates every hour
+          // Check for updates every 5 minutes for faster update propagation
           setInterval(() => {
             registration.update();
-          }, 60 * 60 * 1000);
+          }, 5 * 60 * 1000);
+          
+          // Also check immediately on visibility change (tab becomes active)
+          document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+              registration.update();
+            }
+          });
         }
       },
       onRegisterError(error) {

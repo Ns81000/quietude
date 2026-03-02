@@ -8,6 +8,20 @@ import type { Note } from '@/store/notes';
 const SYNC_QUEUE_KEY = 'quietude:sync_queue';
 const LAST_SYNC_KEY = 'quietude:last_sync';
 
+/**
+ * Clear all IndexedDB databases used by the app.
+ * This ensures a completely fresh start on data version upgrades.
+ */
+export async function clearAllIndexedDB(): Promise<void> {
+  try {
+    // Clear idb-keyval store
+    await clear();
+    console.log('[Sync] Cleared IndexedDB');
+  } catch (err) {
+    console.error('[Sync] Failed to clear IndexedDB:', err);
+  }
+}
+
 interface SyncQueueItem {
   id: string;
   table: 'learning_paths' | 'quiz_sessions' | 'notes' | 'profiles';

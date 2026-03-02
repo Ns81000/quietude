@@ -9,6 +9,7 @@ import { usePathsStore } from '@/store/paths';
 import { useSessionsStore } from '@/store/sessions';
 import { useNotesStore } from '@/store/notes';
 import { useUIStore } from '@/store/ui';
+import { setKnownUser, getKnownUser } from '@/components/auth/AuthProvider';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -138,8 +139,13 @@ export default function VerifyPage() {
         setProfile({ isAuthenticated: true });
         
         // Check server profile first to determine if user has completed onboarding
+        // Fall back to known_user if server fails
         let isOnboarded = useUserStore.getState().isOnboarded;
         let destination: '/dashboard' | '/onboarding' = '/onboarding';
+        
+        // Get known user as fallback
+        const knownUser = getKnownUser();
+        const isKnownOnboardedUser = knownUser?.userId === result.userId && knownUser?.isOnboarded;
         
         if (isSupabaseConfigured() && result.userId) {
           try {
@@ -155,6 +161,12 @@ export default function VerifyPage() {
                 learnStyle: serverProfile.learn_style || null,
                 studyTime: serverProfile.study_time || null,
               });
+            } else if (isKnownOnboardedUser) {
+              // Server didn't confirm but we know this user was onboarded before
+              // Trust the local backup
+              console.log('[Verify] Using known_user fallback for onboarded status');
+              isOnboarded = true;
+              setProfile({ isOnboarded: true });
             }
             
             // Apply theme mood from server profile
@@ -203,13 +215,32 @@ export default function VerifyPage() {
                 sessionStorage.setItem('quietude:sync-done', 'true');
               }
             }
-          } catch {
-            // Fall back to local state
+          } catch (err) {
+            // Server failed - use known_user as fallback
+            console.warn('[Verify] Server profile fetch failed, checking known_user:', err);
+            if (isKnownOnboardedUser) {
+              console.log('[Verify] Using known_user fallback after server failure');
+              isOnboarded = true;
+              setProfile({ isOnboarded: true });
+            }
           }
+        } else if (isKnownOnboardedUser) {
+          // Supabase not configured but we have local backup
+          isOnboarded = true;
+          setProfile({ isOnboarded: true });
         }
         
         if (isOnboarded) {
           destination = '/dashboard';
+        }
+        
+        // Save known user for future fallback (after successful login)
+        if (result.userId && email) {
+          setKnownUser({
+            email,
+            userId: result.userId,
+            isOnboarded,
+          });
         }
         
         toast.success('Welcome to Quietude!');

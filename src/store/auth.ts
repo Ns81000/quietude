@@ -25,6 +25,9 @@ import {
   subscribeSyncStatus,
 } from '@/lib/supabase/sync';
 
+// Known user key - same as in AuthProvider
+const KNOWN_USER_KEY = 'quietude:known_user';
+
 export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -155,6 +158,9 @@ export const useAuthStore = create<AuthState>()(
         
         // Clear sync queue to prevent old user's pending operations from syncing
         await clearSyncQueue();
+        
+        // Clear known user on logout
+        localStorage.removeItem(KNOWN_USER_KEY);
         
         set({
           isAuthenticated: false,

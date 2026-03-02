@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useUserStore } from '@/store/user';
+import { useAuthStore } from '@/store/auth';
+import { setKnownUser, getKnownUser } from '@/components/auth/AuthProvider';
 
 const STUDY_FIELDS = ['Science', 'Arts', 'Commerce', 'Engineering', 'Medicine', 'Law', 'Other'];
 const STUDY_TIMES = [
@@ -74,6 +76,17 @@ export default function OnboardingPage() {
       learnStyle: s,
       isOnboarded: true,
     });
+    
+    // Update known_user to mark as onboarded
+    const { userId, email } = useAuthStore.getState();
+    if (userId && email) {
+      setKnownUser({
+        email,
+        userId,
+        isOnboarded: true,
+      });
+    }
+    
     setTimeout(advance, 200);
   };
 

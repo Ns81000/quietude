@@ -17,24 +17,55 @@ import {
   getPendingSyncCount,
   clearSyncQueue,
   removeFromSyncQueueByPathId,
+  clearAllIndexedDB,
 } from '@/lib/supabase/sync';
 import { getUserProfile, updateUserProfile } from '@/lib/supabase/auth';
+import { clearAllCaches } from '@/lib/pwa/sw-register';
 
 // Data version - increment this to force a reset of all local data for existing users
 // This is useful when breaking changes are made to the data structure
-const DATA_VERSION = 2; // Bumped from 1 to 2 to clear old buggy data
+// v3: Major auth/sync fixes - clearing all data for fresh start
+const DATA_VERSION = 3;
 const DATA_VERSION_KEY = 'quietude:data_version';
+// Key for storing known user identity that survives data version resets
+const KNOWN_USER_KEY = 'quietude:known_user';
 
-function checkAndResetDataVersion(): boolean {
+export interface KnownUser {
+  email: string;
+  userId: string;
+  isOnboarded: boolean;
+}
+
+export function getKnownUser(): KnownUser | null {
+  try {
+    const stored = localStorage.getItem(KNOWN_USER_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setKnownUser(user: KnownUser): void {
+  localStorage.setItem(KNOWN_USER_KEY, JSON.stringify(user));
+}
+
+export function clearKnownUser(): void {
+  localStorage.removeItem(KNOWN_USER_KEY);
+}
+
+async function checkAndResetDataVersion(): Promise<boolean> {
   const storedVersion = localStorage.getItem(DATA_VERSION_KEY);
   const currentVersion = storedVersion ? parseInt(storedVersion, 10) : 0;
   
   if (currentVersion < DATA_VERSION) {
-    console.log(`[DataVersion] Upgrading from v${currentVersion} to v${DATA_VERSION}, clearing local data...`);
+    console.log(`[DataVersion] Upgrading from v${currentVersion} to v${DATA_VERSION}, clearing all data...`);
     
-    // Clear all localStorage keys for this app
+    // Preserve known user identity before clearing
+    const knownUser = getKnownUser();
+    
+    // Clear all localStorage keys for this app EXCEPT known_user
     const keysToRemove = Object.keys(localStorage).filter(key => 
-      key.startsWith('quietude:') || 
+      (key.startsWith('quietude:') && key !== KNOWN_USER_KEY) || 
       key.startsWith('paths-') ||
       key.startsWith('sessions-') ||
       key.startsWith('notes-') ||
@@ -44,13 +75,21 @@ function checkAndResetDataVersion(): boolean {
     );
     keysToRemove.forEach(key => localStorage.removeItem(key));
     
-    // Clear IndexedDB sync queue
-    clearSyncQueue().catch(console.error);
+    // Clear all IndexedDB databases
+    await clearAllIndexedDB();
+    
+    // Clear all service worker caches
+    await clearAllCaches();
+    
+    // Restore known user identity
+    if (knownUser) {
+      setKnownUser(knownUser);
+    }
     
     // Set new version
     localStorage.setItem(DATA_VERSION_KEY, DATA_VERSION.toString());
     
-    console.log(`[DataVersion] Cleared ${keysToRemove.length} localStorage keys`);
+    console.log(`[DataVersion] Cleared ${keysToRemove.length} localStorage keys, IndexedDB, and caches`);
     return true; // Data was reset
   }
   
@@ -129,13 +168,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     const init = async () => {
-      // Check data version and clear old data if needed
-      const wasReset = checkAndResetDataVersion();
-      if (wasReset) {
-        // Force page reload to reinitialize stores with clean state
-        window.location.reload();
-        return;
-      }
+      // Check data version and clear old data if needed (now async)
+      const wasReset = await checkAndResetDataVersion();
+      // No reload needed - stores will initialize fresh with empty state
       
       await initialize();
       setIsInitialized(true);

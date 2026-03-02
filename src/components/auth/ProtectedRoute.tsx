@@ -1,7 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/auth';
 import { useUserStore } from '@/store/user';
-import { useAuthContext } from './AuthProvider';
+import { useAuthContext, getKnownUser } from './AuthProvider';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -9,10 +9,14 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireOnboarding = true }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading } = useAuthStore();
+  const { isAuthenticated, isLoading, userId } = useAuthStore();
   const { isOnboarded } = useUserStore();
   const { isInitialized } = useAuthContext();
   const location = useLocation();
+  
+  // Check known_user as fallback for onboarding status
+  const knownUser = getKnownUser();
+  const isKnownOnboarded = knownUser?.userId === userId && knownUser?.isOnboarded;
 
   if (!isInitialized || isLoading) {
     return (
@@ -32,7 +36,10 @@ export function ProtectedRoute({ children, requireOnboarding = true }: Protected
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 
-  if (requireOnboarding && !isOnboarded) {
+  // Use known_user fallback for onboarding status
+  const effectivelyOnboarded = isOnboarded || isKnownOnboarded;
+  
+  if (requireOnboarding && !effectivelyOnboarded) {
     return <Navigate to="/onboarding" state={{ from: location }} replace />;
   }
 
@@ -40,9 +47,13 @@ export function ProtectedRoute({ children, requireOnboarding = true }: Protected
 }
 
 export function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, userId } = useAuthStore();
   const { isOnboarded } = useUserStore();
   const { isInitialized } = useAuthContext();
+  
+  // Check known_user as fallback for onboarding status
+  const knownUser = getKnownUser();
+  const isKnownOnboarded = knownUser?.userId === userId && knownUser?.isOnboarded;
 
   // Only gate on initial auth check at app boot.
   // Do NOT gate on isLoading — that toggles during verifyOTP/sendOTP and
@@ -65,8 +76,11 @@ export function PublicRoute({ children }: { children: React.ReactNode }) {
   // Already authenticated + onboarded → go straight to dashboard,
   // UNLESS the Verify page is still handling its post-login flow
   // (data sync, profile fetch, etc.)
+  // Use known_user as fallback for onboarding status
+  const effectivelyOnboarded = isOnboarded || isKnownOnboarded;
   const isLoginInProgress = sessionStorage.getItem('quietude:login-in-progress');
-  if (isAuthenticated && isOnboarded && !isLoginInProgress) {
+  
+  if (isAuthenticated && effectivelyOnboarded && !isLoginInProgress) {
     return <Navigate to="/dashboard" replace />;
   }
 
