@@ -4,6 +4,10 @@ import type { Database } from './database.types';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+// Check if we're in production (use proxy to bypass ISP blocks)
+const isProduction = import.meta.env.PROD;
+const PROXY_ENDPOINT = '/api/supabase-proxy';
+
 // Check if we have valid configuration
 const hasValidConfig = Boolean(
   supabaseUrl && 
@@ -18,6 +22,50 @@ if (!hasValidConfig) {
     '\nSet VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.'
   );
 }
+
+/**
+ * Custom fetch that proxies requests through Vercel API in production
+ * to bypass ISP-level blocks on supabase.co domains (e.g., in India)
+ */
+const proxyFetch: typeof fetch = async (input, init) => {
+  // Only proxy in production
+  if (!isProduction) {
+    return fetch(input, init);
+  }
+  
+  try {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+    
+    // Only proxy requests to Supabase
+    if (!url.includes(supabaseUrl!)) {
+      return fetch(input, init);
+    }
+    
+    // Extract the path after the Supabase URL
+    const supabasePath = url.replace(supabaseUrl!, '').replace(/^\//, '');
+    
+    // Build proxy URL
+    const proxyUrl = `${PROXY_ENDPOINT}?path=${encodeURIComponent(supabasePath)}`;
+    
+    console.log(`[Proxy] Routing request through proxy: ${supabasePath.split('?')[0]}`);
+    
+    // Forward the request to our proxy
+    const response = await fetch(proxyUrl, {
+      method: init?.method || 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(init?.headers as Record<string, string> || {}),
+      },
+      body: init?.body,
+    });
+    
+    return response;
+  } catch (error) {
+    console.error('[Proxy] Request failed, falling back to direct:', error);
+    // Fallback to direct request if proxy fails
+    return fetch(input, init);
+  }
+};
 
 // Create the client - always create it but only use when configured
 const client: SupabaseClient<Database> | null = hasValidConfig
@@ -34,6 +82,8 @@ const client: SupabaseClient<Database> | null = hasValidConfig
           'Content-Type': 'application/json',
           'Prefer': 'return=minimal',
         },
+        // Use custom fetch that routes through proxy in production
+        fetch: proxyFetch,
       },
       db: {
         schema: 'public',

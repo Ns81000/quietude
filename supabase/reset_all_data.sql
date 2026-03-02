@@ -8,28 +8,33 @@
 -- 1. Delete child tables first (notes, quiz_sessions, learning_paths, user_sessions, otp_codes)
 -- 2. Delete profiles last (parent table)
 -- 3. Delete Supabase Auth accounts (auth.users)
+--
+-- Run this BEFORE deploying new code to ensure fresh start
 -- =====================================================
 
--- Step 1: Delete all notes (depends on quiz_sessions and profiles)
+-- =====================================================
+-- STEP 1: DELETE ALL APP DATA (run this section)
+-- =====================================================
+
+-- Delete all notes (depends on quiz_sessions and profiles)
 DELETE FROM public.notes;
 
--- Step 2: Delete all quiz sessions (depends on learning_paths and profiles)
+-- Delete all quiz sessions (depends on learning_paths and profiles)
 DELETE FROM public.quiz_sessions;
 
--- Step 3: Delete all learning paths (depends on profiles)
+-- Delete all learning paths (depends on profiles)
 DELETE FROM public.learning_paths;
 
--- Step 4: Delete all user sessions (auth sessions)
+-- Delete all user sessions (auth sessions)
 DELETE FROM public.user_sessions;
 
--- Step 5: Delete all OTP codes
+-- Delete all OTP codes
 DELETE FROM public.otp_codes;
 
--- Step 6: Delete all profiles (parent table - delete last)
+-- Delete all profiles (parent table - delete last)
 DELETE FROM public.profiles;
 
--- Step 7: Delete all Supabase Auth accounts
--- This removes the actual user accounts from Supabase Auth system
+-- Delete all Supabase Auth accounts (removes actual user accounts)
 DELETE FROM auth.users;
 
 -- =====================================================

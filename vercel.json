@@ -6,12 +6,19 @@
   "functions": {
     "api/fetch-transcript.ts": {
       "maxDuration": 30
+    },
+    "api/supabase-proxy.ts": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
     {
       "source": "/api/fetch-transcript",
       "destination": "/api/fetch-transcript"
+    },
+    {
+      "source": "/api/supabase-proxy",
+      "destination": "/api/supabase-proxy"
     },
     {
       "source": "/((?!api|assets|.*\\..*|sw\\.js|workbox-.*\\.js|manifest\\.webmanifest|site\\.webmanifest).*)",
