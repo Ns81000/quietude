@@ -584,13 +584,22 @@ function Navigation({ onGetStarted }: { onGetStarted: () => void }) {
             ))}
           </div>
 
-          <button
-            onClick={onGetStarted}
-            className="px-4 py-2 rounded-lg bg-accent text-accent-text text-sm font-medium
-                       hover:opacity-90 transition-opacity"
-          >
-            Get Started
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/presentation')}
+              className="hidden sm:flex px-4 py-2 rounded-lg border border-accent/50 text-accent text-sm font-medium
+                         hover:bg-accent/10 transition-colors"
+            >
+              Presentation
+            </button>
+            <button
+              onClick={onGetStarted}
+              className="px-4 py-2 rounded-lg bg-accent text-accent-text text-sm font-medium
+                         hover:opacity-90 transition-opacity"
+            >
+              Get Started
+            </button>
+          </div>
         </div>
       </div>
     </motion.nav>
