@@ -25,7 +25,8 @@ import { clearAllCaches } from '@/lib/pwa/sw-register';
 // Data version - increment this to force a reset of all local data for existing users
 // This is useful when breaking changes are made to the data structure
 // v9: Firebase migration fixes + fresh start for all users
-const DATA_VERSION = 9;
+// v10: Preserve known_user during reset so onboarding status survives
+const DATA_VERSION = 10;
 const DATA_VERSION_KEY = 'quietude:data_version';
 
 // KnownUser types for local storage of remembered emails
@@ -93,14 +94,14 @@ async function checkAndResetDataVersion(): Promise<boolean> {
   const currentVersion = storedVersion ? parseInt(storedVersion, 10) : 0;
   
   if (currentVersion < DATA_VERSION) {
-    console.log(`[DataVersion] Upgrading from v${currentVersion} to v${DATA_VERSION}, clearing ALL data for fresh start...`);
+    console.log(`[DataVersion] Upgrading from v${currentVersion} to v${DATA_VERSION}, clearing data for fresh start...`);
     
-    // v4: Complete reset - clear EVERYTHING including known_user for fresh deployment
-    // This ensures all users start fresh after major server-side data reset
+    // v9: Clear app data but PRESERVE known_user keys (onboarding status backup)
+    // This allows returning users to skip onboarding even after data reset
     
-    // Clear ALL localStorage keys for this app (including known_user this time)
+    // Clear localStorage keys for app data, but KEEP known_user for onboarding fallback
     const keysToRemove = Object.keys(localStorage).filter(key => 
-      key.startsWith('quietude:') || 
+      (key.startsWith('quietude:') && !key.startsWith('quietude:known_user:')) || 
       key.startsWith('paths-') ||
       key.startsWith('sessions-') ||
       key.startsWith('notes-') ||
@@ -110,7 +111,7 @@ async function checkAndResetDataVersion(): Promise<boolean> {
     );
     keysToRemove.forEach(key => localStorage.removeItem(key));
     
-    // Clear all IndexedDB databases (including known_user backups)
+    // Clear IndexedDB (app data) - but known_user is in localStorage, not IndexedDB
     await clearAllIndexedDB();
     
     // Clear all service worker caches
@@ -119,7 +120,7 @@ async function checkAndResetDataVersion(): Promise<boolean> {
     // Set new version AFTER clearing (so quietude: prefix removal doesn't clear it)
     localStorage.setItem(DATA_VERSION_KEY, DATA_VERSION.toString());
     
-    console.log(`[DataVersion] Complete reset: cleared ${keysToRemove.length} localStorage keys, all IndexedDB, and all caches`);
+    console.log(`[DataVersion] Reset complete: cleared ${keysToRemove.length} localStorage keys (preserved known_user), cleared IndexedDB and caches`);
     return true; // Data was reset
   }
   
