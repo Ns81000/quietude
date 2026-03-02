@@ -101,6 +101,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.98.0
         version: 2.98.0
+      '@supadata/js':
+        specifier: ^1.4.0
+        version: 1.4.0
       '@tanstack/react-query':
         specifier: ^5.83.0
         version: 5.90.21(react@18.3.1)
@@ -2245,6 +2248,10 @@ packages:
     resolution: {integrity: sha512-Ohc97CtInLwZyiSASz7tT9/Abm/vqnIbO9REp+PivVUII8UZsuI3bngRQnYgJdFoOIwvaEII1fX1qy8x0CyNiw==}
     engines: {node: '>=20.0.0'}
 
+  '@supadata/js@1.4.0':
+    resolution: {integrity: sha512-DzKwwXApb58bAMv6PzW+kbRGMOffNfxBlN4B7eLJ/boFhylmlj6zI9fXlMKFIPt+vnPpJXGCk7OaguaosTYdYA==}
+    engines: {node: '>=18'}
+
   '@surma/rollup-plugin-off-main-thread@2.2.3':
     resolution: {integrity: sha512-lR8q/9W7hZpMWweNiAKU7NQerBnzQQLvi8qnTDU/fxItPhtZVMbPV3lbCwjhIlNBe9Bbr5V+KHshvWmVSG9cxQ==}
 
@@ -2852,6 +2859,9 @@ packages:
 
   core-js-compat@3.48.0:
     resolution: {integrity: sha512-OM4cAF3D6VtH/WkLtWvyNC56EZVXsZdU3iqaMG2B4WvYrlqU831pc4UtG5yp0sE9z8Y02wVN7PjW5Zf9Gt0f1Q==}
+
+  cross-fetch@4.1.0:
+    resolution: {integrity: sha512-uKm5PU+MHTootlWEY+mZ4vvXoCn4fLQxT9dSc1sXVMSFkINTJVN8cAQROpwcKm8bJ/c7rgZVIBWzH5T78sNZZw==}
 
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
@@ -3814,6 +3824,15 @@ packages:
 
   node-fetch@2.6.9:
     resolution: {integrity: sha512-DJm/CJkZkRjKKj4Zi4BsKVZh3ValV5IR5s7LVZnW+6YMh0W1BfNA8XSs6DLMGYlId5F3KnA70uu2qepcR08Qqg==}
+    engines: {node: 4.x || >=6.0.0}
+    peerDependencies:
+      encoding: ^0.1.0
+    peerDependenciesMeta:
+      encoding:
+        optional: true
+
+  node-fetch@2.7.0:
+    resolution: {integrity: sha512-c4FRfUm/dbcWZ7U+1Wq0AwCyFL+3nt2bEw05wfxSz+DWpWsitgmSgYmy2dQdWyKC1694ELPqMs/YzUSNozLt8A==}
     engines: {node: 4.x || >=6.0.0}
     peerDependencies:
       encoding: ^0.1.0
@@ -6800,6 +6819,12 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
+  '@supadata/js@1.4.0':
+    dependencies:
+      cross-fetch: 4.1.0
+    transitivePeerDependencies:
+      - encoding
+
   '@surma/rollup-plugin-off-main-thread@2.2.3':
     dependencies:
       ejs: 3.1.10
@@ -7487,6 +7512,12 @@ snapshots:
   core-js-compat@3.48.0:
     dependencies:
       browserslist: 4.28.1
+
+  cross-fetch@4.1.0:
+    dependencies:
+      node-fetch: 2.7.0
+    transitivePeerDependencies:
+      - encoding
 
   cross-spawn@7.0.6:
     dependencies:
@@ -8545,6 +8576,10 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
 
   node-fetch@2.6.9:
+    dependencies:
+      whatwg-url: 5.0.0
+
+  node-fetch@2.7.0:
     dependencies:
       whatwg-url: 5.0.0
 

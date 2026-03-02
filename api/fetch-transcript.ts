@@ -1,4 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { Supadata } from '@supadata/js';
+
+// Vercel serverless config
+export const config = {
+  maxDuration: 30,
+};
 
 const TRANSCRIPT_CHAR_LIMIT = 50_000;
 
@@ -6,7 +12,44 @@ const TRANSCRIPT_CHAR_LIMIT = 50_000;
 const NOISE_RE = /\[(?:music|applause|laughter|inaudible|crosstalk|silence|sound|noise|cheering|clapping)[^\]]*\]/gi;
 const MUSIC_LINE_RE = /♪[^♪]*♪/g;
 
-// Extract video ID from YouTube URL
+// ---------------------------------------------------------------------------
+// Supadata Key Pool (like Gemini key rotation)
+// ---------------------------------------------------------------------------
+function getSupadataKeys(): string[] {
+  const keys: string[] = [];
+  
+  // Support SUPADATA_API_KEY, SUPADATA_API_KEY_1, SUPADATA_API_KEY_2, etc.
+  if (process.env.SUPADATA_API_KEY) {
+    keys.push(process.env.SUPADATA_API_KEY);
+  }
+  
+  // Check for numbered keys (1-10)
+  for (let i = 1; i <= 10; i++) {
+    const key = process.env[`SUPADATA_API_KEY_${i}`];
+    if (key) keys.push(key);
+  }
+  
+  return keys;
+}
+
+// Round-robin key selection with random start
+let keyIndex = Math.floor(Math.random() * 100);
+
+function getNextSupadataClient(): Supadata | null {
+  const keys = getSupadataKeys();
+  if (keys.length === 0) return null;
+  
+  keyIndex = (keyIndex + 1) % keys.length;
+  const key = keys[keyIndex];
+  
+  console.log(`[supadata] Using key ${keyIndex + 1}/${keys.length}`);
+  return new Supadata({ apiKey: key });
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
 function extractVideoId(url: string): string | null {
   try {
     const u = new URL(url.trim());
@@ -26,7 +69,6 @@ function extractVideoId(url: string): string | null {
   return null;
 }
 
-// Fetch video title via oEmbed
 async function fetchVideoTitle(videoId: string): Promise<string> {
   try {
     const res = await fetch(
@@ -40,7 +82,6 @@ async function fetchVideoTitle(videoId: string): Promise<string> {
   }
 }
 
-// Clean transcript text
 function cleanTranscript(raw: string): { transcript: string; wasTruncated: boolean } {
   let transcript = raw
     .replace(NOISE_RE, '')
@@ -56,159 +97,99 @@ function cleanTranscript(raw: string): { transcript: string; wasTruncated: boole
   return { transcript, wasTruncated };
 }
 
-// Decode HTML entities
-function decodeHtmlEntities(text: string): string {
-  return text
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&apos;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-    .replace(/\\n/g, ' ')
-    .replace(/\n/g, ' ');
-}
+// ---------------------------------------------------------------------------
+// Strategy 1: Supadata (PRIMARY - works from datacenter IPs)
+// ---------------------------------------------------------------------------
 
-// Parse caption XML to segments
-function parseXmlCaptions(xml: string): string[] {
-  const segments: string[] = [];
-  
-  // Try parsing <text> or <p> tags
-  const re = /<(?:text|p)[^>]*>([\s\S]*?)<\/(?:text|p)>/gi;
-  let match;
-  while ((match = re.exec(xml)) !== null) {
-    const text = decodeHtmlEntities(match[1])
-      .replace(/<[^>]+>/g, '')
-      .trim();
-    if (text) segments.push(text);
+async function fetchViaSupadata(videoId: string): Promise<{ text: string; method: string } | null> {
+  const keys = getSupadataKeys();
+  if (keys.length === 0) {
+    console.warn('[supadata] No API keys configured');
+    return null;
   }
 
-  // Fallback: strip all tags
-  if (segments.length === 0) {
-    const plain = decodeHtmlEntities(xml)
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/\s{2,}/g, ' ')
-      .trim();
-    if (plain.length > 50) segments.push(plain);
+  // Try each key until one works
+  const startIndex = keyIndex;
+  let attempts = 0;
+
+  while (attempts < keys.length) {
+    const client = getNextSupadataClient();
+    if (!client) break;
+
+    try {
+      console.log(`[supadata] Fetching transcript for ${videoId}...`);
+
+      const result = await client.transcript({
+        url: `https://www.youtube.com/watch?v=${videoId}`,
+        lang: 'en',
+        text: true,
+      });
+
+      // Handle async job case
+      if ('jobId' in result) {
+        console.warn('[supadata] Got async job ID, skipping...');
+        attempts++;
+        continue;
+      }
+
+      const content = result.content;
+      if (!content) {
+        console.warn('[supadata] Empty transcript content');
+        attempts++;
+        continue;
+      }
+
+      let text: string;
+      if (typeof content === 'string') {
+        text = content;
+      } else {
+        // Array of TranscriptChunk
+        text = content.map((c) => c.text).join(' ');
+      }
+
+      if (text.length < 50) {
+        console.warn(`[supadata] Transcript too short: ${text.length} chars`);
+        attempts++;
+        continue;
+      }
+
+      console.log(`[supadata] Success: ${text.length} chars`);
+      return { text, method: 'supadata' };
+
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn(`[supadata] Error: ${msg}`);
+      
+      // Check if it's a quota/rate limit error - try next key
+      if (msg.includes('quota') || msg.includes('rate') || msg.includes('limit') || msg.includes('429')) {
+        console.log('[supadata] Quota/rate limit hit, trying next key...');
+        attempts++;
+        continue;
+      }
+      
+      // For other errors (video unavailable, no captions), don't retry
+      if (msg.includes('unavailable') || msg.includes('private') || msg.includes('caption')) {
+        throw new Error(msg);
+      }
+      
+      attempts++;
+    }
   }
 
-  return segments;
+  return null;
 }
+
+// ---------------------------------------------------------------------------
+// Strategy 2: Innertube API (FALLBACK - free, works sometimes)
+// ---------------------------------------------------------------------------
 
 interface CaptionTrack {
   baseUrl: string;
   languageCode: string;
   kind?: string;
-  vssId?: string;
 }
 
-// Method 1: Scrape YouTube page and extract captions from ytInitialPlayerResponse
-async function fetchViaPageScrape(videoId: string): Promise<{ segments: string[]; method: string } | null> {
-  console.log('[scrape] Fetching YouTube page...');
-  
-  try {
-    const pageRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'gzip, deflate, br',
-      },
-    });
-
-    if (!pageRes.ok) {
-      console.warn(`[scrape] Page fetch failed: HTTP ${pageRes.status}`);
-      return null;
-    }
-
-    const html = await pageRes.text();
-    
-    // Check for unavailable/private
-    if (html.includes('Video unavailable') || html.includes('This video is private')) {
-      throw new Error('UNAVAILABLE');
-    }
-
-    // Extract ytInitialPlayerResponse
-    const playerMatch = html.match(/ytInitialPlayerResponse\s*=\s*({.+?});(?:\s*var|<\/script>)/s);
-    if (!playerMatch) {
-      console.warn('[scrape] Could not find ytInitialPlayerResponse');
-      return null;
-    }
-
-    let playerData: {
-      playabilityStatus?: { status: string };
-      captions?: {
-        playerCaptionsTracklistRenderer?: {
-          captionTracks?: CaptionTrack[];
-        };
-      };
-    };
-
-    try {
-      playerData = JSON.parse(playerMatch[1]);
-    } catch (e) {
-      console.warn('[scrape] Failed to parse player response');
-      return null;
-    }
-
-    if (playerData.playabilityStatus?.status !== 'OK') {
-      console.warn(`[scrape] Playability status: ${playerData.playabilityStatus?.status}`);
-      return null;
-    }
-
-    const tracks = playerData.captions?.playerCaptionsTracklistRenderer?.captionTracks;
-    if (!tracks || tracks.length === 0) {
-      console.warn('[scrape] No caption tracks found');
-      return null;
-    }
-
-    // Prefer English manual > English auto > any
-    const track =
-      tracks.find((t) => t.languageCode === 'en' && t.kind !== 'asr') ||
-      tracks.find((t) => t.languageCode === 'en') ||
-      tracks.find((t) => t.languageCode?.startsWith('en')) ||
-      tracks[0];
-
-    console.log(`[scrape] Found caption track: ${track.languageCode} (${track.kind || 'manual'})`);
-
-    // Fetch caption XML
-    let captionUrl = track.baseUrl;
-    if (!captionUrl.includes('fmt=')) {
-      captionUrl += (captionUrl.includes('?') ? '&' : '?') + 'fmt=srv3';
-    }
-
-    const xmlRes = await fetch(captionUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept-Language': 'en-US,en;q=0.9',
-      },
-    });
-
-    if (!xmlRes.ok) {
-      console.warn(`[scrape] Caption XML fetch failed: HTTP ${xmlRes.status}`);
-      return null;
-    }
-
-    const xml = await xmlRes.text();
-    const segments = parseXmlCaptions(xml);
-
-    if (segments.length > 0) {
-      console.log(`[scrape] Success: ${segments.length} segments`);
-      return { segments, method: 'page-scrape' };
-    }
-
-    return null;
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    if (msg === 'UNAVAILABLE' || msg === 'PRIVATE') throw err;
-    console.warn(`[scrape] Error: ${msg}`);
-    return null;
-  }
-}
-
-// Method 2: Use Innertube API with WEB_CREATOR client (works better from servers)
-async function fetchViaInnertube(videoId: string): Promise<{ segments: string[]; method: string } | null> {
+async function fetchViaInnertube(videoId: string): Promise<{ text: string; method: string } | null> {
   const clients = [
     {
       label: 'WEB_CREATOR',
@@ -222,25 +203,12 @@ async function fetchViaInnertube(videoId: string): Promise<{ segments: string[];
       },
     },
     {
-      label: 'TVHTML5_SIMPLY_EMBEDDED_PLAYER',
+      label: 'ANDROID',
       context: {
         client: {
-          clientName: 'TVHTML5_SIMPLY_EMBEDDED_PLAYER',
-          clientVersion: '2.0',
-          hl: 'en',
-          gl: 'US',
-        },
-        thirdParty: {
-          embedUrl: 'https://www.youtube.com/',
-        },
-      },
-    },
-    {
-      label: 'WEB',
-      context: {
-        client: {
-          clientName: 'WEB',
-          clientVersion: '2.20241203.06.00',
+          clientName: 'ANDROID',
+          clientVersion: '20.10.38',
+          androidSdkVersion: 34,
           hl: 'en',
           gl: 'US',
         },
@@ -258,11 +226,9 @@ async function fetchViaInnertube(videoId: string): Promise<{ segments: string[];
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             'Origin': 'https://www.youtube.com',
             'Referer': 'https://www.youtube.com/',
-            'X-Youtube-Client-Name': '1',
-            'X-Youtube-Client-Version': '2.20241203.06.00',
           },
           body: JSON.stringify({
             context: client.context,
@@ -273,31 +239,19 @@ async function fetchViaInnertube(videoId: string): Promise<{ segments: string[];
         }
       );
 
-      if (!res.ok) {
-        console.warn(`[innertube] ${client.label}: HTTP ${res.status}`);
-        continue;
-      }
+      if (!res.ok) continue;
 
       const data = await res.json();
       const status = data.playabilityStatus?.status;
 
-      if (status !== 'OK') {
-        const reason = data.playabilityStatus?.reason || status;
-        console.warn(`[innertube] ${client.label}: ${reason}`);
-        if (reason?.toLowerCase().includes('private')) throw new Error('PRIVATE');
-        continue;
-      }
+      if (status !== 'OK') continue;
 
       const tracks = data.captions?.playerCaptionsTracklistRenderer?.captionTracks;
-      if (!tracks || tracks.length === 0) {
-        console.warn(`[innertube] ${client.label}: no caption tracks`);
-        continue;
-      }
+      if (!tracks || tracks.length === 0) continue;
 
       const track =
         tracks.find((t: CaptionTrack) => t.languageCode === 'en' && t.kind !== 'asr') ||
         tracks.find((t: CaptionTrack) => t.languageCode === 'en') ||
-        tracks.find((t: CaptionTrack) => t.languageCode?.startsWith('en')) ||
         tracks[0];
 
       let captionUrl = track.baseUrl;
@@ -309,54 +263,41 @@ async function fetchViaInnertube(videoId: string): Promise<{ segments: string[];
       if (!xmlRes.ok) continue;
 
       const xml = await xmlRes.text();
-      const segments = parseXmlCaptions(xml);
-
-      if (segments.length > 0) {
-        console.log(`[innertube] ${client.label}: ${segments.length} segments`);
-        return { segments, method: `innertube-${client.label}` };
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg === 'PRIVATE' || msg === 'UNAVAILABLE') throw err;
-      console.warn(`[innertube] ${client.label}: ${msg}`);
-    }
-  }
-
-  return null;
-}
-
-// Method 3: Use timedtext API directly (sometimes works when others don't)
-async function fetchViaTimedText(videoId: string): Promise<{ segments: string[]; method: string } | null> {
-  const langs = ['en', 'en-US', 'en-GB', 'a.en'];
-  
-  for (const lang of langs) {
-    try {
-      console.log(`[timedtext] Trying lang=${lang}...`);
       
-      const url = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=${lang}&fmt=srv3`;
-      const res = await fetch(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        },
-      });
+      // Parse segments
+      const segments: string[] = [];
+      const re = /<(?:text|p)[^>]*>([\s\S]*?)<\/(?:text|p)>/gi;
+      let match;
+      while ((match = re.exec(xml)) !== null) {
+        const text = match[1]
+          .replace(/<[^>]+>/g, '')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/&nbsp;/g, ' ')
+          .replace(/\n/g, ' ')
+          .trim();
+        if (text) segments.push(text);
+      }
 
-      if (!res.ok) continue;
-
-      const xml = await res.text();
-      if (!xml || xml.length < 100) continue;
-
-      const segments = parseXmlCaptions(xml);
       if (segments.length > 0) {
-        console.log(`[timedtext] Success with lang=${lang}: ${segments.length} segments`);
-        return { segments, method: `timedtext-${lang}` };
+        const text = segments.join(' ');
+        console.log(`[innertube] ${client.label}: ${text.length} chars`);
+        return { text, method: `innertube-${client.label}` };
       }
     } catch (err) {
-      console.warn(`[timedtext] ${lang}: ${err}`);
+      console.warn(`[innertube] ${client.label}: ${err}`);
     }
   }
 
   return null;
 }
+
+// ---------------------------------------------------------------------------
+// Route Handler
+// ---------------------------------------------------------------------------
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
@@ -391,49 +332,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Fetch title in parallel
     const titlePromise = fetchVideoTitle(videoId);
 
-    // Try multiple methods in order of reliability
-    let result: { segments: string[]; method: string } | null = null;
-    let lastError: Error | null = null;
+    // Try strategies in order
+    let result: { text: string; method: string } | null = null;
 
-    // Method 1: Page scrape (most reliable from servers)
+    // Strategy 1: Supadata (primary - works from datacenter IPs)
     try {
-      result = await fetchViaPageScrape(videoId);
+      result = await fetchViaSupadata(videoId);
     } catch (err) {
-      lastError = err instanceof Error ? err : new Error(String(err));
-      if (lastError.message === 'UNAVAILABLE') {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn(`[supadata] Failed: ${msg}`);
+      
+      // If video is unavailable/private, return error immediately
+      if (msg.includes('unavailable') || msg.includes('private')) {
         return res.status(422).json({ error: 'This video is unavailable or private.' });
-      }
-      if (lastError.message === 'PRIVATE') {
-        return res.status(422).json({ error: 'This video is private.' });
       }
     }
 
-    // Method 2: Innertube API
+    // Strategy 2: Innertube (fallback - free)
     if (!result) {
       try {
         result = await fetchViaInnertube(videoId);
       } catch (err) {
-        lastError = err instanceof Error ? err : new Error(String(err));
-        if (lastError.message === 'PRIVATE') {
-          return res.status(422).json({ error: 'This video is private.' });
-        }
+        console.warn(`[innertube] Failed: ${err}`);
       }
     }
 
-    // Method 3: Direct timedtext API
-    if (!result) {
-      result = await fetchViaTimedText(videoId);
-    }
-
-    if (!result || result.segments.join(' ').length < 50) {
+    if (!result || result.text.length < 50) {
       return res.status(422).json({
-        error: "Could not retrieve transcript. This video may not have captions enabled, or it's region-restricted.",
+        error: "Could not retrieve transcript. This video may not have captions enabled.",
       });
     }
 
     // Clean and return
-    const rawText = result.segments.join(' ');
-    const { transcript, wasTruncated } = cleanTranscript(rawText);
+    const { transcript, wasTruncated } = cleanTranscript(result.text);
     const title = await titlePromise;
 
     if (transcript.length < 50) {
@@ -452,6 +383,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       wasTruncated,
       method: result.method,
     });
+
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[fetch-transcript] Error:', msg);
