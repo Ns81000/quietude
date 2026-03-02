@@ -479,6 +479,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     });
     
     const unsubUser = useUserStore.subscribe((state, prevState) => {
+      // CRITICAL: Don't sync to server during logout (when profile is being cleared)
+      // This prevents corrupting server data with isOnboarded: false
+      const isBeingCleared = !state.name && !state.studyField && !state.learnStyle && 
+                             !state.studyTime && !state.isOnboarded && !state.isAuthenticated;
+      if (isBeingCleared) {
+        console.log('[AuthProvider] Profile being cleared (logout), skipping server sync');
+        return;
+      }
+      
       const profileChanged = 
         state.name !== prevState.name ||
         state.studyField !== prevState.studyField ||

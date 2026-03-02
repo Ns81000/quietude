@@ -154,11 +154,15 @@ export default function VerifyPage() {
         const knownUser = getKnownUser(email);
         const isKnownOnboardedUser = knownUser !== null; // If we have a known user, they've logged in before
         
+        // Debug: Check all known_user keys in localStorage
+        const allKnownUserKeys = Object.keys(localStorage).filter(k => k.startsWith('quietude:known_user:'));
         console.log('[Verify] Checking onboarding status:', { 
           email, 
           localIsOnboarded: isOnboarded,
           knownUserExists: knownUser !== null,
-          knownUser 
+          knownUser,
+          allKnownUserKeys,
+          expectedKey: `quietude:known_user:${email}`
         });
         
         if (isFirebaseConfigured() && result.userId) {
