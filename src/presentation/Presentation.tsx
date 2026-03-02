@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { getTimeTheme, type TimedTheme } from '@/lib/theme';
+import { getTimeTheme, applyTheme, type TimedTheme } from '@/lib/theme';
+import { useUIStore } from '@/store/ui';
 import {
   ChevronLeft,
   ChevronRight,
@@ -265,23 +266,30 @@ export default function Presentation() {
     localStorage.setItem(SLIDE_STORAGE_KEY, currentSlide.toString());
   }, [currentSlide]);
 
-  // Apply theme
+  // Get active mood from store to react to theme changes from landing page
+  const activeMood = useUIStore((s) => s.activeMood);
+
+  // Apply theme (respects mood theme if set, otherwise time-based)
   useEffect(() => {
-    const theme = getTimeTheme();
-    setCurrentTheme(theme);
-    document.documentElement.setAttribute('data-theme', theme);
-    document.documentElement.removeAttribute('data-mood');
-    
-    const interval = setInterval(() => {
-      const newTheme = getTimeTheme();
-      if (newTheme !== theme) {
-        setCurrentTheme(newTheme);
-        document.documentElement.setAttribute('data-theme', newTheme);
+    const updateTheme = () => {
+      if (activeMood) {
+        // Use the mood theme from the store
+        applyTheme(activeMood);
+      } else {
+        // Use time-based theme
+        const theme = getTimeTheme();
+        setCurrentTheme(theme);
+        applyTheme(theme);
       }
-    }, 60000);
+    };
+
+    updateTheme();
+    
+    // Update theme every minute (only matters for time-based themes)
+    const interval = setInterval(updateTheme, 60000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [activeMood]);
 
   // Navigation functions
   const goToSlide = useCallback((index: number) => {
