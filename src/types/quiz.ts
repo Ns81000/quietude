@@ -1,5 +1,5 @@
 export type Difficulty = 'foundation' | 'intermediate' | 'advanced';
-export type SourceType = 'pdf' | 'image' | 'audio' | 'text' | 'paste';
+export type SourceType = 'pdf' | 'image' | 'audio' | 'text' | 'paste' | 'youtube';
 export type TopicStatus = 'locked' | 'active' | 'passed' | 'mastered' | 'mastered_with_depth';
 export type QuestionType = 'mcq' | 'true_false' | 'fill_blank';
 export type LearningPhase =

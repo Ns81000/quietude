@@ -3,9 +3,18 @@
   "buildCommand": "pnpm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "functions": {
+    "api/fetch-transcript.ts": {
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
     {
-      "source": "/((?!assets|.*\\..*|sw\\.js|workbox-.*\\.js|manifest\\.webmanifest|site\\.webmanifest).*)",
+      "source": "/api/fetch-transcript",
+      "destination": "/api/fetch-transcript"
+    },
+    {
+      "source": "/((?!api|assets|.*\\..*|sw\\.js|workbox-.*\\.js|manifest\\.webmanifest|site\\.webmanifest).*)",
       "destination": "/index.html"
     }
   ],
