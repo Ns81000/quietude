@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Check, 
@@ -218,9 +218,6 @@ const futurePlans = [
 export default function Slide8Closing({ registerNavHandler }: SlideProps) {
   const [view, setView] = useState<'comparison' | 'future' | 'closing'>('comparison');
   const [highlightedFeature, setHighlightedFeature] = useState<string | null>(null);
-  const [activePlan, setActivePlan] = useState(0);
-  const [isPlansPaused, setIsPlansPaused] = useState(false);
-  const pauseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Handle internal navigation - returns true if handled internally, false to pass to parent
   const handleInternalNav = useCallback((direction: 'prev' | 'next'): boolean => {
@@ -253,50 +250,6 @@ export default function Slide8Closing({ registerNavHandler }: SlideProps) {
       registerNavHandler(handleInternalNav);
     }
   }, [registerNavHandler, handleInternalNav]);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (pauseTimeoutRef.current) {
-        clearTimeout(pauseTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  // Auto-cycle through future plans
-  useEffect(() => {
-    if (view !== 'future' || isPlansPaused) return;
-    
-    const interval = setInterval(() => {
-      setActivePlan((prev) => (prev + 1) % futurePlans.length);
-    }, 2500);
-    
-    return () => clearInterval(interval);
-  }, [view, isPlansPaused]);
-
-  // Handle plan click - pause auto-cycle
-  const handlePlanClick = (index: number) => {
-    setActivePlan(index);
-    setIsPlansPaused(true);
-    
-    if (pauseTimeoutRef.current) {
-      clearTimeout(pauseTimeoutRef.current);
-    }
-    
-    pauseTimeoutRef.current = setTimeout(() => {
-      setIsPlansPaused(false);
-    }, 15000);
-  };
-
-  // Auto-switch to closing view after some time
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (view === 'comparison') {
-        // Optional: auto-switch
-      }
-    }, 15000);
-    return () => clearTimeout(timer);
-  }, [view]);
 
   return (
     <motion.div
@@ -495,51 +448,18 @@ export default function Slide8Closing({ registerNavHandler }: SlideProps) {
           /* FUTURE PLANS VIEW */
           <motion.div
             key="future"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             className="relative"
           >
-            {/* Floating particles background */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              {futurePlans.map((plan, i) => (
-                <motion.div
-                  key={plan.id}
-                  className="absolute rounded-full opacity-10"
-                  style={{
-                    width: Math.random() * 60 + 20,
-                    height: Math.random() * 60 + 20,
-                    backgroundColor: plan.color,
-                    left: `${10 + i * 15}%`,
-                    top: `${Math.random() * 80}%`,
-                  }}
-                  animate={{
-                    y: [0, -20, 0],
-                    scale: [1, 1.2, 1],
-                    opacity: [0.1, 0.2, 0.1],
-                  }}
-                  transition={{
-                    duration: 6 + i,
-                    delay: i * 0.3,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                  }}
-                />
-              ))}
-            </div>
-
             {/* Header */}
             <div className="text-center mb-6 relative z-10">
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: 'spring', bounce: 0.5, delay: 0.2 }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/30 mb-4"
-              >
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/30 mb-4">
                 <Rocket className="w-4 h-4 text-accent" />
                 <span className="text-sm font-medium text-accent">2026 Roadmap</span>
                 <Sparkles className="w-4 h-4 text-accent" />
-              </motion.div>
+              </div>
 
               <h2 className="font-display text-4xl sm:text-5xl text-text mb-3">
                 The Road Ahead
@@ -549,105 +469,62 @@ export default function Slide8Closing({ registerNavHandler }: SlideProps) {
               </p>
             </div>
 
-            {/* Roadmap visualization */}
-            <div className="hidden lg:flex items-center justify-center gap-2 mb-8 relative z-10">
-              {futurePlans.map((plan, i) => (
-                <div key={plan.id} className="flex items-center">
-                  <motion.button
-                    onClick={() => handlePlanClick(i)}
-                    className="w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300"
-                    style={{
-                      backgroundColor: i === activePlan ? plan.color : 'transparent',
-                      borderColor: i <= activePlan ? plan.color : 'var(--color-border)',
-                    }}
-                    animate={{
-                      scale: i === activePlan ? 1.2 : 1,
-                    }}
-                    whileHover={{ scale: 1.1 }}
-                  >
-                    {(() => {
-                      const Icon = plan.icon;
-                      return (
-                        <Icon 
-                          className="w-5 h-5 transition-colors"
-                          style={{ color: i === activePlan ? 'white' : i < activePlan ? plan.color : 'var(--color-text-muted)' }}
-                        />
-                      );
-                    })()}
-                  </motion.button>
-                  {i < futurePlans.length - 1 && (
-                    <motion.div 
-                      className="w-8 h-0.5 mx-1"
-                      style={{ 
-                        backgroundColor: i < activePlan ? futurePlans[i + 1].color : 'var(--color-border)',
+            {/* Roadmap visualization - Final state (all filled) */}
+            <div className="hidden lg:flex items-center justify-center gap-1 mb-8 relative z-10">
+              {futurePlans.map((plan, i) => {
+                const Icon = plan.icon;
+                const isLast = i === futurePlans.length - 1;
+                
+                return (
+                  <div key={plan.id} className="flex items-center">
+                    <div
+                      className="w-12 h-12 rounded-full flex items-center justify-center border-2"
+                      style={{
+                        backgroundColor: isLast ? plan.color : 'transparent',
+                        borderColor: plan.color,
                       }}
-                      animate={{
-                        scaleX: i < activePlan ? 1 : 0.5,
-                      }}
-                    />
-                  )}
-                </div>
-              ))}
+                    >
+                      <Icon 
+                        className="w-5 h-5"
+                        style={{ color: isLast ? 'white' : plan.color }}
+                      />
+                    </div>
+                    {i < futurePlans.length - 1 && (
+                      <div 
+                        className="w-10 h-0.5"
+                        style={{ backgroundColor: futurePlans[i + 1].color }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Plans Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 relative z-10">
               {futurePlans.map((plan, index) => {
                 const Icon = plan.icon;
-                const isActive = index === activePlan;
                 
                 return (
-                  <motion.div
+                  <div
                     key={plan.id}
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ 
-                      opacity: 1, 
-                      y: 0,
-                      scale: isActive ? 1.02 : 1,
-                    }}
-                    transition={{ delay: index * 0.1 }}
-                    onClick={() => handlePlanClick(index)}
-                    className="relative cursor-pointer group"
+                    className="relative group"
                   >
-                    {/* Glow effect */}
-                    <motion.div
-                      className="absolute -inset-1 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                      style={{
-                        background: `radial-gradient(circle at center, ${plan.color}30, transparent 70%)`,
-                        filter: 'blur(20px)',
-                      }}
-                      animate={{
-                        opacity: isActive ? 0.6 : 0,
-                      }}
-                    />
-                    
                     {/* Card */}
-                    <motion.div
-                      className={`relative h-full p-5 rounded-2xl border-2 transition-all duration-300 overflow-hidden
-                                  ${isActive 
-                                    ? 'border-accent bg-surface shadow-lg' 
-                                    : 'border-border/50 bg-surface/80 hover:border-accent/50'
-                                  }`}
-                      whileHover={{ y: -4 }}
-                    >
+                    <div className="relative h-full p-5 rounded-2xl border-2 border-border/50 bg-surface/80 hover:border-accent/50 transition-all duration-300 overflow-hidden">
                       {/* Background gradient */}
-                      <div 
-                        className={`absolute inset-0 bg-gradient-to-br ${plan.gradient} opacity-50 transition-opacity duration-300
-                                    ${isActive ? 'opacity-100' : 'group-hover:opacity-75'}`}
-                      />
+                      <div className={`absolute inset-0 bg-gradient-to-br ${plan.gradient} opacity-50`} />
                       
                       {/* Content */}
                       <div className="relative z-10">
                         {/* Icon and Phase badge */}
                         <div className="flex items-start justify-between mb-3">
-                          <motion.div
+                          <div
                             className="w-12 h-12 rounded-xl flex items-center justify-center"
                             style={{ backgroundColor: `${plan.color}20` }}
-                            whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
-                            transition={{ duration: 0.5 }}
                           >
                             <Icon className="w-6 h-6" style={{ color: plan.color }} />
-                          </motion.div>
+                          </div>
                           <span 
                             className="text-xs font-bold px-2 py-1 rounded-full"
                             style={{ 
@@ -668,86 +545,34 @@ export default function Slide8Closing({ registerNavHandler }: SlideProps) {
                           {plan.description}
                         </p>
 
-                        {/* Features */}
-                        <AnimatePresence>
-                          {isActive && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              exit={{ opacity: 0, height: 0 }}
-                              transition={{ duration: 0.3 }}
-                              className="space-y-1"
-                            >
-                              <div className="h-px bg-border/50 mb-2" />
-                              <div className="grid grid-cols-2 gap-1">
-                                {plan.features.map((feature, i) => (
-                                  <motion.div
-                                    key={feature}
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: i * 0.05 }}
-                                    className="flex items-center gap-1"
-                                  >
-                                    <ChevronRight className="w-3 h-3" style={{ color: plan.color }} />
-                                    <span className="text-xs text-text-muted">{feature}</span>
-                                  </motion.div>
-                                ))}
+                        {/* Features - Always visible */}
+                        <div className="space-y-1">
+                          <div className="h-px bg-border/50 mb-2" />
+                          <div className="grid grid-cols-2 gap-1">
+                            {plan.features.map((feature) => (
+                              <div
+                                key={feature}
+                                className="flex items-center gap-1"
+                              >
+                                <ChevronRight className="w-3 h-3" style={{ color: plan.color }} />
+                                <span className="text-xs text-text-muted">{feature}</span>
                               </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-
-                        {/* Expand indicator */}
-                        {!isActive && (
-                          <div className="flex items-center gap-1 text-xs text-text-muted mt-1 group-hover:text-accent transition-colors">
-                            <span>Click to explore</span>
-                            <ArrowRight className="w-3 h-3" />
+                            ))}
                           </div>
-                        )}
+                        </div>
                       </div>
-                    </motion.div>
-                  </motion.div>
+                    </div>
+                  </div>
                 );
               })}
             </div>
 
-            {/* Progress indicator */}
-            <div className="flex justify-center items-center gap-4 mt-6 relative z-10">
-              <button
-                onClick={() => setIsPlansPaused(!isPlansPaused)}
-                className="text-xs text-text-muted hover:text-text transition-colors px-3 py-1.5 rounded-full border border-border/50 hover:border-accent/50"
-              >
-                {isPlansPaused ? '▶ Play' : '⏸ Pause'}
-              </button>
-              <div className="flex gap-2">
-                {futurePlans.map((plan, i) => (
-                  <motion.button
-                    key={i}
-                    onClick={() => handlePlanClick(i)}
-                    className="h-2 rounded-full transition-colors"
-                    style={{
-                      backgroundColor: i === activePlan ? plan.color : 'var(--color-border)',
-                    }}
-                    animate={{ 
-                      width: i === activePlan ? 24 : 10,
-                    }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                  />
-                ))}
-              </div>
-            </div>
-
             {/* Bottom tagline */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              className="text-center mt-6 relative z-10"
-            >
+            <div className="text-center mt-6 relative z-10">
               <p className="text-sm text-text-muted italic">
                 "The best way to predict the future is to create it."
               </p>
-            </motion.div>
+            </div>
           </motion.div>
         ) : (
           <motion.div
