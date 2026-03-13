@@ -5,7 +5,11 @@ import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode }) => {
+  const devApiTarget = process.env.VITE_DEV_API_TARGET || 'http://localhost:3000';
+
+  return {
+
   server: {
     host: "::",
     port: 8080,
@@ -14,11 +18,11 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
     proxy: {
-      // Proxy /api requests to production Vercel during local dev
+      // Proxy /api requests to a configurable backend during local dev
       '/api': {
-        target: 'https://quietude-one.vercel.app',
+        target: devApiTarget,
         changeOrigin: true,
-        secure: true,
+        secure: devApiTarget.startsWith('https://'),
       },
     },
   },
@@ -130,6 +134,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    sourcemap: false,
     rollupOptions: {
       output: {
         manualChunks: {
@@ -145,4 +150,8 @@ export default defineConfig(({ mode }) => ({
     // Ensure assets are properly cached
     assetsInlineLimit: 0, // Don't inline assets, better caching
   },
-}));
+    esbuild: {
+      drop: mode === 'production' ? ['console', 'debugger'] : [],
+    },
+  };
+});

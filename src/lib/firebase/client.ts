@@ -68,8 +68,6 @@ if (hasValidConfig) {
     })
   });
   
-  console.log('[Firebase] Initialized with offline persistence (multi-tab)');
-  
   // Set auth persistence to local storage (survives browser close)
   setPersistence(auth, browserLocalPersistence).catch((err) => {
     console.warn('[Firebase] Failed to set auth persistence:', err);

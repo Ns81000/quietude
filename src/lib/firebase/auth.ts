@@ -53,8 +53,7 @@ export async function sendMagicLink(email: string): Promise<{ success: boolean; 
     
     // Save email to localStorage so we can complete sign-in after redirect
     localStorage.setItem(EMAIL_FOR_SIGN_IN_KEY, email);
-    
-    console.log('[Firebase Auth] Magic link sent to:', email);
+
     return { success: true };
   } catch (error: any) {
     console.error('[Firebase Auth] Failed to send magic link:', error);
@@ -126,7 +125,6 @@ export async function handleMagicLinkSignIn(): Promise<{
       } satisfies FirestoreUser);
     }
 
-    console.log('[Firebase Auth] Sign-in successful:', result.user.uid);
     return {
       success: true,
       userId: result.user.uid,
@@ -187,25 +185,23 @@ export async function sendOTP(email: string): Promise<{ success: boolean; error?
   const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
   const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
-  if (serviceId && templateId && publicKey) {
-    try {
-      await emailjs.send(serviceId, templateId, {
-        to_email: email,
-        otp_code: otp,
-        app_name: 'Quietude',
-        expiry_minutes: OTP_EXPIRY_MINUTES,
-      }, publicKey);
-      
-      return { success: true };
-    } catch (err) {
-      console.error('[Auth] EmailJS failed:', err);
-      return { success: false, error: 'Failed to send verification email. Please try again.' };
-    }
+  if (!serviceId || !templateId || !publicKey) {
+    return { success: false, error: 'Email service is not configured. Please contact support.' };
   }
 
-  // Demo mode - log OTP to console
-  console.log(`[Auth] Demo mode - OTP for ${email}: ${otp}`);
-  return { success: true };
+  try {
+    await emailjs.send(serviceId, templateId, {
+      to_email: email,
+      otp_code: otp,
+      app_name: 'Quietude',
+      expiry_minutes: OTP_EXPIRY_MINUTES,
+    }, publicKey);
+
+    return { success: true };
+  } catch (err) {
+    console.error('[Auth] EmailJS failed:', err);
+    return { success: false, error: 'Failed to send verification email. Please try again.' };
+  }
 }
 
 /**
@@ -270,8 +266,6 @@ export async function verifyOTP(email: string, otp: string): Promise<{
       createdAt: new Date().toISOString(),
     }));
 
-    console.log('[Firebase Auth] OTP verified for:', email);
-    
     // Check if new user
     const userRef = doc(db, 'users', userId);
     const userSnap = await getDoc(userRef);
@@ -405,10 +399,8 @@ export async function getUserProfile(userId: string): Promise<AppUser | null> {
     let userSnap;
     try {
       userSnap = await getDocFromServer(userRef);
-      console.log('[Firebase] Got user profile from server');
     } catch (serverErr) {
       // Server fetch failed (offline or blocked), fall back to cache
-      console.log('[Firebase] Server fetch failed, using cache:', serverErr);
       userSnap = await getDoc(userRef);
     }
     

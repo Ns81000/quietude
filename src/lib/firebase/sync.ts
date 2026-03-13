@@ -47,7 +47,6 @@ function notifySyncStatus(status: SyncStatus): void {
 export async function clearAllIndexedDB(): Promise<void> {
   try {
     await clear();
-    console.log('[Sync] Cleared IndexedDB');
   } catch (err) {
     console.error('[Sync] Failed to clear IndexedDB:', err);
   }
@@ -59,7 +58,6 @@ export async function clearAllIndexedDB(): Promise<void> {
 export async function clearSyncQueue(): Promise<void> {
   // With Firestore, we don't have a manual sync queue
   // Firestore handles offline persistence automatically
-  console.log('[Sync] Sync queue cleared (Firestore handles offline automatically)');
 }
 
 // ============================================
@@ -89,15 +87,12 @@ export async function syncLearningPath(path: AppLearningPath, userId: string): P
  */
 export async function syncQuizSession(session: AppQuizSession, userId: string): Promise<void> {
   if (!isFirebaseConfigured() || !navigator.onLine) {
-    console.log('[Sync] Skipping quiz session sync (offline or not configured)');
     return;
   }
   
   try {
     notifySyncStatus('syncing');
-    console.log('[Sync] Syncing quiz session to server:', { sessionId: session.id, userId });
     await saveQuizSession(userId, session);
-    console.log('[Sync] Quiz session synced successfully');
     notifySyncStatus('idle');
   } catch (err) {
     console.error('[Sync] Failed to sync quiz session:', err);
@@ -164,7 +159,7 @@ export async function syncDelete(
  */
 export async function removeFromSyncQueueByPathId(pathId: string): Promise<void> {
   // Firestore handles cascading deletes if needed
-  console.log(`[Sync] Path ${pathId} deleted, Firestore will handle cleanup`);
+  void pathId;
 }
 
 /**

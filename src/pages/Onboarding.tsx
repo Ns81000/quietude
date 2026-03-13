@@ -105,7 +105,6 @@ export default function OnboardingPage() {
             studyTime: profileData.studyTime,
             isOnboarded: true,
           });
-          console.log('[Onboarding] Profile synced to server');
         } catch (err) {
           console.warn('[Onboarding] Failed to sync profile to server:', err);
           // Local known_user will serve as fallback

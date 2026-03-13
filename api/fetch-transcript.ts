@@ -7,6 +7,14 @@ export const config = {
 };
 
 const TRANSCRIPT_CHAR_LIMIT = 50_000;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX_REQUESTS = 20;
+
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'https://quietude-one.vercel.app')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 // Noise tokens to strip from auto-generated captions
 const NOISE_RE = /\[(?:music|applause|laughter|inaudible|crosstalk|silence|sound|noise|cheering|clapping)[^\]]*\]/gi;
@@ -41,9 +49,41 @@ function getNextSupadataClient(): Supadata | null {
   
   keyIndex = (keyIndex + 1) % keys.length;
   const key = keys[keyIndex];
-  
-  console.log(`[supadata] Using key ${keyIndex + 1}/${keys.length}`);
+
   return new Supadata({ apiKey: key });
+}
+
+function getClientIp(req: VercelRequest): string {
+  const forwardedFor = req.headers['x-forwarded-for'];
+  if (typeof forwardedFor === 'string' && forwardedFor.trim()) {
+    return forwardedFor.split(',')[0].trim();
+  }
+  return req.socket.remoteAddress || 'unknown';
+}
+
+function isRateLimited(clientId: string): boolean {
+  const now = Date.now();
+  const existing = rateLimitStore.get(clientId);
+
+  if (!existing || now >= existing.resetAt) {
+    rateLimitStore.set(clientId, {
+      count: 1,
+      resetAt: now + RATE_LIMIT_WINDOW_MS,
+    });
+    return false;
+  }
+
+  if (existing.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return true;
+  }
+
+  existing.count += 1;
+  return false;
+}
+
+function getAllowedOrigin(origin: string | undefined): string {
+  if (!origin) return ALLOWED_ORIGINS[0] || 'https://quietude-one.vercel.app';
+  return ALLOWED_ORIGINS.includes(origin) ? origin : '';
 }
 
 // ---------------------------------------------------------------------------
@@ -117,8 +157,6 @@ async function fetchViaSupadata(videoId: string): Promise<{ text: string; method
     if (!client) break;
 
     try {
-      console.log(`[supadata] Fetching transcript for ${videoId}...`);
-
       const result = await client.transcript({
         url: `https://www.youtube.com/watch?v=${videoId}`,
         lang: 'en',
@@ -153,7 +191,6 @@ async function fetchViaSupadata(videoId: string): Promise<{ text: string; method
         continue;
       }
 
-      console.log(`[supadata] Success: ${text.length} chars`);
       return { text, method: 'supadata' };
 
     } catch (err: unknown) {
@@ -162,7 +199,6 @@ async function fetchViaSupadata(videoId: string): Promise<{ text: string; method
       
       // Check if it's a quota/rate limit error - try next key
       if (msg.includes('quota') || msg.includes('rate') || msg.includes('limit') || msg.includes('429')) {
-        console.log('[supadata] Quota/rate limit hit, trying next key...');
         attempts++;
         continue;
       }
@@ -218,8 +254,6 @@ async function fetchViaInnertube(videoId: string): Promise<{ text: string; metho
 
   for (const client of clients) {
     try {
-      console.log(`[innertube] Trying ${client.label}...`);
-
       const res = await fetch(
         'https://www.youtube.com/youtubei/v1/player?prettyPrint=false',
         {
@@ -284,7 +318,6 @@ async function fetchViaInnertube(videoId: string): Promise<{ text: string; metho
 
       if (segments.length > 0) {
         const text = segments.join(' ');
-        console.log(`[innertube] ${client.label}: ${text.length} chars`);
         return { text, method: `innertube-${client.label}` };
       }
     } catch (err) {
@@ -300,12 +333,20 @@ async function fetchViaInnertube(videoId: string): Promise<{ text: string; metho
 // ---------------------------------------------------------------------------
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const requestOrigin = typeof req.headers.origin === 'string' ? req.headers.origin : undefined;
+  const allowedOrigin = getAllowedOrigin(requestOrigin);
+
+  if (allowedOrigin) {
+    res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Vary', 'Origin');
 
   if (req.method === 'OPTIONS') {
+    if (!allowedOrigin) {
+      return res.status(403).json({ error: 'Origin not allowed' });
+    }
     return res.status(200).end();
   }
 
@@ -313,11 +354,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  if (!allowedOrigin) {
+    return res.status(403).json({ error: 'Origin not allowed' });
+  }
+
+  const clientIp = getClientIp(req);
+  if (isRateLimited(clientIp)) {
+    res.setHeader('Retry-After', '60');
+    return res.status(429).json({ error: 'Rate limit exceeded. Please try again in a minute.' });
+  }
+
   try {
     const { url } = req.body || {};
 
-    if (!url || typeof url !== 'string') {
-      return res.status(400).json({ error: 'No URL provided' });
+    if (!url || typeof url !== 'string' || url.length > 2048) {
+      return res.status(400).json({ error: 'Invalid URL' });
     }
 
     const videoId = extractVideoId(url);
@@ -326,8 +377,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         error: 'Invalid YouTube URL. Use a youtube.com/watch, youtu.be, or Shorts link.',
       });
     }
-
-    console.log(`[fetch-transcript] Processing video: ${videoId}`);
 
     // Fetch title in parallel
     const titlePromise = fetchVideoTitle(videoId);
@@ -372,8 +421,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         error: 'Transcript is too short to generate content from.',
       });
     }
-
-    console.log(`[fetch-transcript] Success via ${result.method}: ${transcript.length} chars`);
 
     return res.status(200).json({
       transcript,

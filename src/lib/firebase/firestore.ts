@@ -19,6 +19,7 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { getFirebaseDb, isFirebaseConfigured } from './client';
+import { useAuthStore } from '@/store/auth';
 import {
   type FirestoreLearningPath,
   type FirestoreQuizSession,
@@ -39,11 +40,16 @@ import {
 // Learning Paths
 // ============================================
 
+function canAccessUserData(userId: string): boolean {
+  const currentUserId = useAuthStore.getState().userId;
+  return !!currentUserId && currentUserId === userId;
+}
+
 /**
  * Get all learning paths for a user
  */
 export async function getLearningPaths(userId: string): Promise<AppLearningPath[]> {
-  if (!isFirebaseConfigured()) return [];
+  if (!isFirebaseConfigured() || !canAccessUserData(userId)) return [];
   
   try {
     const db = getFirebaseDb();
@@ -64,7 +70,7 @@ export async function getLearningPaths(userId: string): Promise<AppLearningPath[
  * Get a single learning path
  */
 export async function getLearningPath(userId: string, pathId: string): Promise<AppLearningPath | null> {
-  if (!isFirebaseConfigured()) return null;
+  if (!isFirebaseConfigured() || !canAccessUserData(userId)) return null;
   
   try {
     const db = getFirebaseDb();
@@ -84,7 +90,7 @@ export async function getLearningPath(userId: string, pathId: string): Promise<A
  * Create or update a learning path
  */
 export async function saveLearningPath(userId: string, path: AppLearningPath): Promise<boolean> {
-  if (!isFirebaseConfigured()) return false;
+  if (!isFirebaseConfigured() || !canAccessUserData(userId)) return false;
   
   try {
     const db = getFirebaseDb();
@@ -110,7 +116,7 @@ export async function saveLearningPath(userId: string, path: AppLearningPath): P
  * Delete a learning path and all related data
  */
 export async function deleteLearningPath(userId: string, pathId: string): Promise<boolean> {
-  if (!isFirebaseConfigured() || !userId || !pathId) return false;
+  if (!isFirebaseConfigured() || !userId || !pathId || !canAccessUserData(userId)) return false;
   
   try {
     const db = getFirebaseDb();
@@ -154,15 +160,13 @@ export async function deleteLearningPath(userId: string, pathId: string): Promis
  * Get all quiz sessions for a user
  */
 export async function getQuizSessions(userId: string): Promise<AppQuizSession[]> {
-  if (!isFirebaseConfigured()) return [];
+  if (!isFirebaseConfigured() || !canAccessUserData(userId)) return [];
   
   try {
     const db = getFirebaseDb();
     const sessionsRef = collection(db, 'users', userId, 'quizSessions');
     const q = query(sessionsRef, orderBy('startedAt', 'desc'));
     const snapshot = await getDocs(q);
-    
-    console.log('[Firestore] getQuizSessions:', { userId, count: snapshot.docs.length });
     
     return snapshot.docs.map(doc => 
       firestoreSessionToApp(doc.id, userId, doc.data() as FirestoreQuizSession)
@@ -177,7 +181,7 @@ export async function getQuizSessions(userId: string): Promise<AppQuizSession[]>
  * Get a single quiz session
  */
 export async function getQuizSession(userId: string, sessionId: string): Promise<AppQuizSession | null> {
-  if (!isFirebaseConfigured()) return null;
+  if (!isFirebaseConfigured() || !canAccessUserData(userId)) return null;
   
   try {
     const db = getFirebaseDb();
@@ -197,7 +201,7 @@ export async function getQuizSession(userId: string, sessionId: string): Promise
  * Create or update a quiz session
  */
 export async function saveQuizSession(userId: string, session: AppQuizSession): Promise<boolean> {
-  if (!isFirebaseConfigured()) return false;
+  if (!isFirebaseConfigured() || !canAccessUserData(userId)) return false;
   
   try {
     const db = getFirebaseDb();
@@ -223,7 +227,7 @@ export async function saveQuizSession(userId: string, session: AppQuizSession): 
  * Delete a quiz session
  */
 export async function deleteQuizSession(userId: string, sessionId: string): Promise<boolean> {
-  if (!isFirebaseConfigured() || !userId || !sessionId) return false;
+  if (!isFirebaseConfigured() || !userId || !sessionId || !canAccessUserData(userId)) return false;
   
   try {
     const db = getFirebaseDb();
@@ -244,7 +248,7 @@ export async function deleteQuizSession(userId: string, sessionId: string): Prom
  * Get all notes for a user
  */
 export async function getNotes(userId: string): Promise<AppNote[]> {
-  if (!isFirebaseConfigured()) return [];
+  if (!isFirebaseConfigured() || !canAccessUserData(userId)) return [];
   
   try {
     const db = getFirebaseDb();
@@ -265,7 +269,7 @@ export async function getNotes(userId: string): Promise<AppNote[]> {
  * Get a single note
  */
 export async function getNote(userId: string, noteId: string): Promise<AppNote | null> {
-  if (!isFirebaseConfigured()) return null;
+  if (!isFirebaseConfigured() || !canAccessUserData(userId)) return null;
   
   try {
     const db = getFirebaseDb();
@@ -285,7 +289,7 @@ export async function getNote(userId: string, noteId: string): Promise<AppNote |
  * Create or update a note
  */
 export async function saveNote(userId: string, note: AppNote): Promise<boolean> {
-  if (!isFirebaseConfigured()) return false;
+  if (!isFirebaseConfigured() || !canAccessUserData(userId)) return false;
   
   try {
     const db = getFirebaseDb();
@@ -311,7 +315,7 @@ export async function saveNote(userId: string, note: AppNote): Promise<boolean> 
  * Delete a note
  */
 export async function deleteNote(userId: string, noteId: string): Promise<boolean> {
-  if (!isFirebaseConfigured() || !userId || !noteId) return false;
+  if (!isFirebaseConfigured() || !userId || !noteId || !canAccessUserData(userId)) return false;
   
   try {
     const db = getFirebaseDb();
@@ -336,7 +340,7 @@ export async function fetchAllUserData(userId: string): Promise<{
   sessions: AppQuizSession[];
   notes: AppNote[];
 } | null> {
-  if (!isFirebaseConfigured()) return null;
+  if (!isFirebaseConfigured() || !canAccessUserData(userId)) return null;
   
   try {
     const [paths, sessions, notes] = await Promise.all([

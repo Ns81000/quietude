@@ -11,8 +11,6 @@ import { useNotesStore } from '@/store/notes';
 import { useUIStore } from '@/store/ui';
 import { 
   setKnownUserWithBackup, 
-  getKnownUserWithFallback,
-  setKnownUserSync as setKnownUser,
   getKnownUserSync as getKnownUser 
 } from '@/components/auth/AuthProvider';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
@@ -134,7 +132,6 @@ export default function VerifyPage() {
         
         // ACCOUNT SWITCH DETECTION: Clear all local data if different user is logging in
         if (previousUserId && previousUserId !== result.userId) {
-          console.log('[Verify] Account switch detected, clearing local data');
           useUserStore.getState().clear();
           usePathsStore.getState().clearAll();
           useSessionsStore.getState().clearAll();
@@ -154,27 +151,10 @@ export default function VerifyPage() {
         const knownUser = getKnownUser(email);
         const isKnownOnboardedUser = knownUser !== null; // If we have a known user, they've logged in before
         
-        // Debug: Check all known_user keys in localStorage
-        const allKnownUserKeys = Object.keys(localStorage).filter(k => k.startsWith('quietude:known_user:'));
-        console.log('[Verify] Checking onboarding status:', { 
-          email, 
-          localIsOnboarded: isOnboarded,
-          knownUserExists: knownUser !== null,
-          knownUser,
-          allKnownUserKeys,
-          expectedKey: `quietude:known_user:${email}`
-        });
-        
         if (isFirebaseConfigured() && result.userId) {
           try {
             setVerifyStatus('syncing');
             const serverProfile = await getUserProfile(result.userId);
-            
-            console.log('[Verify] Server profile:', { 
-              exists: serverProfile !== null,
-              isOnboarded: serverProfile?.isOnboarded,
-              name: serverProfile?.name
-            });
             
             if (serverProfile?.isOnboarded) {
               isOnboarded = true;
@@ -197,7 +177,6 @@ export default function VerifyPage() {
             } else if (isKnownOnboardedUser) {
               // Server didn't confirm but we know this user was onboarded before
               // Trust the local backup
-              console.log('[Verify] Using known_user fallback for onboarding status');
               isOnboarded = true;
               setProfile({ isOnboarded: true });
             }
@@ -210,13 +189,7 @@ export default function VerifyPage() {
             // Pre-fetch user data before navigating to dashboard
             if (isOnboarded) {
               destination = '/dashboard';
-              console.log('[Verify] Fetching user data from server...');
               const serverData = await fetchAllUserData(result.userId);
-              console.log('[Verify] Server data fetched:', {
-                paths: serverData?.paths?.length ?? 0,
-                sessions: serverData?.sessions?.length ?? 0,
-                notes: serverData?.notes?.length ?? 0,
-              });
               if (serverData) {
                 // Replace local data with server data to prevent duplicates
                 const pathsStore = usePathsStore.getState();
@@ -258,7 +231,6 @@ export default function VerifyPage() {
             // Server failed - use known_user as fallback
             console.warn('[Verify] Server profile fetch failed, checking known_user:', err);
             if (isKnownOnboardedUser) {
-              console.log('[Verify] Using known_user fallback after server failure');
               isOnboarded = true;
               setProfile({ isOnboarded: true });
             }

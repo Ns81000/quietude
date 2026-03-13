@@ -322,11 +322,6 @@ export default function QuizPage() {
     // Don't call setNotesPhase() - it changes phase and blanks the screen
     // We handle the loading state locally with isGeneratingNotes
 
-    // Debug logging to verify source content is being passed
-    console.log('[Notes Generation] Topic:', topicTitle);
-    console.log('[Notes Generation] Summary:', topicSummary);
-    console.log('[Notes Generation] Source content length:', sourceContent?.length || 0);
-    console.log('[Notes Generation] Has API keys:', hasApiKeys());
 
     try {
       let notesHtml: string;

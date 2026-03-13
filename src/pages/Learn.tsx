@@ -93,12 +93,10 @@ export function Learn() {
 
   const handleEditPlan = () => {
     // TODO: Open edit modal
-    console.log("Edit plan");
   };
 
   const handleDeletePlan = () => {
     // TODO: Show confirmation dialog
-    console.log("Delete plan");
   };
 
   if (!plan || !learningPath) {

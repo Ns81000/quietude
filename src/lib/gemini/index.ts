@@ -78,7 +78,6 @@ export async function analyzeContent(content: string): Promise<AnalysisResponse>
   const cacheKey = `analysis_${hashString(content)}`;
   const cached = getCached<AnalysisResponse>(cacheKey);
   if (cached) {
-    console.log("[Gemini] Using cached analysis");
     return cached;
   }
 
@@ -207,7 +206,6 @@ export async function analyzeFile(file: File): Promise<AnalysisResponse> {
   const cacheKey = await getFileCacheKey(file);
   const cached = getCached<AnalysisResponse & { extractedContent?: string }>(cacheKey);
   if (cached) {
-    console.log("[Gemini] Using cached file analysis for:", file.name);
     return cached;
   }
 
@@ -305,7 +303,6 @@ export async function quickAnalyze(content: string): Promise<QuickAnalysisRespon
   const cacheKey = `quick_${hashString(content)}`;
   const cached = getCached<QuickAnalysisResponse>(cacheKey);
   if (cached) {
-    console.log("[Gemini] Using cached quick analysis");
     return cached;
   }
 
@@ -369,7 +366,6 @@ export async function generateNotes(params: {
   const cacheKey = `notes_${hashString(params.topicTitle + params.topicSummary)}`;
   const cached = getCached<string>(cacheKey);
   if (cached) {
-    console.log("[Gemini] Using cached notes");
     return cached;
   }
 

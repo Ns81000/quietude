@@ -8,7 +8,6 @@ export function registerServiceWorker() {
       immediate: true,
       onNeedRefresh() {
         // Auto-update silently in background - no user prompt
-        console.log('[PWA] New content available, auto-updating...');
         // Trigger the actual update immediately
         if (updateSW) {
           updateSW(true).catch(err => {
@@ -17,7 +16,7 @@ export function registerServiceWorker() {
         }
       },
       onOfflineReady() {
-        console.log('[PWA] App ready to work offline');
+        // App is ready to work offline
       },
       onRegistered(registration) {
         if (registration) {
