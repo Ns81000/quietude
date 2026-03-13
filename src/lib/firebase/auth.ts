@@ -247,13 +247,8 @@ export async function verifyOTP(email: string, otp: string): Promise<{
       return { success: false, error: 'Invalid verification code.' };
     }
 
-    // OTP is valid - now we need to authenticate with Firebase
-    // Since we're using custom OTP, we'll use custom token or just create/update user directly
-    // For simplicity, we'll check if user exists in Firestore and create if not
-    
-    const db = getFirebaseDb();
-    
-    // Generate a consistent userId from email
+    // OTP is valid. For EmailJS OTP mode, establish app session locally.
+    // Firestore profile bootstrap is handled later where available.
     const userId = await getOrCreateUserId(email);
     
     // Clear OTP
@@ -266,26 +261,7 @@ export async function verifyOTP(email: string, otp: string): Promise<{
       createdAt: new Date().toISOString(),
     }));
 
-    // Check if new user
-    const userRef = doc(db, 'users', userId);
-    const userSnap = await getDoc(userRef);
-    const isNewUser = !userSnap.exists();
-    
-    if (isNewUser) {
-      await setDoc(userRef, {
-        email,
-        name: null,
-        studyField: null,
-        learnStyle: null,
-        studyTime: null,
-        isOnboarded: false,
-        themeMood: null,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-      } satisfies FirestoreUser);
-    }
-
-    return { success: true, userId, isNewUser };
+    return { success: true, userId, isNewUser: false };
   } catch (error) {
     console.error('[Auth] OTP verification failed:', error);
     return { success: false, error: 'Verification failed. Please try again.' };
