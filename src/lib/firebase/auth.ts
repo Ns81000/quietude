@@ -53,7 +53,8 @@ export async function sendMagicLink(email: string): Promise<{ success: boolean; 
     
     // Save email to localStorage so we can complete sign-in after redirect
     localStorage.setItem(EMAIL_FOR_SIGN_IN_KEY, email);
-
+    
+    console.log('[Firebase Auth] Magic link sent to:', email);
     return { success: true };
   } catch (error: any) {
     console.error('[Firebase Auth] Failed to send magic link:', error);
@@ -125,6 +126,7 @@ export async function handleMagicLinkSignIn(): Promise<{
       } satisfies FirestoreUser);
     }
 
+    console.log('[Firebase Auth] Sign-in successful:', result.user.uid);
     return {
       success: true,
       userId: result.user.uid,
@@ -185,23 +187,25 @@ export async function sendOTP(email: string): Promise<{ success: boolean; error?
   const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
   const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
-  if (!serviceId || !templateId || !publicKey) {
-    return { success: false, error: 'Email service is not configured. Please contact support.' };
+  if (serviceId && templateId && publicKey) {
+    try {
+      await emailjs.send(serviceId, templateId, {
+        to_email: email,
+        otp_code: otp,
+        app_name: 'Quietude',
+        expiry_minutes: OTP_EXPIRY_MINUTES,
+      }, publicKey);
+      
+      return { success: true };
+    } catch (err) {
+      console.error('[Auth] EmailJS failed:', err);
+      return { success: false, error: 'Failed to send verification email. Please try again.' };
+    }
   }
 
-  try {
-    await emailjs.send(serviceId, templateId, {
-      to_email: email,
-      otp_code: otp,
-      app_name: 'Quietude',
-      expiry_minutes: OTP_EXPIRY_MINUTES,
-    }, publicKey);
-
-    return { success: true };
-  } catch (err) {
-    console.error('[Auth] EmailJS failed:', err);
-    return { success: false, error: 'Failed to send verification email. Please try again.' };
-  }
+  // Demo mode - log OTP to console
+  console.log(`[Auth] Demo mode - OTP for ${email}: ${otp}`);
+  return { success: true };
 }
 
 /**
@@ -247,8 +251,13 @@ export async function verifyOTP(email: string, otp: string): Promise<{
       return { success: false, error: 'Invalid verification code.' };
     }
 
-    // OTP is valid. For EmailJS OTP mode, establish app session locally.
-    // Firestore profile bootstrap is handled later where available.
+    // OTP is valid - now we need to authenticate with Firebase
+    // Since we're using custom OTP, we'll use custom token or just create/update user directly
+    // For simplicity, we'll check if user exists in Firestore and create if not
+    
+    const db = getFirebaseDb();
+    
+    // Generate a consistent userId from email
     const userId = await getOrCreateUserId(email);
     
     // Clear OTP
@@ -261,7 +270,28 @@ export async function verifyOTP(email: string, otp: string): Promise<{
       createdAt: new Date().toISOString(),
     }));
 
-    return { success: true, userId, isNewUser: false };
+    console.log('[Firebase Auth] OTP verified for:', email);
+    
+    // Check if new user
+    const userRef = doc(db, 'users', userId);
+    const userSnap = await getDoc(userRef);
+    const isNewUser = !userSnap.exists();
+    
+    if (isNewUser) {
+      await setDoc(userRef, {
+        email,
+        name: null,
+        studyField: null,
+        learnStyle: null,
+        studyTime: null,
+        isOnboarded: false,
+        themeMood: null,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      } satisfies FirestoreUser);
+    }
+
+    return { success: true, userId, isNewUser };
   } catch (error) {
     console.error('[Auth] OTP verification failed:', error);
     return { success: false, error: 'Verification failed. Please try again.' };
@@ -375,8 +405,10 @@ export async function getUserProfile(userId: string): Promise<AppUser | null> {
     let userSnap;
     try {
       userSnap = await getDocFromServer(userRef);
+      console.log('[Firebase] Got user profile from server');
     } catch (serverErr) {
       // Server fetch failed (offline or blocked), fall back to cache
+      console.log('[Firebase] Server fetch failed, using cache:', serverErr);
       userSnap = await getDoc(userRef);
     }
     

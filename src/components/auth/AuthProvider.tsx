@@ -27,92 +27,21 @@ import { clearAllCaches } from '@/lib/pwa/sw-register';
 // v9: Firebase migration fixes + fresh start for all users
 // v10: Preserve known_user during reset so onboarding status survives
 // v11: Fix logout data deletion bug - ensures cross-device sync works
-// v13: Force fresh client reset after security/auth storage changes
-const DATA_VERSION = 13;
+const DATA_VERSION = 12;
 const DATA_VERSION_KEY = 'quietude:data_version';
 
 // KnownUser types for local storage of remembered emails
 export interface KnownUser {
-  email?: string;
+  email: string;
   name?: string;
   lastLogin?: string;
-}
-
-function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
-}
-
-function hashEmailKey(email: string): string {
-  const normalized = normalizeEmail(email);
-  let hash = 2166136261;
-  for (let i = 0; i < normalized.length; i++) {
-    hash ^= normalized.charCodeAt(i);
-    hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
-  }
-  return Math.abs(hash >>> 0).toString(36);
-}
-
-function getKnownUserStorageKey(email: string): string {
-  return `quietude:known_user:${hashEmailKey(email)}`;
-}
-
-function getLegacyKnownUserStorageKey(email: string): string {
-  return `quietude:known_user:${normalizeEmail(email)}`;
-}
-
-function getLegacyKnownUserStorageKeyExact(email: string): string {
-  return `quietude:known_user:${email}`;
 }
 
 // Get known user from localStorage
 export function getKnownUser(email: string): KnownUser | null {
   try {
-    const storageKey = getKnownUserStorageKey(email);
-    const stored = localStorage.getItem(storageKey);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-
-    // Migrate legacy key format (plain email in storage key)
-    const legacyCandidates = [
-      getLegacyKnownUserStorageKeyExact(email),
-      getLegacyKnownUserStorageKey(email),
-    ];
-
-    for (const legacyKey of legacyCandidates) {
-      const legacyStored = localStorage.getItem(legacyKey);
-      if (!legacyStored) continue;
-
-      const parsed = JSON.parse(legacyStored) as KnownUser;
-      localStorage.setItem(storageKey, JSON.stringify(parsed));
-      if (legacyKey !== storageKey) {
-        localStorage.removeItem(legacyKey);
-      }
-      return parsed;
-    }
-
-    // Last-resort migration for very old payloads that included email in value
-    const normalizedTarget = normalizeEmail(email);
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!key || !key.startsWith('quietude:known_user:')) continue;
-
-      const candidateRaw = localStorage.getItem(key);
-      if (!candidateRaw) continue;
-
-      const candidate = JSON.parse(candidateRaw) as KnownUser;
-      if (!candidate.email || normalizeEmail(candidate.email) !== normalizedTarget) {
-        continue;
-      }
-
-      localStorage.setItem(storageKey, JSON.stringify(candidate));
-      if (key !== storageKey) {
-        localStorage.removeItem(key);
-      }
-      return candidate;
-    }
-
-    return null;
+    const stored = localStorage.getItem(`quietude:known_user:${email}`);
+    return stored ? JSON.parse(stored) : null;
   } catch {
     return null;
   }
@@ -121,13 +50,9 @@ export function getKnownUser(email: string): KnownUser | null {
 // Set known user in localStorage
 export function setKnownUser(email: string, user: KnownUser): void {
   try {
-    const safeUser: KnownUser = {
-      name: user.name,
-      lastLogin: user.lastLogin,
-    };
-    localStorage.setItem(getKnownUserStorageKey(email), JSON.stringify(safeUser));
+    localStorage.setItem(`quietude:known_user:${email}`, JSON.stringify(user));
   } catch {
-    // Ignore storage failures
+    console.warn('[KnownUser] Failed to save to localStorage');
   }
 }
 
@@ -170,6 +95,8 @@ async function checkAndResetDataVersion(): Promise<boolean> {
   const currentVersion = storedVersion ? parseInt(storedVersion, 10) : 0;
   
   if (currentVersion < DATA_VERSION) {
+    console.log(`[DataVersion] Upgrading from v${currentVersion} to v${DATA_VERSION}, clearing data for fresh start...`);
+    
     // v9: Clear app data but PRESERVE known_user keys (onboarding status backup)
     // This allows returning users to skip onboarding even after data reset
     
@@ -193,6 +120,8 @@ async function checkAndResetDataVersion(): Promise<boolean> {
     
     // Set new version AFTER clearing (so quietude: prefix removal doesn't clear it)
     localStorage.setItem(DATA_VERSION_KEY, DATA_VERSION.toString());
+    
+    console.log(`[DataVersion] Reset complete: cleared ${keysToRemove.length} localStorage keys (preserved known_user), cleared IndexedDB and caches`);
     return true; // Data was reset
   }
   
@@ -255,6 +184,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           
           // If another tab changed the user, reload this tab to sync state
           if (newState.state?.userId !== currentUserId) {
+            console.log('[AuthProvider] Account change detected in another tab, reloading...');
             window.location.reload();
           }
         } catch {
@@ -277,6 +207,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (prevUserIdRef.current !== userId) {
       // User changed - reset sync state
       if (prevUserIdRef.current !== null && userId !== prevUserIdRef.current) {
+        console.log('[AuthProvider] User changed, resetting sync state');
         syncedRef.current = false;
         setupCompleteRef.current = false;
         
@@ -377,6 +308,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           const hasLocalDataFromDifferentUser = existingPaths.some(p => p.user_id && p.user_id !== userId);
           
           if (hasLocalDataFromDifferentUser) {
+            console.log('[AuthProvider] Detected local data from different user, clearing stores');
             pathsStore.clearAll();
             sessionsStore.clearAll();
             notesStore.clearAll();
@@ -498,6 +430,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             // Clean up any orphaned quiz sessions in the sync queue for this path
             safeSync(() => removeFromSyncQueueByPathId(path.id));
           });
+        } else {
+          console.log('[AuthProvider] Paths being cleared (logout), skipping server delete');
         }
         
         getPendingSyncCount().then(setPendingSyncCount);
@@ -529,6 +463,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           deletedSessions.forEach(session => {
             safeSync(() => syncDelete('quiz_sessions', session.id, userId));
           });
+        } else {
+          console.log('[AuthProvider] Sessions being cleared (logout), skipping server delete');
         }
         
         getPendingSyncCount().then(setPendingSyncCount);
@@ -560,6 +496,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           deletedNotes.forEach(note => {
             safeSync(() => syncDelete('notes', note.id, userId));
           });
+        } else {
+          console.log('[AuthProvider] Notes being cleared (logout), skipping server delete');
         }
         
         getPendingSyncCount().then(setPendingSyncCount);
@@ -572,6 +510,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const isBeingCleared = !state.name && !state.studyField && !state.learnStyle && 
                              !state.studyTime && !state.isOnboarded && !state.isAuthenticated;
       if (isBeingCleared) {
+        console.log('[AuthProvider] Profile being cleared (logout), skipping server sync');
         return;
       }
       
