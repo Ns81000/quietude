@@ -59,6 +59,10 @@ function getLegacyKnownUserStorageKey(email: string): string {
   return `quietude:known_user:${normalizeEmail(email)}`;
 }
 
+function getLegacyKnownUserStorageKeyExact(email: string): string {
+  return `quietude:known_user:${email}`;
+}
+
 // Get known user from localStorage
 export function getKnownUser(email: string): KnownUser | null {
   try {
@@ -69,16 +73,45 @@ export function getKnownUser(email: string): KnownUser | null {
     }
 
     // Migrate legacy key format (plain email in storage key)
-    const legacyKey = getLegacyKnownUserStorageKey(email);
-    const legacyStored = localStorage.getItem(legacyKey);
-    if (!legacyStored) {
-      return null;
+    const legacyCandidates = [
+      getLegacyKnownUserStorageKeyExact(email),
+      getLegacyKnownUserStorageKey(email),
+    ];
+
+    for (const legacyKey of legacyCandidates) {
+      const legacyStored = localStorage.getItem(legacyKey);
+      if (!legacyStored) continue;
+
+      const parsed = JSON.parse(legacyStored) as KnownUser;
+      localStorage.setItem(storageKey, JSON.stringify(parsed));
+      if (legacyKey !== storageKey) {
+        localStorage.removeItem(legacyKey);
+      }
+      return parsed;
     }
 
-    const parsed = JSON.parse(legacyStored) as KnownUser;
-    localStorage.setItem(storageKey, JSON.stringify(parsed));
-    localStorage.removeItem(legacyKey);
-    return parsed;
+    // Last-resort migration for very old payloads that included email in value
+    const normalizedTarget = normalizeEmail(email);
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key || !key.startsWith('quietude:known_user:')) continue;
+
+      const candidateRaw = localStorage.getItem(key);
+      if (!candidateRaw) continue;
+
+      const candidate = JSON.parse(candidateRaw) as KnownUser;
+      if (!candidate.email || normalizeEmail(candidate.email) !== normalizedTarget) {
+        continue;
+      }
+
+      localStorage.setItem(storageKey, JSON.stringify(candidate));
+      if (key !== storageKey) {
+        localStorage.removeItem(key);
+      }
+      return candidate;
+    }
+
+    return null;
   } catch {
     return null;
   }
