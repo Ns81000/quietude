@@ -51,7 +51,7 @@ function getGeminiKeys(): string[] {
   }
 
   for (let i = 1; i <= 10; i++) {
-    const key = process.env[`GEMINI_API_KEY_${i}`];
+    const key = process.env[`GEMINI_API_KEY_${i}`] || process.env[`VITE_GEMINI_KEY_${i}`];
     if (key) keys.push(key);
   }
 
