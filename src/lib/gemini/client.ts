@@ -56,7 +56,7 @@ export function hasApiKeys(): boolean {
   return true;
 }
 
-export function getModel(modelName: string = 'gemini-2.5-flash'): GenerativeModel {
+export function getModel(modelName: string = 'gemini-2.5-flash-lite'): GenerativeModel {
   return createProxyModel(modelName);
 }
 
@@ -96,7 +96,7 @@ export async function safeGeminiCall<T>(
   fn: (model: GenerativeModel) => Promise<T>,
   maxRetries: number = 2,
   timeoutMs: number = 60000,
-  modelName: string = 'gemini-2.5-flash'
+  modelName: string = 'gemini-2.5-flash-lite'
 ): Promise<T> {
   let lastError: Error | null = null;
 

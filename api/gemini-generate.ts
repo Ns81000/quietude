@@ -139,7 +139,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { modelName = 'gemini-2.5-flash', contents } = req.body || {};
+    const { modelName = 'gemini-2.5-flash-lite', contents } = req.body || {};
 
     if (!contents) {
       return res.status(400).json({ error: 'Missing contents payload.' });
