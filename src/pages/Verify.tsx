@@ -266,9 +266,21 @@ export default function VerifyPage() {
         setIsVerifying(false);
         setCode(['', '', '', '', '', '']);
         inputsRef.current[0]?.focus();
-        toast.error('Verification failed', {
-          description: result.error || 'Please try again.',
-        });
+        
+        // Enhanced error handling with security feedback
+        if (result.error?.includes('rate') || result.error?.includes('Too many')) {
+          toast.error('Too many attempts', {
+            description: result.error || 'Your account has been temporarily locked for security. Please try again in 30 minutes.',
+          });
+        } else if (result.error?.includes('Invalid') || result.error?.includes('Code expired')) {
+          toast.error('Verification failed', {
+            description: result.error || 'The code is invalid or expired. Please request a new one.',
+          });
+        } else {
+          toast.error('Verification failed', {
+            description: result.error || 'Please try again.',
+          });
+        }
       }
     } catch (err) {
       verifyLockRef.current = false;
@@ -291,7 +303,20 @@ export default function VerifyPage() {
         setCode(['', '', '', '', '', '']);
         inputsRef.current[0]?.focus();
       } else {
-        toast.error('Failed to resend code');
+        // Enhanced error handling with security feedback
+        if (result.error?.includes('rate') || result.error?.includes('Too many')) {
+          toast.error('Too many attempts', {
+            description: result.error || 'Please try again in 1 hour.',
+          });
+        } else if (result.error?.includes('Disposable')) {
+          toast.error('Invalid email provider', {
+            description: 'Please use a permanent email address.',
+          });
+        } else {
+          toast.error('Failed to resend code', {
+            description: result.error || 'Please try again.',
+          });
+        }
       }
     } catch {
       toast.error('Failed to resend code');

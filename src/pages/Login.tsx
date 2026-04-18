@@ -45,9 +45,20 @@ export default function LoginPage() {
         });
         navigate('/verify');
       } else {
-        toast.error('Failed to send code', {
-          description: result.error || 'Please try again.',
-        });
+        // Enhanced error handling with security feedback
+        if (result.error?.includes('Disposable')) {
+          toast.error('Invalid email provider', {
+            description: 'Please use a permanent email address to create your account.',
+          });
+        } else if (result.error?.includes('rate') || result.error?.includes('Too many')) {
+          toast.error('Too many attempts', {
+            description: result.error || 'Please try again in a few minutes.',
+          });
+        } else {
+          toast.error('Failed to send code', {
+            description: result.error || 'Please try again.',
+          });
+        }
       }
     } catch {
       toast.error('Something went wrong', {

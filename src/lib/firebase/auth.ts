@@ -19,6 +19,15 @@ import { getFirebaseAuth, getFirebaseDb, isFirebaseConfigured } from './client';
 import type { FirestoreUser, AppUser } from './types';
 import { firestoreUserToApp } from './types';
 import emailjs from '@emailjs/browser';
+import { validateEmailAddress, isDisposableEmail } from '../disposable-emails';
+import {
+  checkOtpSendRateLimit,
+  recordOtpSendAttempt,
+  checkOtpVerifyRateLimit,
+  recordOtpVerifyAttempt,
+  resetRateLimits,
+  getClientFingerprint,
+} from './rateLimit';
 
 // ============================================
 // Constants
@@ -165,14 +174,31 @@ function hashOTP(otp: string, email: string): string {
 }
 
 /**
- * Send OTP via EmailJS (same as before, but stores in localStorage only)
+ * Send OTP via EmailJS with security checks
+ * - Blocks disposable emails
+ * - Enforces rate limiting per email and device
+ * - Records all attempts for DDoS protection
  */
 export async function sendOTP(email: string): Promise<{ success: boolean; error?: string }> {
+  // 1. Validate email format
+  const validation = validateEmailAddress(email);
+  if (!validation.valid) {
+    return { success: false, error: validation.error };
+  }
+
+  // 2. Check rate limits
+  const fingerprint = getClientFingerprint();
+  const rateLimitCheck = await checkOtpSendRateLimit(email, fingerprint);
+  if (!rateLimitCheck.allowed) {
+    return { success: false, error: rateLimitCheck.reason };
+  }
+
+  // 3. Generate and hash OTP
   const otp = generateSecureOTP();
   const otpHash = hashOTP(otp, email);
   const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000).toISOString();
 
-  // Store OTP locally (Firebase doesn't need server-side OTP storage)
+  // 4. Store OTP locally
   localStorage.setItem('quietude:pending_otp', JSON.stringify({
     email,
     hash: otpHash,
@@ -181,8 +207,12 @@ export async function sendOTP(email: string): Promise<{ success: boolean; error?
   }));
 
   // Also save email for sign-in
-  localStorage.setItem(EMAIL_FOR_SIGN_IN_KEY, email);
+  localStorage.setItem('Email_FOR_SIGN_IN_KEY', email);
 
+  // 5. Record rate limit attempt
+  await recordOtpSendAttempt(email, fingerprint);
+
+  // 6. Send email
   const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
   const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
   const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
@@ -209,7 +239,10 @@ export async function sendOTP(email: string): Promise<{ success: boolean; error?
 }
 
 /**
- * Verify OTP and create/sign-in user
+ * Verify OTP and create/sign-in user with security checks
+ * - Enforces rate limiting per email and device
+ * - Tracks failed attempts for DDoS protection
+ * - Resets rate limits on successful verification
  */
 export async function verifyOTP(email: string, otp: string): Promise<{
   success: boolean;
@@ -221,11 +254,20 @@ export async function verifyOTP(email: string, otp: string): Promise<{
     return { success: false, error: 'Firebase is not configured' };
   }
 
+  const fingerprint = getClientFingerprint();
+
+  // 1. Check rate limits for verification attempts
+  const rateLimitCheck = await checkOtpVerifyRateLimit(email, fingerprint);
+  if (!rateLimitCheck.allowed) {
+    return { success: false, error: rateLimitCheck.reason };
+  }
+
   const submittedHash = hashOTP(otp, email);
   
-  // Validate against local stored OTP
+  // 2. Validate against local stored OTP
   const stored = localStorage.getItem('quietude:pending_otp');
   if (!stored) {
+    await recordOtpVerifyAttempt(email, fingerprint, true);
     return { success: false, error: 'No verification code found. Please request a new one.' };
   }
 
@@ -233,14 +275,17 @@ export async function verifyOTP(email: string, otp: string): Promise<{
     const pending = JSON.parse(stored);
     
     if (pending.email !== email) {
+      await recordOtpVerifyAttempt(email, fingerprint, true);
       return { success: false, error: 'Email mismatch. Please request a new code.' };
     }
     
     if (pending.attempts >= MAX_OTP_ATTEMPTS) {
+      await recordOtpVerifyAttempt(email, fingerprint, true);
       return { success: false, error: 'Too many attempts. Please request a new code.' };
     }
 
     if (new Date(pending.expiresAt) < new Date()) {
+      await recordOtpVerifyAttempt(email, fingerprint, true);
       return { success: false, error: 'Code expired. Please request a new one.' };
     }
 
@@ -248,6 +293,8 @@ export async function verifyOTP(email: string, otp: string): Promise<{
     localStorage.setItem('quietude:pending_otp', JSON.stringify(pending));
 
     if (pending.hash !== submittedHash) {
+      // Record failed attempt
+      await recordOtpVerifyAttempt(email, fingerprint, true);
       return { success: false, error: 'Invalid verification code.' };
     }
 
@@ -291,9 +338,17 @@ export async function verifyOTP(email: string, otp: string): Promise<{
       } satisfies FirestoreUser);
     }
 
+    // Reset rate limits on successful verification
+    await resetRateLimits(email);
+    
+    // Record successful verification attempt
+    await recordOtpVerifyAttempt(email, fingerprint, false);
+
     return { success: true, userId, isNewUser };
   } catch (error) {
     console.error('[Auth] OTP verification failed:', error);
+    // Record attempt as failed
+    await recordOtpVerifyAttempt(email, fingerprint, true);
     return { success: false, error: 'Verification failed. Please try again.' };
   }
 }
