@@ -448,6 +448,10 @@ const DISPOSABLE_DOMAINS = new Set([
   'nemailz.com',
   'nemallow.de',
   'nemallow.com',
+  // Additional temp mail services discovered
+  'dwseal.com',
+  'dwseal.io',
+  'dwseal.net',
 ]);
 
 /**

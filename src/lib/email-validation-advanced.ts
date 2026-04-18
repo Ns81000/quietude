@@ -39,6 +39,8 @@ function analyzeDisposablePatterns(domain: string): boolean {
     /inbox.?is/i,                          // inbox.is style
     /inbox.?tk/i,                          // inbox.tk style
     /^[\d]{1,3}mail/i,                     // 10mail, 20mail, etc
+    /^dw[\w]*mail/i,                       // dwseal, dwmail, etc (shorthand temp services)
+    /^(seal|sealmail)/i,                   // seal-based services
   ];
 
   return suspiciousPatterns.some(pattern => pattern.test(lowerDomain));
