@@ -19,7 +19,7 @@ import { getFirebaseAuth, getFirebaseDb, isFirebaseConfigured } from './client';
 import type { FirestoreUser, AppUser } from './types';
 import { firestoreUserToApp } from './types';
 import emailjs from '@emailjs/browser';
-import { validateEmailAddress, isDisposableEmail } from '../disposable-emails';
+import { validateEmailAddressEnhanced } from '../email-validation-advanced';
 import {
   checkOtpSendRateLimit,
   recordOtpSendAttempt,
@@ -175,13 +175,13 @@ function hashOTP(otp: string, email: string): string {
 
 /**
  * Send OTP via EmailJS with security checks
- * - Blocks disposable emails
+ * - Blocks disposable emails (static list + pattern analysis)
  * - Enforces rate limiting per email and device
  * - Records all attempts for DDoS protection
  */
 export async function sendOTP(email: string): Promise<{ success: boolean; error?: string }> {
-  // 1. Validate email format
-  const validation = validateEmailAddress(email);
+  // 1. Validate email format (now with pattern analysis)
+  const validation = validateEmailAddressEnhanced(email);
   if (!validation.valid) {
     return { success: false, error: validation.error };
   }
