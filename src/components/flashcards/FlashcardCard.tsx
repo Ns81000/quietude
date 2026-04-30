@@ -33,7 +33,7 @@ export function FlashcardCard({
 
   return (
     <div 
-      className="relative w-full min-h-[400px] h-[60vh] max-h-[500px] touch-manipulation select-none [perspective:1500px]" 
+      className="relative w-full min-h-[400px] h-[60vh] max-h-[500px] touch-manipulation select-none [perspective:1500px] pb-6 md:pb-0" 
       onClick={onFlip}
     >
       {/* Decorative Stack layers beneath the main card to indicate remaining cards */}
@@ -52,20 +52,19 @@ export function FlashcardCard({
 
       {/* Main Draggable/Flip Container */}
       <motion.div
-        className="relative w-full h-full cursor-pointer touch-manipulation focus:outline-none"
+        className="relative w-full h-full cursor-pointer touch-manipulation focus:outline-none rounded-2xl"
         style={{ transformStyle: 'preserve-3d' }}
         initial={false}
         animate={{ 
           rotateY: isFlipped ? 180 : 0,
-          // Removed dynamic scale to prevent text rasterization blurriness during and after flip 
           boxShadow: isFlipped ? "0 20px 40px -10px rgba(0,0,0,0.2)" : "0 10px 30px -10px rgba(0,0,0,0.1)",
         }}
         whileTap={{ scale: 0.98 }}
-        transition={{ type: "spring", stiffness: 100, damping: 20, mass: 1 }}
+        transition={{ type: "spring", stiffness: 200, damping: 25, mass: 0.8 }}
       >
         {/* Front of Card */}
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 rounded-2xl overflow-hidden"
           style={{
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
@@ -73,7 +72,7 @@ export function FlashcardCard({
             transform: 'translateZ(1px)', // Forces hardware text-crispness
           }}
         >
-          <div className="w-full h-full bg-surface border-2 border-border rounded-2xl p-8 shadow-lg flex flex-col">
+          <div className="w-full h-full bg-surface border-2 border-border p-6 md:p-8 flex flex-col">
             {/* Header */}
             <div className="flex items-start justify-between mb-6">
               <div className="flex items-center gap-2">
@@ -120,7 +119,7 @@ export function FlashcardCard({
             )}
 
             {/* Tap to flip indicator */}
-            <div className="mt-6 text-center">
+            <div className="mt-auto pt-6 text-center">
               <p className="text-sm text-text-muted">Tap to flip</p>
             </div>
           </div>
@@ -128,7 +127,7 @@ export function FlashcardCard({
 
         {/* Back of Card */}
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 rounded-2xl overflow-hidden"
           style={{
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
@@ -136,7 +135,7 @@ export function FlashcardCard({
             transform: 'rotateY(180deg) translateZ(1px)',
           }}
         >
-          <div className="w-full h-full bg-surface border-2 border-accent/40 rounded-2xl p-8 shadow-lg flex flex-col">
+          <div className="w-full h-full bg-surface border-2 border-accent/40 p-6 md:p-8 flex flex-col">
             {/* Header */}
             <div className="flex items-start justify-between mb-6">
               <div className="flex items-center gap-2">
@@ -195,7 +194,7 @@ export function FlashcardCard({
             )}
 
             {/* Tap to flip back indicator */}
-            <div className="mt-6 text-center">
+            <div className="mt-auto pt-6 text-center">
               <p className="text-sm text-text-muted">Tap to flip back</p>
             </div>
           </div>
