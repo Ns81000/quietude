@@ -57,7 +57,7 @@ export function FlashcardCard({
         initial={false}
         animate={{ 
           rotateY: isFlipped ? 180 : 0,
-          scale: isFlipped ? 1.05 : 1, // Card slightly scales up toward user when flipped
+          // Removed dynamic scale to prevent text rasterization blurriness during and after flip 
           boxShadow: isFlipped ? "0 20px 40px -10px rgba(0,0,0,0.2)" : "0 10px 30px -10px rgba(0,0,0,0.1)",
         }}
         whileTap={{ scale: 0.98 }}
@@ -69,6 +69,8 @@ export function FlashcardCard({
           style={{
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
+            WebkitFontSmoothing: 'antialiased',
+            transform: 'translateZ(1px)', // Forces hardware text-crispness
           }}
         >
           <div className="w-full h-full bg-surface border-2 border-border rounded-2xl p-8 shadow-lg flex flex-col">
@@ -130,7 +132,8 @@ export function FlashcardCard({
           style={{
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
-            transform: 'rotateY(180deg)',
+            WebkitFontSmoothing: 'antialiased',
+            transform: 'rotateY(180deg) translateZ(1px)',
           }}
         >
           <div className="w-full h-full bg-surface border-2 border-accent/40 rounded-2xl p-8 shadow-lg flex flex-col">
