@@ -11,6 +11,8 @@ import { useQuizStore } from "@/store/quiz";
 import { useSessionsStore } from "@/store/sessions";
 import { useNotesStore } from "@/store/notes";
 import { usePathsStore, selectActivePath } from "@/store/paths";
+import { toast } from "sonner";
+import { useDocsSync } from "@/lib/firebase/sync"; // Check if we have delete
 
 export function Learn() {
   const { pathId } = useParams<{ pathId: string }>();
@@ -52,7 +54,8 @@ export function Learn() {
       // Check if topic has been passed - filter by both topic_id AND path_id
       const topicSessions = sessions.filter((s) => s.topic_id === topic.id && s.path_id === learningPath.id);
       const passedSession = topicSessions.find((s) => s.passed);
-      const hasNotes = notes.some((n) => n.topic_id === topic.id);
+      // Ensure notes generated check matching the topic title as well, since topic.id could be globally duplicated logic (e.g. topic-1, topic-2).
+      const hasNotes = notes.some((n) => n.topic_id === topic.id && n.topic_title === topic.title);
       
       // Determine status based on progress
       let status: Topic['status'] = 'locked';
@@ -96,7 +99,13 @@ export function Learn() {
   };
 
   const handleDeletePlan = () => {
-    // TODO: Show confirmation dialog
+    if (window.confirm("Are you sure you want to delete this study plan? This cannot be undone.")) {
+      if (plan) {
+        usePathsStore.getState().deletePath(plan.id);
+        toast.success("Study plan deleted.");
+        navigate('/dashboard');
+      }
+    }
   };
 
   if (!plan || !learningPath) {

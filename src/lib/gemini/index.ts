@@ -14,6 +14,7 @@ import {
   buildNotesPrompt,
   buildEvalPrompt,
   buildQuickAnalysisPrompt,
+  buildFlashcardsPrompt,
 } from "./prompts";
 import {
   parseAnalysisResponse,
@@ -21,10 +22,12 @@ import {
   parseNotesResponse,
   parseEvalResponse,
   parseQuickAnalysisResponse,
+  parseFlashcardsResponse,
   AnalysisResponse,
   QuizResponse,
   EvalResponse,
   QuickAnalysisResponse,
+  FlashcardsResponse,
 } from "./parsers";
 import { QuestionType, Difficulty, Question } from "@/types/quiz";
 
@@ -417,6 +420,38 @@ export async function evaluateAnswer(params: {
 }
 
 /**
+ * Generate flashcards for a topic
+ * CACHED: Same topic won't trigger another API call for 24h
+ */
+export async function generateFlashcards(params: {
+  topicTitle: string;
+  topicSummary: string;
+  cardCount: number;
+  sourceContent?: string;
+}): Promise<FlashcardsResponse['cards']> {
+  // Check cache first
+  const cacheKey = `flashcards_${hashString(params.topicTitle + params.topicSummary + params.cardCount)}`;
+  const cached = getCached<FlashcardsResponse['cards']>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  if (!hasApiKeys()) {
+    throw new Error("NO_API_KEYS: Gemini API keys not configured");
+  }
+
+  const prompt = buildFlashcardsPrompt(params);
+
+  return safeGeminiCall(async (model) => {
+    const result = await model.generateContent(prompt);
+    const response = result.response.text();
+    const { cards } = parseFlashcardsResponse(response);
+    setCache(cacheKey, cards); // Cache the result
+    return cards;
+  });
+}
+
+/**
  * Mock functions for demo mode (when no API keys are configured)
  */
 export function getMockAnalysis(content: string): AnalysisResponse {
@@ -550,8 +585,34 @@ export function getMockNotes(topicTitle: string): string {
 `.trim();
 }
 
+export function getMockFlashcards(count: number): Array<{
+  front: string;
+  back: string;
+  explanation: string;
+  hint?: string;
+  tags: string[];
+  difficulty: 'easy' | 'medium' | 'hard';
+}> {
+  const cards = [];
+  const difficulties: Array<'easy' | 'medium' | 'hard'> = ['easy', 'medium', 'hard'];
+  
+  for (let i = 0; i < count; i++) {
+    const difficulty = difficulties[i % 3];
+    cards.push({
+      front: `What is the key concept ${i + 1}?`,
+      back: `Concept ${i + 1} explanation`,
+      explanation: `This concept is important because it forms the foundation for understanding more advanced topics.`,
+      hint: difficulty === 'hard' ? `Think about the fundamental principles` : undefined,
+      tags: ['concept', 'foundation'],
+      difficulty,
+    });
+  }
+  
+  return cards;
+}
+
 // Re-export utilities from client
 export { hasApiKeys, getQuotaStatus, isMultimodalSupported } from "./client";
 
 // Export types
-export type { AnalysisResponse, QuizResponse, EvalResponse, QuickAnalysisResponse };
+export type { AnalysisResponse, QuizResponse, EvalResponse, QuickAnalysisResponse, FlashcardsResponse };

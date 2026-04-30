@@ -22,6 +22,7 @@ import { SyncIndicator } from '@/components/auth/SyncIndicator';
 const NAV_ITEMS = [
   { path: '/dashboard', label: 'Dashboard' },
   { path: '/quizzes', label: 'Quizzes' },
+  { path: '/flashcards', label: 'Flashcards' },
   { path: '/notes', label: 'Notes' },
   { path: '/stats', label: 'Stats' },
 ];

@@ -1,6 +1,72 @@
 import type { GenerativeModel } from '@google/generative-ai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const GEMINI_API_ROUTE = '/api/gemini-generate';
+const IS_DEV = import.meta.env.DEV;
+
+// Get API keys from environment (only available in dev mode)
+function getDevApiKeys(): string[] {
+  if (!IS_DEV) return [];
+  
+  const keys: string[] = [];
+  for (let i = 1; i <= 10; i++) {
+    const key = import.meta.env[`VITE_GEMINI_API_KEY_${i}`];
+    if (key) keys.push(key);
+  }
+  return keys;
+}
+
+let devKeyIndex = 0;
+const devKeys = getDevApiKeys();
+
+function isQuotaError(message: string): boolean {
+  const lower = message.toLowerCase();
+  return (
+    lower.includes('429') ||
+    lower.includes('quota') ||
+    lower.includes('rate limit') ||
+    lower.includes('resource exhausted')
+  );
+}
+
+// Direct Gemini API call for development
+function createDirectModel(modelName: string): GenerativeModel {
+  if (devKeys.length === 0) {
+    throw new Error('No Gemini API keys configured. Add VITE_GEMINI_API_KEY_1, etc. to .env.local');
+  }
+
+  const directModel = {
+    async generateContent(contents: unknown): Promise<any> {
+      let lastError: Error | null = null;
+      let attempts = 0;
+
+      while (attempts < devKeys.length) {
+        devKeyIndex = (devKeyIndex + 1) % devKeys.length;
+        const key = devKeys[devKeyIndex];
+
+        try {
+          const genAI = new GoogleGenerativeAI(key);
+          const model = genAI.getGenerativeModel({ model: modelName });
+          const result = await model.generateContent(contents as any);
+          return result;
+        } catch (error) {
+          const err = error instanceof Error ? error : new Error(String(error));
+          lastError = err;
+
+          if (!isQuotaError(err.message)) {
+            throw err;
+          }
+
+          attempts += 1;
+        }
+      }
+
+      throw lastError || new Error('All Gemini keys exhausted');
+    },
+  };
+
+  return directModel as unknown as GenerativeModel;
+}
 
 type ProxyGenerateResponse = {
   response: {
@@ -53,16 +119,17 @@ export interface KeyState {
 }
 
 export function hasApiKeys(): boolean {
-  return true;
+  return IS_DEV ? devKeys.length > 0 : true;
 }
 
 export function getModel(modelName: string = 'gemini-2.5-flash-lite'): GenerativeModel {
-  return createProxyModel(modelName);
+  // In development, use direct API calls; in production, use proxy
+  return IS_DEV ? createDirectModel(modelName) : createProxyModel(modelName);
 }
 
 export function getGeminiClient(): { getGenerativeModel: (args: { model: string }) => GenerativeModel } {
   return {
-    getGenerativeModel: ({ model }) => createProxyModel(model),
+    getGenerativeModel: ({ model }) => IS_DEV ? createDirectModel(model) : createProxyModel(model),
   };
 }
 
@@ -102,7 +169,7 @@ export async function safeGeminiCall<T>(
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      const model = createProxyModel(modelName);
+      const model = IS_DEV ? createDirectModel(modelName) : createProxyModel(modelName);
       return await withTimeout(fn(model), timeoutMs);
     } catch (error) {
       lastError = error as Error;

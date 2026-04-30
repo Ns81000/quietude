@@ -258,3 +258,43 @@ export function parseQuickAnalysisResponse(text: string): QuickAnalysisResponse 
     estimatedQuestions: data.estimatedQuestions || 10,
   };
 }
+
+/**
+ * Flashcards response
+ */
+export interface FlashcardsResponse {
+  cards: Array<{
+    front: string;
+    back: string;
+    explanation: string;
+    hint?: string;
+    tags: string[];
+    difficulty: 'easy' | 'medium' | 'hard';
+  }>;
+}
+
+/**
+ * Parse flashcards response
+ */
+export function parseFlashcardsResponse(text: string): FlashcardsResponse {
+  const data = parseJSON<FlashcardsResponse>(text);
+  
+  if (!Array.isArray(data.cards)) {
+    throw new Error("Invalid flashcards response: missing cards array");
+  }
+  
+  // Validate each card
+  data.cards.forEach((card, index) => {
+    if (!card.front || !card.back) {
+      throw new Error(`Invalid card at index ${index}: missing front or back`);
+    }
+    if (!['easy', 'medium', 'hard'].includes(card.difficulty)) {
+      card.difficulty = 'medium'; // Default fallback
+    }
+    if (!Array.isArray(card.tags)) {
+      card.tags = [];
+    }
+  });
+  
+  return data;
+}

@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useRef, useState } from 'react';
-import { LayoutDashboard, FileText, BookOpen, BarChart3, User, LogOut, Download, Upload, Palette, Check, Loader2 } from 'lucide-react';
+import { LayoutDashboard, FileText, BookOpen, BarChart3, User, LogOut, Download, Upload, Palette, Check, Loader2, Layers } from 'lucide-react';
 import { useUserStore } from '@/store/user';
 import { useQuizStore } from '@/store/quiz';
 import { usePathsStore } from '@/store/paths';
@@ -23,6 +23,7 @@ import { SyncIndicator } from '@/components/auth/SyncIndicator';
 const NAV_ITEMS = [
   { path: '/dashboard', icon: LayoutDashboard },
   { path: '/quizzes', icon: FileText },
+  { path: '/flashcards', icon: Layers },
   { path: '/notes', icon: BookOpen },
   { path: '/stats', icon: BarChart3 },
 ];

@@ -329,27 +329,297 @@ export async function deleteNote(userId: string, noteId: string): Promise<boolea
 }
 
 // ============================================
+// Flashcard Decks
+// ============================================
+
+/**
+ * Get all flashcard decks for a user
+ */
+export async function getFlashcardDecks(userId: string): Promise<import('./types').AppFlashcardDeck[]> {
+  if (!isFirebaseConfigured() || !canAccessUserData(userId)) return [];
+  
+  try {
+    const db = getFirebaseDb();
+    const decksRef = collection(db, 'users', userId, 'flashcardDecks');
+    const q = query(decksRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    
+    const { firestoreDeckToApp } = await import('./types');
+    return snapshot.docs.map(doc => 
+      firestoreDeckToApp(doc.id, doc.data() as import('./types').FirestoreFlashcardDeck)
+    );
+  } catch (err) {
+    console.error('[Firestore] Failed to get flashcard decks:', err);
+    return [];
+  }
+}
+
+/**
+ * Get a single flashcard deck
+ */
+export async function getFlashcardDeck(userId: string, deckId: string): Promise<import('./types').AppFlashcardDeck | null> {
+  if (!isFirebaseConfigured() || !canAccessUserData(userId)) return null;
+  
+  try {
+    const db = getFirebaseDb();
+    const deckRef = doc(db, 'users', userId, 'flashcardDecks', deckId);
+    const deckSnap = await getDoc(deckRef);
+    
+    if (!deckSnap.exists()) return null;
+    
+    const { firestoreDeckToApp } = await import('./types');
+    return firestoreDeckToApp(deckId, deckSnap.data() as import('./types').FirestoreFlashcardDeck);
+  } catch (err) {
+    console.error('[Firestore] Failed to get flashcard deck:', err);
+    return null;
+  }
+}
+
+/**
+ * Get flashcard decks by topic
+ */
+export async function getFlashcardDecksByTopic(userId: string, topicId: string): Promise<import('./types').AppFlashcardDeck[]> {
+  if (!isFirebaseConfigured() || !canAccessUserData(userId)) return [];
+  
+  try {
+    const db = getFirebaseDb();
+    const decksRef = collection(db, 'users', userId, 'flashcardDecks');
+    const snapshot = await getDocs(decksRef);
+    
+    const { firestoreDeckToApp } = await import('./types');
+    return snapshot.docs
+      .map(doc => firestoreDeckToApp(doc.id, doc.data() as import('./types').FirestoreFlashcardDeck))
+      .filter(deck => deck.topicId === topicId);
+  } catch (err) {
+    console.error('[Firestore] Failed to get flashcard decks by topic:', err);
+    return [];
+  }
+}
+
+/**
+ * Create or update a flashcard deck
+ */
+export async function saveFlashcardDeck(userId: string, deck: import('./types').AppFlashcardDeck): Promise<boolean> {
+  if (!isFirebaseConfigured() || !canAccessUserData(userId)) return false;
+  
+  try {
+    const db = getFirebaseDb();
+    const deckRef = doc(db, 'users', userId, 'flashcardDecks', deck.id);
+    
+    const { appDeckToFirestore, stringToTimestamp } = await import('./types');
+    const firestoreData = appDeckToFirestore(deck);
+    
+    // Check if exists to set createdAt only on first save
+    const existing = await getDoc(deckRef);
+    if (!existing.exists()) {
+      (firestoreData as any).createdAt = stringToTimestamp(deck.createdAt);
+    }
+    
+    await setDoc(deckRef, firestoreData, { merge: true });
+    return true;
+  } catch (err) {
+    console.error('[Firestore] Failed to save flashcard deck:', err);
+    return false;
+  }
+}
+
+/**
+ * Delete a flashcard deck and all its cards
+ */
+export async function deleteFlashcardDeck(userId: string, deckId: string): Promise<boolean> {
+  if (!isFirebaseConfigured() || !userId || !deckId || !canAccessUserData(userId)) return false;
+  
+  try {
+    const db = getFirebaseDb();
+    const batch = writeBatch(db);
+    
+    // Delete the deck
+    const deckRef = doc(db, 'users', userId, 'flashcardDecks', deckId);
+    batch.delete(deckRef);
+    
+    // Delete all cards in the deck
+    const cardsRef = collection(db, 'users', userId, 'flashcards');
+    const cardsSnapshot = await getDocs(cardsRef);
+    cardsSnapshot.docs.forEach(cardDoc => {
+      const data = cardDoc.data() as import('./types').FirestoreFlashcard;
+      if (data.deckId === deckId) {
+        batch.delete(cardDoc.ref);
+      }
+    });
+    
+    await batch.commit();
+    return true;
+  } catch (err) {
+    console.error('[Firestore] Failed to delete flashcard deck:', err);
+    return false;
+  }
+}
+
+// ============================================
+// Flashcards
+// ============================================
+
+/**
+ * Get all flashcards for a user
+ */
+export async function getFlashcards(userId: string): Promise<import('./types').AppFlashcard[]> {
+  if (!isFirebaseConfigured() || !canAccessUserData(userId)) return [];
+  
+  try {
+    const db = getFirebaseDb();
+    const cardsRef = collection(db, 'users', userId, 'flashcards');
+    const q = query(cardsRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    
+    const { firestoreCardToApp } = await import('./types');
+    return snapshot.docs.map(doc => 
+      firestoreCardToApp(doc.id, doc.data() as import('./types').FirestoreFlashcard)
+    );
+  } catch (err) {
+    console.error('[Firestore] Failed to get flashcards:', err);
+    return [];
+  }
+}
+
+/**
+ * Get flashcards by deck
+ */
+export async function getFlashcardsByDeck(userId: string, deckId: string): Promise<import('./types').AppFlashcard[]> {
+  if (!isFirebaseConfigured() || !canAccessUserData(userId)) return [];
+  
+  try {
+    const db = getFirebaseDb();
+    const cardsRef = collection(db, 'users', userId, 'flashcards');
+    const snapshot = await getDocs(cardsRef);
+    
+    const { firestoreCardToApp } = await import('./types');
+    return snapshot.docs
+      .map(doc => firestoreCardToApp(doc.id, doc.data() as import('./types').FirestoreFlashcard))
+      .filter(card => card.deckId === deckId);
+  } catch (err) {
+    console.error('[Firestore] Failed to get flashcards by deck:', err);
+    return [];
+  }
+}
+
+/**
+ * Get due flashcards for spaced repetition
+ */
+export async function getDueFlashcards(userId: string, deckId: string): Promise<import('./types').AppFlashcard[]> {
+  if (!isFirebaseConfigured() || !canAccessUserData(userId)) return [];
+  
+  try {
+    const cards = await getFlashcardsByDeck(userId, deckId);
+    const now = new Date().toISOString();
+    return cards.filter(card => card.nextReview <= now);
+  } catch (err) {
+    console.error('[Firestore] Failed to get due flashcards:', err);
+    return [];
+  }
+}
+
+/**
+ * Save a single flashcard
+ */
+export async function saveFlashcard(userId: string, card: import('./types').AppFlashcard): Promise<boolean> {
+  if (!isFirebaseConfigured() || !canAccessUserData(userId)) return false;
+  
+  try {
+    const db = getFirebaseDb();
+    const cardRef = doc(db, 'users', userId, 'flashcards', card.id);
+    
+    const { appCardToFirestore, stringToTimestamp } = await import('./types');
+    const firestoreData = appCardToFirestore(card);
+    
+    // Check if exists to set createdAt only on first save
+    const existing = await getDoc(cardRef);
+    if (!existing.exists()) {
+      (firestoreData as any).createdAt = stringToTimestamp(card.createdAt);
+    }
+    
+    await setDoc(cardRef, firestoreData, { merge: true });
+    return true;
+  } catch (err) {
+    console.error('[Firestore] Failed to save flashcard:', err);
+    return false;
+  }
+}
+
+/**
+ * Save multiple flashcards in a batch
+ */
+export async function saveFlashcardsBatch(userId: string, cards: import('./types').AppFlashcard[]): Promise<boolean> {
+  if (!isFirebaseConfigured() || !canAccessUserData(userId) || cards.length === 0) return false;
+  
+  try {
+    const db = getFirebaseDb();
+    const batch = writeBatch(db);
+    const { appCardToFirestore, stringToTimestamp } = await import('./types');
+    
+    for (const card of cards) {
+      const cardRef = doc(db, 'users', userId, 'flashcards', card.id);
+      const firestoreData = appCardToFirestore(card);
+      
+      // Check if exists to set createdAt only on first save
+      const existing = await getDoc(cardRef);
+      if (!existing.exists()) {
+        (firestoreData as any).createdAt = stringToTimestamp(card.createdAt);
+      }
+      
+      batch.set(cardRef, firestoreData, { merge: true });
+    }
+    
+    await batch.commit();
+    return true;
+  } catch (err) {
+    console.error('[Firestore] Failed to save flashcards batch:', err);
+    return false;
+  }
+}
+
+/**
+ * Delete a flashcard
+ */
+export async function deleteFlashcard(userId: string, cardId: string): Promise<boolean> {
+  if (!isFirebaseConfigured() || !userId || !cardId || !canAccessUserData(userId)) return false;
+  
+  try {
+    const db = getFirebaseDb();
+    const cardRef = doc(db, 'users', userId, 'flashcards', cardId);
+    await deleteDoc(cardRef);
+    return true;
+  } catch (err) {
+    console.error('[Firestore] Failed to delete flashcard:', err);
+    return false;
+  }
+}
+
+// ============================================
 // Bulk Operations
 // ============================================
 
 /**
- * Fetch all user data (paths, sessions, notes) in parallel
+ * Fetch all user data (paths, sessions, notes, flashcards) in parallel
  */
 export async function fetchAllUserData(userId: string): Promise<{
   paths: AppLearningPath[];
   sessions: AppQuizSession[];
   notes: AppNote[];
+  flashcardDecks: import('./types').AppFlashcardDeck[];
+  flashcards: import('./types').AppFlashcard[];
 } | null> {
   if (!isFirebaseConfigured() || !canAccessUserData(userId)) return null;
   
   try {
-    const [paths, sessions, notes] = await Promise.all([
+    const [paths, sessions, notes, flashcardDecks, flashcards] = await Promise.all([
       getLearningPaths(userId),
       getQuizSessions(userId),
       getNotes(userId),
+      getFlashcardDecks(userId),
+      getFlashcards(userId),
     ]);
     
-    return { paths, sessions, notes };
+    return { paths, sessions, notes, flashcardDecks, flashcards };
   } catch (err) {
     console.error('[Firestore] Failed to fetch all user data:', err);
     return null;

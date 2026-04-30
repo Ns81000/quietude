@@ -28,8 +28,6 @@ import {
   analyzeFile,
   processFile,
   quickAnalyze,
-  getMockAnalysis,
-  hasApiKeys,
   isMultimodalSupported,
 } from '@/lib/gemini';
 
@@ -635,29 +633,24 @@ function EmptyDashboard({ onNewSubjectCreated }: EmptyDashboardProps = {}) {
     try {
       let analysisResult;
 
-      if (hasApiKeys()) {
-        // Use real API
-        if (content.length > 2000) {
-          analysisResult = await analyzeContent(content);
-        } else {
-          const quickResult = await quickAnalyze(content);
-          analysisResult = {
-            needsStudyPlan: false,
-            subject: quickResult.subject,
-            educationLevel: 'Undergraduate',
-            topicType: 'mixed',
-            topics: [{
-              id: 1,
-              title: quickResult.title,
-              difficulty: quickResult.difficulty,
-              estimatedQuestions: quickResult.estimatedQuestions,
-              summary: quickResult.summary,
-            }],
-          };
-        }
+      // Use real API
+      if (content.length > 2000) {
+        analysisResult = await analyzeContent(content);
       } else {
-        // Use mock data for demo
-        analysisResult = getMockAnalysis(content);
+        const quickResult = await quickAnalyze(content);
+        analysisResult = {
+          needsStudyPlan: false,
+          subject: quickResult.subject,
+          educationLevel: 'Undergraduate',
+          topicType: 'mixed',
+          topics: [{
+            id: 1,
+            title: quickResult.title,
+            difficulty: quickResult.difficulty,
+            estimatedQuestions: quickResult.estimatedQuestions,
+            summary: quickResult.summary,
+          }],
+        };
       }
 
       // Create a learning path from the analysis
@@ -743,7 +736,7 @@ function EmptyDashboard({ onNewSubjectCreated }: EmptyDashboardProps = {}) {
         clearInterval(progressInterval);
         setUploadState((prev) => ({ ...prev, progress: 100 }));
         processContent(text, file.name);
-      } else if (hasApiKeys() && isMultimodalSupported(file.type)) {
+      } else if (isMultimodalSupported(file.type)) {
         // For images, PDFs, audio - use Gemini multimodal
         clearInterval(progressInterval);
         setUploadState((prev) => ({
@@ -890,114 +883,68 @@ function EmptyDashboard({ onNewSubjectCreated }: EmptyDashboardProps = {}) {
         status: 'processing',
       });
 
-      if (hasApiKeys()) {
-        let analysisResult;
-        
-        if (videoInfo.transcript.length > 2000) {
-          analysisResult = await analyzeContent(videoInfo.transcript);
-        } else {
-          const quickResult = await quickAnalyze(videoInfo.transcript);
-          analysisResult = {
-            needsStudyPlan: false,
-            subject: quickResult.subject,
-            educationLevel: 'Undergraduate',
-            topicType: 'mixed',
-            topics: [{
-              id: 1,
-              title: quickResult.title,
-              difficulty: quickResult.difficulty,
-              estimatedQuestions: quickResult.estimatedQuestions,
-              summary: quickResult.summary,
-            }],
-          };
-        }
-
-        const pathId = `path_${Date.now()}`;
-        const learningPath = {
-          id: pathId,
-          user_id: 'local',
-          title: videoInfo.title,
-          subject: analysisResult.subject || videoInfo.title,
-          education_level: analysisResult.educationLevel,
-          topic_type: analysisResult.topicType,
-          needs_study_plan: analysisResult.needsStudyPlan,
-          source_type: 'youtube' as const,
-          source_url: getYouTubeUrl(videoInfo.videoId),
-          topics: analysisResult.topics.map((t) => ({
-            id: `topic_${t.id}`,
-            path_id: pathId,
-            title: t.title,
-            difficulty: t.difficulty,
-            estimated_questions: t.estimatedQuestions,
-            order_index: t.id,
-            is_locked: t.id > 1,
-            summary: t.summary,
-            source_content: videoInfo.transcript,
-          })),
-          source_text: videoInfo.transcript,
-          source_file_name: `YouTube: ${videoInfo.title}`,
-          status: 'active' as const,
-          created_at: new Date().toISOString(),
-        };
-
-        setLearningPath(learningPath);
-        setUploadState((prev) => ({
-          ...prev,
-          status: 'complete',
-          isUploading: false,
-        }));
-
-        toast.success('YouTube video analyzed successfully!');
-        onNewSubjectCreated?.();
-        
-        setTimeout(() => {
-          navigate('/learn');
-        }, 500);
+      let analysisResult;
+      
+      if (videoInfo.transcript.length > 2000) {
+        analysisResult = await analyzeContent(videoInfo.transcript);
       } else {
-        const mockResult = getMockAnalysis(videoInfo.transcript);
-        
-        const pathId = `path_${Date.now()}`;
-        const learningPath = {
-          id: pathId,
-          user_id: 'local',
-          title: videoInfo.title,
-          subject: mockResult.subject || videoInfo.title,
-          education_level: mockResult.educationLevel,
-          topic_type: mockResult.topicType,
-          needs_study_plan: mockResult.needsStudyPlan,
-          source_type: 'youtube' as const,
-          source_url: getYouTubeUrl(videoInfo.videoId),
-          topics: mockResult.topics.map((t) => ({
-            id: `topic_${t.id}`,
-            path_id: pathId,
-            title: t.title,
-            difficulty: t.difficulty,
-            estimated_questions: t.estimatedQuestions,
-            order_index: t.id,
-            is_locked: t.id > 1,
-            summary: t.summary,
-            source_content: videoInfo.transcript,
-          })),
-          source_text: videoInfo.transcript,
-          source_file_name: `YouTube: ${videoInfo.title}`,
-          status: 'active' as const,
-          created_at: new Date().toISOString(),
+        const quickResult = await quickAnalyze(videoInfo.transcript);
+        analysisResult = {
+          needsStudyPlan: false,
+          subject: quickResult.subject,
+          educationLevel: 'Undergraduate',
+          topicType: 'mixed',
+          topics: [{
+            id: 1,
+            title: quickResult.title,
+            difficulty: quickResult.difficulty,
+            estimatedQuestions: quickResult.estimatedQuestions,
+            summary: quickResult.summary,
+          }],
         };
-
-        setLearningPath(learningPath);
-        setUploadState((prev) => ({
-          ...prev,
-          status: 'complete',
-          isUploading: false,
-        }));
-
-        toast.success('YouTube video processed!');
-        onNewSubjectCreated?.();
-        
-        setTimeout(() => {
-          navigate('/learn');
-        }, 500);
       }
+
+      const pathId = `path_${Date.now()}`;
+      const learningPath = {
+        id: pathId,
+        user_id: 'local',
+        title: videoInfo.title,
+        subject: analysisResult.subject || videoInfo.title,
+        education_level: analysisResult.educationLevel,
+        topic_type: analysisResult.topicType,
+        needs_study_plan: analysisResult.needsStudyPlan,
+        source_type: 'youtube' as const,
+        source_url: getYouTubeUrl(videoInfo.videoId),
+        topics: analysisResult.topics.map((t) => ({
+          id: `topic_${t.id}`,
+          path_id: pathId,
+          title: t.title,
+          difficulty: t.difficulty,
+          estimated_questions: t.estimatedQuestions,
+          order_index: t.id,
+          is_locked: t.id > 1,
+          summary: t.summary,
+          source_content: videoInfo.transcript,
+        })),
+        source_text: videoInfo.transcript,
+        source_file_name: `YouTube: ${videoInfo.title}`,
+        status: 'active' as const,
+        created_at: new Date().toISOString(),
+      };
+
+      setLearningPath(learningPath);
+      setUploadState((prev) => ({
+        ...prev,
+        status: 'complete',
+        isUploading: false,
+      }));
+
+      toast.success('YouTube video analyzed successfully!');
+      onNewSubjectCreated?.();
+      
+      setTimeout(() => {
+        navigate('/learn');
+      }, 500);
     } catch (error) {
       const ytError = error as YouTubeError;
       const errorMessage = ytError.userMessage || 'Failed to fetch transcript. Please try another video.';

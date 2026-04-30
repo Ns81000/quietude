@@ -6,10 +6,12 @@ import { ScoreChart } from "@/components/stats/ScoreChart";
 import { ActivityCalendar } from "@/components/stats/ActivityCalendar";
 import { SubjectTable } from "@/components/stats/SubjectTable";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, FileText, Target, Flame, Clock, Sun, Moon, Sunrise, Sunset } from "lucide-react";
+import { BookOpen, FileText, Target, Flame, Clock, Sun, Moon, Sunrise, Sunset, Layers } from "lucide-react";
 import { useSessionsStore } from "@/store/sessions";
 import { useNotesStore } from "@/store/notes";
+import { useFlashcardsStore } from "@/store/flashcards";
 import { usePathsStore, selectActivePath } from "@/store/paths";
+import { getStudyStats } from "@/lib/srs";
 
 export default function StatsPage() {
   const navigate = useNavigate();
@@ -18,11 +20,15 @@ export default function StatsPage() {
   const sessions = useSessionsStore((s) => s.sessions);
   const { getStats } = useSessionsStore();
   const notes = useNotesStore((s) => s.notes);
+  const { cards: flashcards, decks: flashcardDecks } = useFlashcardsStore();
   // Subscribe directly to paths store for reactive learningPath
   const learningPath = usePathsStore(selectActivePath);
   // Get ALL paths for subjects performance
   const allPaths = usePathsStore((s) => s.paths);
   const setActivePath = usePathsStore((s) => s.setActivePath);
+  
+  // Calculate flashcard stats
+  const flashcardStats = useMemo(() => getStudyStats(flashcards), [flashcards]);
   
   // Calculate stats from real sessions
   const stats = useMemo(() => {
@@ -236,7 +242,7 @@ export default function StatsPage() {
         <p className="text-text-soft text-base mb-8">Your learning progress at a glance.</p>
 
         {/* Summary numbers */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -249,7 +255,7 @@ export default function StatsPage() {
               </div>
             </div>
             <p className="font-display text-3xl text-text">{stats.totalQuizzes}</p>
-            <p className="text-xs text-text-muted mt-1">Quizzes taken</p>
+            <p className="text-xs text-text-muted mt-1 whitespace-nowrap">Quizzes taken</p>
           </motion.div>
 
           <motion.div
@@ -264,7 +270,7 @@ export default function StatsPage() {
               </div>
             </div>
             <p className="font-display text-3xl text-text">{stats.notesGenerated}</p>
-            <p className="text-xs text-text-muted mt-1">Notes generated</p>
+            <p className="text-xs text-text-muted mt-1 whitespace-nowrap">Notes generated</p>
           </motion.div>
 
           <motion.div
@@ -279,7 +285,7 @@ export default function StatsPage() {
               </div>
             </div>
             <p className="font-display text-3xl text-text">{stats.topicsMastered}</p>
-            <p className="text-xs text-text-muted mt-1">Topics mastered</p>
+            <p className="text-xs text-text-muted mt-1 whitespace-nowrap">Topics mastered</p>
           </motion.div>
 
           <motion.div
@@ -294,9 +300,54 @@ export default function StatsPage() {
               </div>
             </div>
             <p className="font-display text-3xl text-text">{stats.streak} days</p>
-            <p className="text-xs text-text-muted mt-1">Current streak</p>
+            <p className="text-xs text-text-muted mt-1 whitespace-nowrap">Current streak</p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-surface border border-border rounded-xl p-5"
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
+                <Layers className="w-5 h-5 text-accent" />
+              </div>
+            </div>
+            <p className="font-display text-3xl text-text">{flashcardStats.total}</p>
+            <p className="text-xs text-text-muted mt-1 whitespace-nowrap">Flashcards</p>
           </motion.div>
         </div>
+
+        {/* Flashcard Stats Section - only show if user has flashcards */}
+        {flashcards.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="mb-8"
+          >
+            <h2 className="font-medium text-text mb-4">Flashcard Progress</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-surface border border-border rounded-xl p-4">
+                <p className="text-xs text-text-muted mb-1">Total Decks</p>
+                <p className="font-display text-2xl text-text">{flashcardDecks.length}</p>
+              </div>
+              <div className="bg-surface border border-border rounded-xl p-4">
+                <p className="text-xs text-text-muted mb-1">Due Today</p>
+                <p className="font-display text-2xl text-accent">{flashcardStats.dueToday}</p>
+              </div>
+              <div className="bg-surface border border-border rounded-xl p-4">
+                <p className="text-xs text-text-muted mb-1">Known Cards</p>
+                <p className="font-display text-2xl text-correct">{flashcardStats.known}</p>
+              </div>
+              <div className="bg-surface border border-border rounded-xl p-4">
+                <p className="text-xs text-text-muted mb-1">Accuracy</p>
+                <p className="font-display text-2xl text-text">{flashcardStats.accuracy.toFixed(0)}%</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Charts section - only show if we have data */}
         {hasData ? (

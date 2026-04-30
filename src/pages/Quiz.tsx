@@ -6,6 +6,8 @@ import { useQuizStore, Question } from '@/store/quiz';
 import { usePathsStore, selectActivePath } from '@/store/paths';
 import { useSessionsStore } from '@/store/sessions';
 import { useNotesStore } from '@/store/notes';
+import { useAuthStore } from '@/store/auth';
+import { syncNote, syncQuizSession } from '@/lib/firebase/sync';
 import { ConfigScreen } from '@/components/quiz/ConfigScreen';
 import { QuestionCard } from '@/components/quiz/QuestionCard';
 import { MCQOptions } from '@/components/quiz/MCQOptions';
@@ -21,9 +23,6 @@ import { fuzzyMatch } from '@/lib/answerMatch';
 import {
   generateQuiz,
   generateNotes as genNotes,
-  getMockQuestions,
-  getMockNotes,
-  hasApiKeys,
 } from '@/lib/gemini';
 
 export default function QuizPage() {
@@ -55,6 +54,7 @@ export default function QuizPage() {
 
   const addSession = useSessionsStore((s) => s.addSession);
   const addNote = useNotesStore((s) => s.addNote);
+  const authUserId = useAuthStore((s) => s.userId);
 
   // Derive values directly instead of using selectors that return new objects
   const currentQuestion = questions[currentQuestionIndex] || null;
@@ -143,29 +143,22 @@ export default function QuizPage() {
     const latestConfig = useQuizStore.getState().config;
 
     try {
-      let generatedQuestions: Question[];
+      // Use real Gemini API
+      const rawQuestions = await generateQuiz({
+        topicTitle,
+        topicSummary,
+        questionCount: latestConfig.count,
+        types: latestConfig.types,
+        difficulty: latestConfig.difficulty,
+        isDigDeeper: false,
+        isRetake: false,
+        sourceContent: sourceContent?.slice(0, 15000),
+      });
 
-      if (hasApiKeys()) {
-        // Use real Gemini API
-        const rawQuestions = await generateQuiz({
-          topicTitle,
-          topicSummary,
-          questionCount: latestConfig.count,
-          types: latestConfig.types,
-          difficulty: latestConfig.difficulty,
-          isDigDeeper: false,
-          isRetake: false,
-          sourceContent: sourceContent?.slice(0, 15000),
-        });
-
-        generatedQuestions = rawQuestions.map((q, i) => ({
-          ...q,
-          id: `q${i + 1}`,
-        })) as Question[];
-      } else {
-        // Use mock questions for demo
-        generatedQuestions = getMockQuestions(latestConfig.count, latestConfig.types) as Question[];
-      }
+      const generatedQuestions = rawQuestions.map((q, i) => ({
+        ...q,
+        id: `q${i + 1}`,
+      })) as Question[];
 
       const session = {
         id: `session-${Date.now()}`,
@@ -190,30 +183,8 @@ export default function QuizPage() {
       startQuiz(session, generatedQuestions);
     } catch (error) {
       console.error('Failed to generate quiz:', error);
-      toast.error('Failed to generate quiz. Using demo questions instead.');
-      // Fallback to mock questions - also use latest config
-      const latestConfigFallback = useQuizStore.getState().config;
-      const mockQuestions = getMockQuestions(latestConfigFallback.count, latestConfigFallback.types) as Question[];
-      const session = {
-        id: `session-${Date.now()}`,
-        user_id: 'local-user',
-        topic_id: topicId || currentTopic?.id || 'demo-topic',
-        path_id: pathId || learningPath?.id || 'demo-path',
-        subject: learningPath?.subject || 'General',
-        is_dig_deeper: false,
-        is_retake: false,
-        config: latestConfigFallback,
-        questions: mockQuestions,
-        answers: [],
-        score: null,
-        total: mockQuestions.length,
-        score_pct: null,
-        passed: null,
-        started_at: new Date().toISOString(),
-        submitted_at: null,
-        time_taken_secs: null,
-      };
-      startQuiz(session, mockQuestions);
+      toast.error('Failed to generate quiz. Please try again.');
+      setPhase('config');
     } finally {
       setIsGenerating(false);
     }
@@ -294,6 +265,15 @@ export default function QuizPage() {
     const store = useQuizStore.getState();
     if (store.currentSession) {
       addSession(store.currentSession);
+      
+      // Sync the completed session to Firebase
+      if (authUserId) {
+        try {
+          await syncQuizSession(store.currentSession, authUserId);
+        } catch (error) {
+          console.warn('Failed to sync quiz session to Firebase:', error);
+        }
+      }
     }
   };
 
@@ -322,47 +302,33 @@ export default function QuizPage() {
     // Don't call setNotesPhase() - it changes phase and blanks the screen
     // We handle the loading state locally with isGeneratingNotes
 
-
     try {
-      let notesHtml: string;
-
-      if (hasApiKeys()) {
-        notesHtml = await genNotes({
-          topicTitle,
-          topicSummary,
-          sourceContent: sourceContent?.slice(0, 15000),
-        });
-      } else {
-        notesHtml = getMockNotes(topicTitle);
-      }
-
-      // Save notes to store
-      addNote({
-        id: `note-${Date.now()}`,
-        topic_id: topicFromPath?.id || currentTopic?.id || 'demo-topic',
-        topic_title: topicTitle,
-        subject: learningPath?.subject || 'General',
-        content_html: notesHtml,
-        created_at: new Date().toISOString(),
+      const notesHtml = await genNotes({
+        topicTitle,
+        topicSummary,
+        sourceContent: sourceContent?.slice(0, 15000),
       });
 
-      // Navigate to notes page
-      toast.success('Notes generated successfully!');
-      navigate('/notes');
-    } catch (error) {
-      console.error('Failed to generate notes:', error);
-      toast.error('Failed to generate notes. Using demo notes instead.');
-      // Use mock notes as fallback
-      const mockNotes = getMockNotes(topicTitle);
-      addNote({
-        id: `note-${Date.now()}`,
-        topic_id: topicFromPath?.id || currentTopic?.id || 'demo-topic',
-        topic_title: topicTitle,
-        subject: learningPath?.subject || 'General',
-        content_html: mockNotes,
-        created_at: new Date().toISOString(),
-      });
-      navigate('/notes');
+        const newNote = {
+          id: `note-${Date.now()}`,
+          topic_id: topicFromPath?.id || currentTopic?.id || 'demo-topic',
+          topic_title: topicTitle,
+          subject: learningPath?.subject || 'General',
+          content_html: notesHtml,
+          created_at: new Date().toISOString(),
+        };
+
+        // Save notes to store
+        addNote(newNote);
+
+        // Sync to Firebase if user is logged in
+        if (authUserId) {
+          try {
+            await syncNote(newNote, authUserId);
+          } catch (syncError) {
+            console.warn('Firebase sync failed for note:', syncError);
+          }
+        }
     } finally {
       setIsGeneratingNotes(false);
     }
@@ -375,29 +341,22 @@ export default function QuizPage() {
     const latestConfig = useQuizStore.getState().config;
 
     try {
-      let generatedQuestions: Question[];
+      // Use real Gemini API with isDigDeeper flag for harder questions
+      const rawQuestions = await generateQuiz({
+        topicTitle,
+        topicSummary,
+        questionCount: latestConfig.count,
+        types: latestConfig.types,
+        difficulty: 'advanced',
+        isDigDeeper: true,
+        isRetake: false,
+        sourceContent: sourceContent?.slice(0, 15000),
+      });
 
-      if (hasApiKeys()) {
-        // Use real Gemini API with isDigDeeper flag for harder questions
-        const rawQuestions = await generateQuiz({
-          topicTitle,
-          topicSummary,
-          questionCount: latestConfig.count,
-          types: latestConfig.types,
-          difficulty: 'advanced',
-          isDigDeeper: true,
-          isRetake: false,
-          sourceContent: sourceContent?.slice(0, 15000),
-        });
-
-        generatedQuestions = rawQuestions.map((q, i) => ({
-          ...q,
-          id: `q${i + 1}`,
-        })) as Question[];
-      } else {
-        // Use mock questions for demo
-        generatedQuestions = getMockQuestions(latestConfig.count, latestConfig.types) as Question[];
-      }
+      const generatedQuestions = rawQuestions.map((q, i) => ({
+        ...q,
+        id: `q${i + 1}`,
+      })) as Question[];
 
       const session = {
         id: `session-${Date.now()}`,
@@ -423,29 +382,7 @@ export default function QuizPage() {
       toast.success('Dig deeper quiz started!');
     } catch (error) {
       console.error('Failed to generate dig deeper quiz:', error);
-      toast.error('Failed to generate quiz. Using demo questions instead.');
-      // Fallback to mock questions
-      const mockQuestions = getMockQuestions(latestConfig.count, latestConfig.types) as Question[];
-      const session = {
-        id: `session-${Date.now()}`,
-        user_id: 'local-user',
-        topic_id: topicId || currentTopic?.id || 'demo-topic',
-        path_id: pathId || learningPath?.id || 'demo-path',
-        subject: learningPath?.subject || 'General',
-        is_dig_deeper: true,
-        is_retake: false,
-        config: latestConfig,
-        questions: mockQuestions,
-        answers: [],
-        score: null,
-        total: mockQuestions.length,
-        score_pct: null,
-        passed: null,
-        started_at: new Date().toISOString(),
-        submitted_at: null,
-        time_taken_secs: null,
-      };
-      startQuiz(session, mockQuestions);
+      toast.error('Failed to generate quiz. Please try again.');
     } finally {
       setIsDiggingDeeper(false);
     }
@@ -482,47 +419,51 @@ export default function QuizPage() {
   return (
     <Shell hideNav={phase === 'QUIZ_ACTIVE'}>
       <AnimatePresence mode="wait">
-        {/* Loading / Initial State */}
-        {(phase === 'IDLE' || phase === 'TOPIC_MAP_READY' || phase === 'TOPIC_SELECTED') && (
-          <motion.div
-            key="loading"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex flex-col items-center justify-center min-h-[60vh] gap-4"
-          >
-            <Loader2 className="w-8 h-8 animate-spin text-accent" />
-            <p className="text-text-soft">Loading quiz...</p>
-          </motion.div>
-        )}
+        {(() => {
+          if (phase === 'IDLE' || phase === 'TOPIC_MAP_READY' || phase === 'TOPIC_SELECTED') {
+            return (
+              <motion.div
+                key="loading"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col items-center justify-center min-h-[60vh] gap-4"
+              >
+                <Loader2 className="w-8 h-8 animate-spin text-accent" />
+                <p className="text-text-soft">Loading quiz...</p>
+              </motion.div>
+            );
+          }
 
-        {/* Configuration Screen */}
-        {phase === 'CONFIGURING' && !isGenerating && (
-          <ConfigScreen
-            key="config"
-            topicTitle={topicTitle}
-            topicSummary={topicSummary}
-            onBegin={handleBegin}
-            onBack={() => navigate('/learn')}
-          />
-        )}
+          if (isGenerating) {
+            return (
+              <motion.div
+                key="generating"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col items-center justify-center min-h-[60vh] gap-4"
+              >
+                <Loader2 className="w-8 h-8 animate-spin text-accent" />
+                <p className="text-text-soft">Generating your quiz...</p>
+              </motion.div>
+            );
+          }
 
-        {/* Loading state for quiz generation */}
-        {isGenerating && (
-          <motion.div
-            key="generating"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex flex-col items-center justify-center min-h-[60vh] gap-4"
-          >
-            <Loader2 className="w-8 h-8 animate-spin text-accent" />
-            <p className="text-text-soft">Generating your quiz...</p>
-          </motion.div>
-        )}
+          if (phase === 'CONFIGURING') {
+            return (
+              <ConfigScreen
+                key="config"
+                topicTitle={topicTitle}
+                topicSummary={topicSummary}
+                onBegin={handleBegin}
+                onBack={() => navigate('/learn')}
+              />
+            );
+          }
 
-        {/* Active Quiz */}
-        {phase === 'QUIZ_ACTIVE' && currentQuestion && (
+          if (phase === 'QUIZ_ACTIVE' && currentQuestion) {
+            return (
           <motion.div
             key="quiz"
             initial={{ opacity: 0 }}
@@ -640,25 +581,30 @@ export default function QuizPage() {
               </div>
             </div>
           </motion.div>
-        )}
+            );
+          }
 
-        {/* Result Screens */}
-        {(phase === 'QUIZ_RESULT_PASS' || phase === 'QUIZ_RESULT_FAIL') && currentSession && (
-          <ScoreScreen
-            key="result"
-            score={currentSession.score || 0}
-            total={currentSession.total}
-            passed={currentSession.passed || false}
-            isDigDeeper={currentSession.is_dig_deeper}
-            topicTitle={topicTitle}
-            onGenerateNotes={handleGenerateNotes}
-            onNextTopic={() => navigate('/learn')}
-            onDigDeeper={handleDigDeeper}
-            onReview={() => navigate('/quizzes')}
-            onRetake={startRetake}
-            isLoading={isGeneratingNotes || isDiggingDeeper}
-          />
-        )}
+          if ((phase === 'QUIZ_RESULT_PASS' || phase === 'QUIZ_RESULT_FAIL') && currentSession) {
+            return (
+              <ScoreScreen
+                key="result"
+                score={currentSession.score || 0}
+                total={currentSession.total}
+                passed={currentSession.passed || false}
+                isDigDeeper={currentSession.is_dig_deeper}
+                topicTitle={topicTitle}
+                onGenerateNotes={handleGenerateNotes}
+                onNextTopic={() => navigate('/learn')}
+                onDigDeeper={handleDigDeeper}
+                onReview={() => navigate('/quizzes')}
+                onRetake={startRetake}
+                isLoading={isGeneratingNotes || isDiggingDeeper}
+              />
+            );
+          }
+          
+          return null;
+        })()}
       </AnimatePresence>
     </Shell>
   );

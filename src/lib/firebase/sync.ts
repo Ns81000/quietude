@@ -13,9 +13,14 @@ import {
   deleteLearningPath,
   deleteQuizSession,
   deleteNote,
+  saveFlashcardDeck,
+  saveFlashcard,
+  saveFlashcardsBatch,
+  deleteFlashcardDeck,
+  deleteFlashcard,
   fetchAllUserData,
 } from './firestore';
-import type { AppLearningPath, AppQuizSession, AppNote } from './types';
+import type { AppLearningPath, AppQuizSession, AppNote, AppFlashcardDeck, AppFlashcard } from './types';
 import { get, set, clear } from 'idb-keyval';
 
 // ============================================
@@ -119,10 +124,64 @@ export async function syncNote(note: AppNote, userId: string): Promise<void> {
 }
 
 /**
+ * Sync a flashcard deck to Firestore
+ */
+export async function syncFlashcardDeck(deck: AppFlashcardDeck, userId: string): Promise<void> {
+  if (!isFirebaseConfigured() || !navigator.onLine) {
+    return;
+  }
+  
+  try {
+    notifySyncStatus('syncing');
+    await saveFlashcardDeck(userId, deck);
+    notifySyncStatus('idle');
+  } catch (err) {
+    console.error('[Sync] Failed to sync flashcard deck:', err);
+    notifySyncStatus('error');
+  }
+}
+
+/**
+ * Sync a flashcard to Firestore
+ */
+export async function syncFlashcard(card: AppFlashcard, userId: string): Promise<void> {
+  if (!isFirebaseConfigured() || !navigator.onLine) {
+    return;
+  }
+  
+  try {
+    notifySyncStatus('syncing');
+    await saveFlashcard(userId, card);
+    notifySyncStatus('idle');
+  } catch (err) {
+    console.error('[Sync] Failed to sync flashcard:', err);
+    notifySyncStatus('error');
+  }
+}
+
+/**
+ * Sync multiple flashcards to Firestore in a batch
+ */
+export async function syncFlashcardsBatch(cards: AppFlashcard[], userId: string): Promise<void> {
+  if (!isFirebaseConfigured() || !navigator.onLine || cards.length === 0) {
+    return;
+  }
+  
+  try {
+    notifySyncStatus('syncing');
+    await saveFlashcardsBatch(userId, cards);
+    notifySyncStatus('idle');
+  } catch (err) {
+    console.error('[Sync] Failed to sync flashcards batch:', err);
+    notifySyncStatus('error');
+  }
+}
+
+/**
  * Sync deletion to Firestore
  */
 export async function syncDelete(
-  table: 'learning_paths' | 'quiz_sessions' | 'notes',
+  table: 'learning_paths' | 'quiz_sessions' | 'notes' | 'flashcard_decks' | 'flashcards',
   id: string,
   userId?: string
 ): Promise<void> {
@@ -143,6 +202,12 @@ export async function syncDelete(
         break;
       case 'notes':
         await deleteNote(userId, id);
+        break;
+      case 'flashcard_decks':
+        await deleteFlashcardDeck(userId, id);
+        break;
+      case 'flashcards':
+        await deleteFlashcard(userId, id);
         break;
     }
     

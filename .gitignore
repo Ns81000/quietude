@@ -30,3 +30,4 @@ Re-vision-kokothon--main
 *.njsproj
 *.sln
 *.sw?
+.vercel

@@ -222,3 +222,53 @@ Respond ONLY with valid JSON:
 }
 `.trim();
 }
+
+/**
+ * Build prompt for flashcard generation
+ */
+export function buildFlashcardsPrompt(params: {
+  topicTitle: string;
+  topicSummary: string;
+  cardCount: number;
+  sourceContent?: string;
+}): string {
+  const { topicTitle, topicSummary, cardCount, sourceContent } = params;
+
+  return `
+Generate ${cardCount} flashcards for studying: ${topicTitle}
+Topic summary: ${topicSummary}
+${sourceContent ? `\nSource content:\n${sourceContent.slice(0, 8000)}\n` : ""}
+
+Rules:
+- Front: Clear, concise question (max 15 words)
+- Back: Answer + brief explanation (max 50 words)
+- Difficulty: Mix of easy (40%), medium (40%), hard (20%)
+- Types: 
+  * Definition (30%)
+  * Concept explanation (30%)
+  * Application (20%)
+  * Comparison (10%)
+  * Example (10%)
+- Include hints for hard cards only
+- Add tags for categorization
+
+Respond ONLY with valid JSON. No preamble. No markdown fences.
+
+Schema:
+{
+  "cards": [
+    {
+      "front": "question text",
+      "back": "answer text",
+      "explanation": "brief explanation",
+      "hint": "optional hint for hard cards",
+      "tags": ["tag1", "tag2"],
+      "difficulty": "easy | medium | hard"
+    }
+  ]
+}
+
+Front must be a clear question. Back must be concise answer.
+Explanation provides context. Tags help organize cards.
+`.trim();
+}

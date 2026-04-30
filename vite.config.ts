@@ -6,6 +6,7 @@ import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
+  // In development, proxy to local Vercel dev server
   const devApiTarget = process.env.VITE_DEV_API_TARGET || 'http://localhost:3000';
 
   return {
@@ -17,14 +18,14 @@ export default defineConfig(({ mode }) => {
     hmr: {
       overlay: false,
     },
-    proxy: {
-      // Proxy /api requests to a configurable backend during local dev
+    proxy: mode === 'development' ? {
+      // Proxy /api requests to local Vercel dev server
       '/api': {
         target: devApiTarget,
         changeOrigin: true,
-        secure: devApiTarget.startsWith('https://'),
+        secure: false,
       },
-    },
+    } : undefined,
   },
   plugins: [
     react(),

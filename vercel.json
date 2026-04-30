@@ -6,12 +6,19 @@
   "functions": {
     "api/fetch-transcript.ts": {
       "maxDuration": 30
+    },
+    "api/gemini-generate.ts": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
     {
       "source": "/api/fetch-transcript",
       "destination": "/api/fetch-transcript"
+    },
+    {
+      "source": "/api/gemini-generate",
+      "destination": "/api/gemini-generate"
     },
     {
       "source": "/((?!api|assets|.*\\..*|sw\\.js|workbox-.*\\.js|manifest\\.webmanifest|site\\.webmanifest).*)",

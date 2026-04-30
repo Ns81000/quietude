@@ -15,6 +15,8 @@ const Verify = lazy(() => import("./pages/Verify"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Quizzes = lazy(() => import("./pages/Quizzes"));
+const Flashcards = lazy(() => import("./pages/Flashcards"));
+const FlashcardPractice = lazy(() => import("./pages/FlashcardPractice"));
 const Notes = lazy(() => import("./pages/Notes"));
 const Stats = lazy(() => import("./pages/Stats"));
 const Quiz = lazy(() => import("./pages/Quiz"));
@@ -62,6 +64,8 @@ const App = () => (
                 {/* Protected routes - need authentication AND onboarding */}
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/quizzes" element={<ProtectedRoute><Quizzes /></ProtectedRoute>} />
+                <Route path="/flashcards" element={<ProtectedRoute><Flashcards /></ProtectedRoute>} />
+                <Route path="/flashcards/:deckId/practice" element={<ProtectedRoute><FlashcardPractice /></ProtectedRoute>} />
                 <Route path="/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />
                 <Route path="/stats" element={<ProtectedRoute><Stats /></ProtectedRoute>} />
                 <Route path="/quiz" element={<ProtectedRoute><Quiz /></ProtectedRoute>} />

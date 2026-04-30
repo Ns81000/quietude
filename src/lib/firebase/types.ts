@@ -112,6 +112,69 @@ export interface FirestoreNote {
   updatedAt: Timestamp;
 }
 
+/**
+ * Flashcard deck document
+ * Path: /users/{userId}/flashcardDecks/{deckId}
+ */
+export interface FirestoreFlashcardDeck {
+  name: string;
+  description: string;
+  topicId: string;
+  pathId: string;
+  subject: string;
+  settings: {
+    cardsPerSession: number;
+    showHints: boolean;
+    autoFlip: boolean;
+    autoFlipDelay: number;
+    shuffleOnStart: boolean;
+    soundEnabled: boolean;
+  };
+  stats: {
+    totalCards: number;
+    knownCards: number;
+    learningCards: number;
+    newCards: number;
+    difficultCards: number;
+    lastPracticed: string | null;
+    totalReviews: number;
+    averageScore: number;
+    streak: number;
+  };
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/**
+ * Flashcard document
+ * Path: /users/{userId}/flashcards/{cardId}
+ */
+export interface FirestoreFlashcard {
+  deckId: string;
+  topicId: string;
+  pathId: string;
+  front: string;
+  back: string;
+  hint: string | null;
+  explanation: string | null;
+  tags: string[];
+  difficulty: string;
+  status: string;
+  easeFactor: number;
+  interval: number;
+  repetitions: number;
+  nextReview: Timestamp;
+  lastReviewed: Timestamp | null;
+  timesReviewed: number;
+  timesCorrect: number;
+  timesWrong: number;
+  averageResponseTime: number;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  createdBy: string;
+  relatedCards: string[];
+}
+
 // ============================================
 // App Types (as used in frontend)
 // These mirror the existing app types
@@ -192,6 +255,63 @@ export interface AppNote {
   content_html: string;
   session_id?: string;
   created_at: string;
+}
+
+export interface AppFlashcardDeck {
+  id: string;
+  name: string;
+  description: string;
+  topicId: string;
+  pathId: string;
+  subject: string;
+  settings: {
+    cardsPerSession: number;
+    showHints: boolean;
+    autoFlip: boolean;
+    autoFlipDelay: number;
+    shuffleOnStart: boolean;
+    soundEnabled: boolean;
+  };
+  stats: {
+    totalCards: number;
+    knownCards: number;
+    learningCards: number;
+    newCards: number;
+    difficultCards: number;
+    lastPracticed: string | null;
+    totalReviews: number;
+    averageScore: number;
+    streak: number;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AppFlashcard {
+  id: string;
+  deckId: string;
+  topicId: string;
+  pathId: string;
+  front: string;
+  back: string;
+  hint?: string;
+  explanation?: string;
+  tags: string[];
+  difficulty: string;
+  status: string;
+  easeFactor: number;
+  interval: number;
+  repetitions: number;
+  nextReview: string;
+  lastReviewed: string | null;
+  timesReviewed: number;
+  timesCorrect: number;
+  timesWrong: number;
+  averageResponseTime: number;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  relatedCards: string[];
 }
 
 // ============================================
@@ -374,3 +494,100 @@ export function appNoteToFirestore(note: AppNote): Omit<FirestoreNote, 'createdA
     updatedAt: FirebaseTimestamp.now(),
   };
 }
+
+/**
+ * Convert Firestore flashcard deck to app format
+ */
+export function firestoreDeckToApp(id: string, data: FirestoreFlashcardDeck): AppFlashcardDeck {
+  return {
+    id,
+    name: data.name,
+    description: data.description,
+    topicId: data.topicId,
+    pathId: data.pathId,
+    subject: data.subject,
+    settings: data.settings,
+    stats: data.stats,
+    createdAt: timestampToString(data.createdAt),
+    updatedAt: timestampToString(data.updatedAt),
+  };
+}
+
+/**
+ * Convert app flashcard deck to Firestore format
+ */
+export function appDeckToFirestore(deck: AppFlashcardDeck): Omit<FirestoreFlashcardDeck, 'createdAt'> & { createdAt?: Timestamp; updatedAt: Timestamp } {
+  return {
+    name: deck.name,
+    description: deck.description,
+    topicId: deck.topicId,
+    pathId: deck.pathId,
+    subject: deck.subject,
+    settings: deck.settings,
+    stats: deck.stats,
+    updatedAt: FirebaseTimestamp.now(),
+  };
+}
+
+/**
+ * Convert Firestore flashcard to app format
+ */
+export function firestoreCardToApp(id: string, data: FirestoreFlashcard): AppFlashcard {
+  return {
+    id,
+    deckId: data.deckId,
+    topicId: data.topicId,
+    pathId: data.pathId,
+    front: data.front,
+    back: data.back,
+    hint: data.hint || undefined,
+    explanation: data.explanation || undefined,
+    tags: data.tags,
+    difficulty: data.difficulty,
+    status: data.status,
+    easeFactor: data.easeFactor,
+    interval: data.interval,
+    repetitions: data.repetitions,
+    nextReview: timestampToString(data.nextReview),
+    lastReviewed: data.lastReviewed ? timestampToString(data.lastReviewed) : null,
+    timesReviewed: data.timesReviewed,
+    timesCorrect: data.timesCorrect,
+    timesWrong: data.timesWrong,
+    averageResponseTime: data.averageResponseTime,
+    createdAt: timestampToString(data.createdAt),
+    updatedAt: timestampToString(data.updatedAt),
+    createdBy: data.createdBy,
+    relatedCards: data.relatedCards,
+  };
+}
+
+/**
+ * Convert app flashcard to Firestore format
+ */
+export function appCardToFirestore(card: AppFlashcard): Omit<FirestoreFlashcard, 'createdAt'> & { createdAt?: Timestamp; updatedAt: Timestamp } {
+  return {
+    deckId: card.deckId,
+    topicId: card.topicId,
+    pathId: card.pathId,
+    front: card.front,
+    back: card.back,
+    hint: card.hint || null,
+    explanation: card.explanation || null,
+    tags: card.tags,
+    difficulty: card.difficulty,
+    status: card.status,
+    easeFactor: card.easeFactor,
+    interval: card.interval,
+    repetitions: card.repetitions,
+    nextReview: stringToTimestamp(card.nextReview),
+    lastReviewed: card.lastReviewed ? stringToTimestamp(card.lastReviewed) : null,
+    timesReviewed: card.timesReviewed,
+    timesCorrect: card.timesCorrect,
+    timesWrong: card.timesWrong,
+    averageResponseTime: card.averageResponseTime,
+    updatedAt: FirebaseTimestamp.now(),
+    createdBy: card.createdBy,
+    relatedCards: card.relatedCards,
+  };
+}
+
