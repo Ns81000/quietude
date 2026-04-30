@@ -17,6 +17,7 @@ import { useUserStore } from './user';
 import { usePathsStore } from './paths';
 import { useSessionsStore } from './sessions';
 import { useNotesStore } from './notes';
+import { useFlashcardsStore } from './flashcards';
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -139,6 +140,7 @@ export const useAuthStore = create<AuthState>()(
         usePathsStore.getState().clearAll();
         useSessionsStore.getState().clearAll();
         useNotesStore.getState().clearAll();
+        useFlashcardsStore.getState().clearAll();
         
         // Clear sync queue to prevent old user's pending operations from syncing
         await clearSyncQueue();

@@ -4,6 +4,7 @@ import { useUserStore } from '@/store/user';
 import { usePathsStore } from '@/store/paths';
 import { useSessionsStore } from '@/store/sessions';
 import { useNotesStore } from '@/store/notes';
+import { useFlashcardsStore } from '@/store/flashcards';
 import { useUIStore } from '@/store/ui';
 import { isFirebaseConfigured } from '@/lib/firebase/client';
 import { 
@@ -11,6 +12,8 @@ import {
   syncLearningPath, 
   syncQuizSession, 
   syncNote,
+  syncFlashcardDeck,
+  syncFlashcardsBatch,
   syncDelete,
   processSyncQueue,
   getLastSyncTime,
@@ -312,6 +315,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             pathsStore.clearAll();
             sessionsStore.clearAll();
             notesStore.clearAll();
+            useFlashcardsStore.getState().clearAll();
           }
           
           // Merge server paths with local - always get fresh state to avoid duplicates
@@ -370,6 +374,44 @@ export function AuthProvider({ children }: AuthProviderProps) {
               syncNote(localNote, userId);
             }
           });
+
+          // Merge server flashcard decks with local
+          serverData.flashcardDecks.forEach(serverDeck => {
+            const currentDecks = useFlashcardsStore.getState().decks;
+            const localDeck = currentDecks.find(d => d.id === serverDeck.id);
+            if (!localDeck) {
+              useFlashcardsStore.getState().addDeck(serverDeck);
+            } else {
+              useFlashcardsStore.getState().updateDeck(serverDeck.id, serverDeck);
+            }
+          });
+          
+          const serverDeckIds = new Set(serverData.flashcardDecks.map(d => d.id));
+          const currentDecksAfterMerge = useFlashcardsStore.getState().decks;
+          currentDecksAfterMerge.forEach(localDeck => {
+            if (!serverDeckIds.has(localDeck.id)) {
+              syncFlashcardDeck(localDeck, userId);
+            }
+          });
+
+          // Merge server flashcards with local
+          serverData.flashcards.forEach(serverCard => {
+            const currentCards = useFlashcardsStore.getState().cards;
+            const localCard = currentCards.find(c => c.id === serverCard.id);
+            if (!localCard) {
+              useFlashcardsStore.getState().addCard(serverCard);
+            } else {
+              useFlashcardsStore.getState().updateCard(serverCard.id, serverCard);
+            }
+          });
+
+          const serverCardIds = new Set(serverData.flashcards.map(c => c.id));
+          const currentCardsAfterMerge = useFlashcardsStore.getState().cards;
+          // Sync missing cards in batches
+          const missingCards = currentCardsAfterMerge.filter(c => !serverCardIds.has(c.id));
+          if (missingCards.length > 0) {
+            syncFlashcardsBatch(missingCards, userId);
+          }
           
           setLastSyncTime(new Date());
         }

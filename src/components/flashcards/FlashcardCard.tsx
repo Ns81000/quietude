@@ -32,13 +32,36 @@ export function FlashcardCard({
   };
 
   return (
-    <div className="perspective-1000 w-full min-h-[400px] h-[60vh] max-h-[500px] touch-manipulation select-none" onClick={onFlip}>
-      <div
-        className="relative w-full h-full transition-transform duration-600 cursor-pointer active:scale-[0.99] touch-manipulation"
-        style={{
-          transformStyle: 'preserve-3d',
-          transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+    <div 
+      className="relative w-full min-h-[400px] h-[60vh] max-h-[500px] touch-manipulation select-none [perspective:1500px]" 
+      onClick={onFlip}
+    >
+      {/* Decorative Stack layers beneath the main card to indicate remaining cards */}
+      {cardNumber < totalCards && (
+        <div 
+          className="absolute inset-0 bg-surface border-2 border-border/60 rounded-2xl shadow-sm -z-20 transition-all duration-300"
+          style={{ transform: 'translateY(12px) scale(0.94) translateZ(-40px)' }}
+        />
+      )}
+      {cardNumber < totalCards - 1 && (
+        <div 
+          className="absolute inset-0 bg-surface border-2 border-border/40 rounded-2xl shadow-sm -z-30 transition-all duration-300"
+          style={{ transform: 'translateY(24px) scale(0.88) translateZ(-80px)' }}
+        />
+      )}
+
+      {/* Main Draggable/Flip Container */}
+      <motion.div
+        className="relative w-full h-full cursor-pointer touch-manipulation focus:outline-none"
+        style={{ transformStyle: 'preserve-3d' }}
+        initial={false}
+        animate={{ 
+          rotateY: isFlipped ? 180 : 0,
+          scale: isFlipped ? 1.05 : 1, // Card slightly scales up toward user when flipped
+          boxShadow: isFlipped ? "0 20px 40px -10px rgba(0,0,0,0.2)" : "0 10px 30px -10px rgba(0,0,0,0.1)",
         }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: "spring", stiffness: 100, damping: 20, mass: 1 }}
       >
         {/* Front of Card */}
         <div
@@ -174,7 +197,7 @@ export function FlashcardCard({
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

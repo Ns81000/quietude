@@ -8,6 +8,7 @@ import { fetchAllUserData, clearSyncQueue } from '@/lib/firebase/sync';
 import { usePathsStore } from '@/store/paths';
 import { useSessionsStore } from '@/store/sessions';
 import { useNotesStore } from '@/store/notes';
+import { useFlashcardsStore } from '@/store/flashcards';
 import { useUIStore } from '@/store/ui';
 import { 
   setKnownUserWithBackup, 
@@ -136,6 +137,7 @@ export default function VerifyPage() {
           usePathsStore.getState().clearAll();
           useSessionsStore.getState().clearAll();
           useNotesStore.getState().clearAll();
+          useFlashcardsStore.getState().clearAll();
           // Clear sync queue to prevent old user's pending operations
           await clearSyncQueue();
         }

@@ -28,6 +28,8 @@ export default function FlashcardPracticePage() {
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [isShuffling, setIsShuffling] = useState(false);
+  const [exitDirection, setExitDirection] = useState<'left' | 'right' | null>(null);
 
   useEffect(() => {
     if (hasInitialized) return;
@@ -104,14 +106,19 @@ export default function FlashcardPracticePage() {
     const finalCorrectCount = knew ? correctCount + 1 : correctCount;
     const finalReviewedCount = reviewedCards.size + 1;
 
-    // Move to next card instantly for smooth UI
-    if (currentIndex < sessionCards.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-      // Flip state will be reset by useEffect
-    } else {
-      // Session complete
-      updateDeckStats(finalCorrectCount, finalReviewedCount);
-    }
+    // Trigger visual exit animation first
+    setExitDirection(knew ? 'right' : 'left');
+
+    setTimeout(() => {
+      // Move to next card after animation smoothly completes
+      if (currentIndex < sessionCards.length - 1) {
+        setCurrentIndex(currentIndex + 1);
+        setExitDirection(null);
+      } else {
+        // Session complete
+        updateDeckStats(finalCorrectCount, finalReviewedCount);
+      }
+    }, 450); // Gives user enough time to perceive the consequence.
 
     // Sync to Firebase in the background (Non-blocking)
     if (userId) {
@@ -174,11 +181,20 @@ export default function FlashcardPracticePage() {
   };
 
   const handleShuffle = () => {
-    const shuffled = [...sessionCards].sort(() => Math.random() - 0.5);
-    setSessionCards(shuffled);
-    setCurrentIndex(0);
-    // Flip state will be reset by useEffect
-    toast.success('Deck shuffled!');
+    setIsShuffling(true);
+
+    // Haptic feedback (trigger native vibration if supported by device)
+    if (typeof window !== "undefined" && window.navigator && window.navigator.vibrate) {
+      window.navigator.vibrate([20, 30, 20]);
+    }
+
+    setTimeout(() => {
+      const shuffled = [...sessionCards].sort(() => Math.random() - 0.5);
+      setSessionCards(shuffled);
+      setCurrentIndex(0);
+      setIsShuffling(false);
+      toast.success('Deck shuffled!');
+    }, 400); // match duration of the visual animation
   };
 
   const handleRestart = () => {
@@ -299,13 +315,15 @@ export default function FlashcardPracticePage() {
           </button>
 
           <div className="flex items-center gap-4">
-            <button
+            <motion.button
               onClick={handleShuffle}
+              animate={{ rotate: isShuffling ? 360 : 0 }}
+              transition={{ duration: 0.4 }}
               className="p-2 hover:bg-bg-2 rounded-lg transition-colors"
               title="Shuffle deck"
             >
               <Shuffle size={20} className="text-text-soft" />
-            </button>
+            </motion.button>
             <button
               onClick={handleRestart}
               className="p-2 hover:bg-bg-2 rounded-lg transition-colors"
@@ -334,15 +352,28 @@ export default function FlashcardPracticePage() {
         </div>
 
         {/* Card */}
-        <div className="mb-8">
-          <FlashcardCard
-            card={currentCard}
-            isFlipped={isFlipped}
-            showHint={showHint}
-            onFlip={handleFlip}
-            cardNumber={currentIndex + 1}
-            totalCards={sessionCards.length}
-          />
+        <div className="mb-8 relative perspective-1000">
+          <motion.div
+            key={currentCard.id} // Triggers re-entry for the new card automatically
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ 
+              opacity: isShuffling ? 0 : exitDirection ? 0 : 1, 
+              scale: isShuffling ? 0.9 : exitDirection ? 0.9 : 1,
+              y: isShuffling ? -40 : exitDirection === 'left' ? 40 : exitDirection === 'right' ? -40 : 0,
+              x: exitDirection === 'left' ? -200 : exitDirection === 'right' ? 200 : 0,
+              rotateZ: isShuffling ? Math.random() * 10 - 5 : exitDirection === 'left' ? -10 : exitDirection === 'right' ? 10 : 0 
+            }}
+            transition={{ type: "spring", stiffness: 150, damping: 20 }}
+          >
+            <FlashcardCard
+              card={currentCard}
+              isFlipped={isFlipped}
+              showHint={showHint}
+              onFlip={handleFlip}
+              cardNumber={currentIndex + 1}
+              totalCards={sessionCards.length}
+            />
+          </motion.div>
         </div>
 
         {/* Controls */}

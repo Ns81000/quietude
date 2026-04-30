@@ -556,15 +556,12 @@ export async function saveFlashcardsBatch(userId: string, cards: import('./types
     const batch = writeBatch(db);
     const { appCardToFirestore, stringToTimestamp } = await import('./types');
     
+    // Batch operations directly without getDoc to prevent massive network rate-limiting.
+    // The timestamp merge strategy relies on the client's original createdAt string.
     for (const card of cards) {
       const cardRef = doc(db, 'users', userId, 'flashcards', card.id);
       const firestoreData = appCardToFirestore(card);
-      
-      // Check if exists to set createdAt only on first save
-      const existing = await getDoc(cardRef);
-      if (!existing.exists()) {
-        (firestoreData as any).createdAt = stringToTimestamp(card.createdAt);
-      }
+      (firestoreData as any).createdAt = stringToTimestamp(card.createdAt);
       
       batch.set(cardRef, firestoreData, { merge: true });
     }

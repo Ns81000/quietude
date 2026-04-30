@@ -39,14 +39,14 @@ export function DeckList({ decks }: DeckListProps) {
       for (const card of deckCards) {
         deleteCard(card.id);
         if (userId) {
-          await syncDelete('flashcard', card.id, userId);
+          await syncDelete('flashcards', card.id, userId);
         }
       }
 
       // Delete the deck
       deleteDeck(deck.id);
       if (userId) {
-        await syncDelete('flashcard_deck', deck.id, userId);
+        await syncDelete('flashcard_decks', deck.id, userId);
       }
 
       toast.success('Deck deleted successfully');
