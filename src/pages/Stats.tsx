@@ -392,6 +392,7 @@ export default function StatsPage() {
                   onSubjectClick={(pathId) => {
                     // Set the clicked path as active and navigate to learn page
                     setActivePath(pathId);
+                    window.scrollTo(0, 0);
                     navigate('/learn');
                   }}
                 />

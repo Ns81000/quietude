@@ -414,8 +414,8 @@ function ActiveDashboard() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
                   className={cn(
-                    "flex items-center gap-3 p-4 bg-surface/50 border rounded-xl transition-colors cursor-pointer",
-                    isSelected ? "border-accent/50 bg-accent/5" : "border-border hover:border-text-muted/30"
+                    "flex items-center gap-3 p-4 bg-surface border rounded-xl transition-colors cursor-pointer",
+                    isSelected ? "border-accent/50 bg-accent/5" : "border-border hover:border-text-muted"
                   )}
                   onClick={() => togglePathSelection(path.id)}
                 >
@@ -427,8 +427,8 @@ function ActiveDashboard() {
                   </div>
                   
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-text-muted truncate">{path.subject}</h3>
-                    <p className="text-xs text-text-muted/70">
+                    <h3 className="font-medium text-text truncate">{path.subject}</h3>
+                    <p className="text-xs text-text-soft">
                       {progress.completed}/{progress.total} topics completed
                     </p>
                   </div>
@@ -438,8 +438,8 @@ function ActiveDashboard() {
                       e.stopPropagation();
                       handleRestoreSubject(path.id);
                     }}
-                    className="px-3 py-1.5 text-xs rounded-lg border border-border text-text-muted 
-                               hover:text-text hover:border-text-muted transition-colors"
+                    className="px-3 py-1.5 text-xs rounded-lg border border-border text-text-soft 
+                               hover:text-text hover:border-text-soft transition-colors"
                   >
                     Restore
                   </button>
@@ -1101,7 +1101,7 @@ function EmptyDashboard({ onNewSubjectCreated }: EmptyDashboardProps = {}) {
                       exit={{ opacity: 0, x: 20 }}
                       className={cn(
                         "flex items-center gap-3 p-4 bg-surface border rounded-xl transition-colors cursor-pointer",
-                        isSelected ? "border-accent/50 bg-accent/5" : "border-border hover:border-text-muted/30"
+                        isSelected ? "border-accent/50 bg-accent/5" : "border-border hover:border-text-muted"
                       )}
                       onClick={() => togglePathSelection(path.id)}
                     >
@@ -1114,7 +1114,7 @@ function EmptyDashboard({ onNewSubjectCreated }: EmptyDashboardProps = {}) {
                       
                       <div className="flex-1 min-w-0">
                         <h3 className="font-medium text-text truncate">{path.subject}</h3>
-                        <p className="text-xs text-text-muted">
+                        <p className="text-xs text-text-soft">
                           {progress.completed}/{progress.total} topics completed
                         </p>
                       </div>
@@ -1124,8 +1124,8 @@ function EmptyDashboard({ onNewSubjectCreated }: EmptyDashboardProps = {}) {
                           e.stopPropagation();
                           handleRestoreSubject(path.id);
                         }}
-                        className="px-3 py-1.5 text-xs rounded-lg border border-border text-text-muted 
-                                   hover:text-text hover:border-text-muted transition-colors"
+                        className="px-3 py-1.5 text-xs rounded-lg border border-border text-text-soft 
+                                   hover:text-text hover:border-text-soft transition-colors"
                       >
                         Restore
                       </button>
