@@ -27,18 +27,18 @@
   /* ── Default: Morning Mist ── */
   :root {
     --bg: 0 0% 100%;
-    --bg-2: 210 20% 96%;
+    --bg-2: 30 35% 92%;
     --surface: 0 0% 100%;
-    --border: 210 30% 70%;
-    --text: 220 40% 15%;
-    --text-soft: 220 22% 46%;
-    --text-muted: 220 18% 67%;
-    --accent: 24 100% 55%;
-    --accent-soft: 24 100% 85%;
+    --border: 25 30% 84%;
+    --text: 20 40% 13%;
+    --text-soft: 20 22% 46%;
+    --text-muted: 25 18% 67%;
+    --accent: 18 55% 50%;
+    --accent-soft: 18 55% 85%;
     --accent-text: 0 0% 100%;
-    --correct: 140 100% 40%;
-    --incorrect: 0 100% 50%;
-    --shadow: 220 40% 15%;
+    --correct: 145 35% 36%;
+    --incorrect: 0 48% 49%;
+    --shadow: 20 40% 13%;
 
     --font-display: 'Lora', Georgia, serif;
     --font-body: 'DM Sans', system-ui, sans-serif;
@@ -62,167 +62,167 @@
   /* ── Morning Mist (05:00–10:59) ── */
   [data-theme="morning"] {
     --bg: 0 0% 100%;
-    --bg-2: 210 20% 96%;
+    --bg-2: 30 35% 92%;
     --surface: 0 0% 100%;
-    --border: 210 30% 70%;
-    --text: 220 40% 15%;
-    --text-soft: 220 22% 46%;
-    --text-muted: 220 18% 67%;
-    --accent: 24 100% 55%;
-    --accent-soft: 24 100% 85%;
+    --border: 25 30% 84%;
+    --text: 20 40% 13%;
+    --text-soft: 20 22% 46%;
+    --text-muted: 25 18% 67%;
+    --accent: 18 55% 50%;
+    --accent-soft: 18 55% 85%;
     --accent-text: 0 0% 100%;
-    --correct: 140 100% 40%;
-    --incorrect: 0 100% 50%;
-    --shadow: 220 40% 15%;
+    --correct: 145 35% 36%;
+    --incorrect: 0 48% 49%;
+    --shadow: 20 40% 13%;
   }
 
   /* ── Afternoon Focus (11:00–15:59) ── */
   [data-theme="afternoon"] {
-    --bg: 195 50% 96%;
-    --bg-2: 195 40% 90%;
+    --bg: 0 0% 100%;
+    --bg-2: 40 3% 92%;
     --surface: 0 0% 100%;
-    --border: 195 50% 75%;
-    --text: 200 50% 10%;
-    --text-soft: 200 30% 45%;
-    --text-muted: 200 20% 65%;
-    --accent: 195 100% 45%;
-    --accent-soft: 195 100% 85%;
+    --border: 40 3% 84%;
+    --text: 60 6% 10%;
+    --text-soft: 50 3% 43%;
+    --text-muted: 50 2% 67%;
+    --accent: 205 40% 40%;
+    --accent-soft: 205 40% 87%;
     --accent-text: 0 0% 100%;
-    --correct: 140 100% 40%;
-    --incorrect: 0 100% 50%;
-    --shadow: 200 50% 10%;
+    --correct: 145 35% 36%;
+    --incorrect: 0 48% 49%;
+    --shadow: 60 6% 10%;
   }
 
   /* ── Golden Hour (16:00–18:59) ── */
   [data-theme="golden"] {
-    --bg: 40 60% 95%;
-    --bg-2: 40 50% 88%;
+    --bg: 0 0% 100%;
+    --bg-2: 38 50% 88%;
     --surface: 0 0% 100%;
-    --border: 35 60% 75%;
-    --text: 30 60% 15%;
-    --text-soft: 30 40% 45%;
-    --text-muted: 30 30% 65%;
-    --accent: 30 100% 50%;
-    --accent-soft: 30 100% 85%;
+    --border: 38 40% 80%;
+    --text: 30 60% 11%;
+    --text-soft: 35 50% 37%;
+    --text-muted: 35 30% 60%;
+    --accent: 35 72% 42%;
+    --accent-soft: 42 60% 82%;
     --accent-text: 0 0% 100%;
-    --correct: 140 100% 40%;
-    --incorrect: 0 100% 50%;
-    --shadow: 30 60% 15%;
+    --correct: 145 35% 36%;
+    --incorrect: 0 48% 49%;
+    --shadow: 30 60% 11%;
   }
 
   /* ── Evening Wind (19:00–21:59) ── */
   [data-theme="evening"] {
     --bg: 0 0% 100%;
-    --bg-2: 335 50% 94%;
+    --bg-2: 335 18% 92%;
     --surface: 0 0% 100%;
-    --border: 335 40% 75%;
-    --text: 330 60% 15%;
-    --text-soft: 330 30% 45%;
-    --text-muted: 335 20% 70%;
-    --accent: 335 95% 55%;
-    --accent-soft: 335 95% 88%;
+    --border: 335 12% 84%;
+    --text: 330 45% 11%;
+    --text-soft: 330 24% 45%;
+    --text-muted: 335 16% 70%;
+    --accent: 340 46% 42%;
+    --accent-soft: 340 46% 88%;
     --accent-text: 0 0% 100%;
-    --correct: 140 100% 40%;
-    --incorrect: 0 100% 50%;
-    --shadow: 330 60% 15%;
+    --correct: 145 35% 36%;
+    --incorrect: 0 48% 49%;
+    --shadow: 330 45% 11%;
   }
 
   /* ── Midnight Study (22:00–04:59) ── */
   [data-theme="midnight"] {
-    --bg: 230 80% 10%;
-    --bg-2: 230 60% 15%;
-    --surface: 230 50% 18%;
-    --border: 230 60% 35%;
-    --text: 180 30% 90%;
-    --text-soft: 180 20% 65%;
-    --text-muted: 180 15% 45%;
-    --accent: 180 100% 50%;
-    --accent-soft: 180 100% 80%;
-    --accent-text: 230 80% 10%;
-    --correct: 140 100% 45%;
-    --incorrect: 0 100% 55%;
+    --bg: 220 18% 8%;
+    --bg-2: 220 16% 12%;
+    --surface: 218 18% 15%;
+    --border: 218 16% 21%;
+    --text: 35 20% 88%;
+    --text-soft: 218 10% 58%;
+    --text-muted: 218 8% 35%;
+    --accent: 42 48% 55%;
+    --accent-soft: 42 30% 18%;
+    --accent-text: 220 18% 8%;
+    --correct: 145 32% 42%;
+    --incorrect: 0 55% 55%;
     --shadow: 0 0% 0%;
   }
 
   /* ── Mood Overrides ── */
   [data-mood="sage"] {
     --bg: 0 0% 100%;
-    --bg-2: 120 40% 94%;
+    --bg-2: 105 15% 91%;
     --surface: 0 0% 100%;
-    --border: 120 40% 75%;
-    --text: 120 40% 15%;
-    --text-soft: 120 20% 45%;
-    --text-muted: 120 15% 65%;
-    --accent: 120 90% 40%;
-    --accent-soft: 120 90% 85%;
+    --border: 100 14% 82%;
+    --text: 105 20% 10%;
+    --text-soft: 105 18% 42%;
+    --text-muted: 105 12% 66%;
+    --accent: 105 36% 35%;
+    --accent-soft: 105 36% 84%;
     --accent-text: 0 0% 100%;
-    --correct: 140 100% 40%;
-    --incorrect: 0 100% 50%;
-    --shadow: 120 40% 15%;
+    --correct: 145 35% 36%;
+    --incorrect: 0 48% 49%;
+    --shadow: 105 20% 10%;
   }
 
   [data-mood="storm"] {
     --bg: 0 0% 100%;
-    --bg-2: 215 30% 92%;
+    --bg-2: 218 12% 91%;
     --surface: 0 0% 100%;
-    --border: 215 35% 75%;
-    --text: 220 40% 15%;
-    --text-soft: 218 20% 45%;
-    --text-muted: 218 15% 65%;
-    --accent: 215 90% 45%;
-    --accent-soft: 215 90% 85%;
+    --border: 215 10% 83%;
+    --text: 220 20% 10%;
+    --text-soft: 218 12% 39%;
+    --text-muted: 218 10% 68%;
+    --accent: 218 54% 41%;
+    --accent-soft: 218 54% 87%;
     --accent-text: 0 0% 100%;
-    --correct: 140 100% 40%;
-    --incorrect: 0 100% 50%;
-    --shadow: 220 40% 15%;
+    --correct: 145 35% 36%;
+    --incorrect: 0 48% 49%;
+    --shadow: 220 20% 10%;
   }
 
   [data-mood="sand"] {
     --bg: 0 0% 100%;
-    --bg-2: 35 40% 92%;
+    --bg-2: 32 24% 91%;
     --surface: 0 0% 100%;
-    --border: 35 40% 75%;
-    --text: 30 40% 15%;
-    --text-soft: 30 20% 45%;
-    --text-muted: 30 15% 65%;
-    --accent: 35 95% 50%;
-    --accent-soft: 35 95% 85%;
+    --border: 30 16% 83%;
+    --text: 28 28% 13%;
+    --text-soft: 28 18% 46%;
+    --text-muted: 28 12% 69%;
+    --accent: 30 38% 40%;
+    --accent-soft: 30 38% 83%;
     --accent-text: 0 0% 100%;
-    --correct: 140 100% 40%;
-    --incorrect: 0 100% 50%;
-    --shadow: 30 40% 15%;
+    --correct: 145 35% 36%;
+    --incorrect: 0 48% 49%;
+    --shadow: 28 28% 13%;
   }
 
   [data-mood="plum"] {
     --bg: 0 0% 100%;
-    --bg-2: 290 30% 93%;
+    --bg-2: 290 12% 90%;
     --surface: 0 0% 100%;
-    --border: 290 35% 75%;
-    --text: 290 50% 15%;
-    --text-soft: 290 20% 45%;
-    --text-muted: 290 15% 65%;
-    --accent: 290 95% 50%;
-    --accent-soft: 290 95% 88%;
+    --border: 285 10% 82%;
+    --text: 290 50% 8%;
+    --text-soft: 288 14% 44%;
+    --text-muted: 288 10% 69%;
+    --accent: 285 40% 38%;
+    --accent-soft: 285 40% 88%;
     --accent-text: 0 0% 100%;
-    --correct: 140 100% 40%;
-    --incorrect: 0 100% 50%;
-    --shadow: 290 50% 15%;
+    --correct: 145 35% 36%;
+    --incorrect: 0 48% 49%;
+    --shadow: 290 50% 8%;
   }
 
   [data-mood="ink"] {
     --bg: 0 0% 100%;
-    --bg-2: 220 20% 92%;
+    --bg-2: 40 8% 88%;
     --surface: 0 0% 100%;
-    --border: 220 30% 70%;
-    --text: 220 40% 15%;
-    --text-soft: 220 20% 45%;
-    --text-muted: 220 15% 65%;
-    --accent: 220 90% 50%;
-    --accent-soft: 220 90% 85%;
+    --border: 0 2% 80%;
+    --text: 30 20% 5%;
+    --text-soft: 25 8% 35%;
+    --text-muted: 25 5% 59%;
+    --accent: 30 30% 25%;
+    --accent-soft: 30 8% 82%;
     --accent-text: 0 0% 100%;
-    --correct: 140 100% 40%;
-    --incorrect: 0 100% 50%;
-    --shadow: 220 40% 15%;
+    --correct: 145 35% 36%;
+    --incorrect: 0 48% 49%;
+    --shadow: 30 20% 5%;
   }
   * {
     border-color: hsl(var(--border));
