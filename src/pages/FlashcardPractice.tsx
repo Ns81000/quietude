@@ -31,6 +31,7 @@ export default function FlashcardPracticePage() {
   const [isShuffling, setIsShuffling] = useState(false);
   const [exitDirection, setExitDirection] = useState<'left' | 'right' | null>(null);
 
+  // Initialize session
   useEffect(() => {
     if (hasInitialized) return;
 
@@ -48,12 +49,6 @@ export default function FlashcardPracticePage() {
     setSessionCards(shuffled);
     setHasInitialized(true);
   }, [deck, deckCards, navigate, hasInitialized]);
-
-  // Reset flip state when card changes
-  useEffect(() => {
-    setIsFlipped(false);
-    setShowHint(false);
-  }, [currentIndex]);
 
   if (!deck || sessionCards.length === 0) {
     return null;
@@ -112,6 +107,8 @@ export default function FlashcardPracticePage() {
     setTimeout(() => {
       // Move to next card after animation smoothly completes
       if (currentIndex < sessionCards.length - 1) {
+        setIsFlipped(false);
+        setShowHint(false);
         setCurrentIndex(currentIndex + 1);
         setExitDirection(null);
       } else {
@@ -302,10 +299,10 @@ export default function FlashcardPracticePage() {
   }
 
   return (
-    <Shell>
-      <div className="max-w-4xl mx-auto py-8 px-4">
+    <div className="flex flex-col h-[100dvh] w-full mt-4 bg-bg overflow-hidden text-text">
+      <div className="flex-1 flex flex-col w-full max-w-3xl mx-auto px-4 py-4 md:py-6 min-h-0">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-4 shrink-0">
           <button
             onClick={handleExit}
             className="flex items-center gap-2 text-text-soft hover:text-text transition-colors"
@@ -335,7 +332,7 @@ export default function FlashcardPracticePage() {
         </div>
 
         {/* Progress */}
-        <div className="mb-8">
+        <div className="mb-4 shrink-0">
           <div className="flex items-center justify-between text-sm text-text-muted mb-2">
             <span>{deck.name}</span>
             <span>
@@ -352,18 +349,17 @@ export default function FlashcardPracticePage() {
         </div>
 
         {/* Card */}
-        <div className="mb-8 relative perspective-1000">
+        <div className="flex-1 min-h-0 relative perspective-1000 w-full mb-6">
           <motion.div
             key={currentCard.id} // Triggers re-entry for the new card automatically
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            initial={{ opacity: 0, scale: 0.95, x: exitDirection === 'left' ? 150 : exitDirection === 'right' ? -150 : 0 }}
             animate={{ 
               opacity: isShuffling ? 0 : exitDirection ? 0 : 1, 
               scale: isShuffling ? 0.95 : exitDirection ? 0.95 : 1,
-              y: isShuffling ? -20 : 0,
               x: exitDirection === 'left' ? -150 : exitDirection === 'right' ? 150 : 0,
             }}
             transition={{ type: "spring", stiffness: 260, damping: 30 }}
-            className="will-change-transform"
+            className="absolute inset-0 will-change-transform"
           >
             <FlashcardCard
               card={currentCard}
@@ -377,7 +373,7 @@ export default function FlashcardPracticePage() {
         </div>
 
         {/* Controls */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 shrink-0 min-h-[140px] justify-end">
           {/* Hint Button */}
           {currentCard.hint && !isFlipped && (
             <button
@@ -435,7 +431,7 @@ export default function FlashcardPracticePage() {
         </div>
 
         {/* Stats */}
-        <div className="mt-8 flex items-center justify-center gap-6 text-sm">
+        <div className="mt-4 mb-2 flex items-center justify-center gap-6 text-sm shrink-0 pb-safe">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-correct" />
             <span className="text-text-muted">
@@ -450,6 +446,6 @@ export default function FlashcardPracticePage() {
           </div>
         </div>
       </div>
-    </Shell>
+    </div>
   );
 }

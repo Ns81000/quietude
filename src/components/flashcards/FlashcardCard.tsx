@@ -33,7 +33,7 @@ export function FlashcardCard({
 
   return (
     <div 
-      className="relative w-full min-h-[400px] h-[60vh] max-h-[500px] touch-manipulation select-none [perspective:1500px] pb-6 md:pb-0" 
+      className="relative w-full h-full touch-manipulation select-none [perspective:1500px]" 
       onClick={onFlip}
     >
       {/* Main Draggable/Flip Container */}
