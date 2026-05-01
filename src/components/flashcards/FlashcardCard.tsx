@@ -49,11 +49,10 @@ export function FlashcardCard({
       >
         {/* Front of Card */}
         <div
-          className="absolute inset-0 rounded-2xl overflow-hidden bg-surface border-2 border-border"
+          className="absolute inset-0 rounded-[2rem] overflow-hidden bg-surface border border-border shadow-sm hover:shadow-md transition-shadow"
           style={{
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
-            WebkitFontSmoothing: 'antialiased',
             transform: 'translateZ(1px)', // Forces hardware text-crispness
           }}
         >
@@ -112,11 +111,10 @@ export function FlashcardCard({
 
         {/* Back of Card */}
         <div
-          className="absolute inset-0 rounded-2xl overflow-hidden bg-surface border-2 border-accent/40"
+          className="absolute inset-0 rounded-[2rem] overflow-hidden bg-surface border border-accent/20 shadow-md"
           style={{
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
-            WebkitFontSmoothing: 'antialiased',
             transform: 'rotateY(180deg) translateZ(1px)',
           }}
         >
@@ -147,7 +145,7 @@ export function FlashcardCard({
 
             {/* Answer */}
             <div className="flex-1 flex flex-col justify-center px-2 md:px-4 my-2">
-              <p className="text-2xl md:text-3xl font-bold text-correct text-center mb-4 line-clamp-4 shrink-0">
+              <p className="text-2xl md:text-3xl font-medium text-text text-center mb-4 line-clamp-4 shrink-0">
                 {card.back}
               </p>
 

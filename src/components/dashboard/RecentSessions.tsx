@@ -26,38 +26,41 @@ export function RecentSessions({
 
   return (
     <div className={className}>
-      <h3 className="text-sm text-text-soft font-medium mb-3">Recent sessions</h3>
-      <div className="space-y-2">
+      <h3 className="text-xs uppercase tracking-widest font-semibold text-text-muted mb-4 px-1">Recent Sessions</h3>
+      <div className="space-y-3">
         {sessions.map((session) => (
           <button
             key={session.id}
             onClick={() => onSessionClick?.(session.id)}
             className={cn(
-              'w-full flex items-center justify-between py-3 px-4',
-              'bg-surface border border-border rounded-lg',
-              'hover:border-text-muted transition-colors duration-150 text-left',
+              'w-full flex items-center justify-between p-4',
+              'bg-surface border border-border rounded-xl',
+              'hover:bg-surface/80 hover:shadow-md hover:border-border/80 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300 text-left group',
               !onSessionClick && 'cursor-default'
             )}
           >
-            <div className="flex-1 min-w-0">
-              <span className="text-sm text-text block truncate">
+            <div className="flex-1 min-w-0 pr-4">
+              <span className="text-sm font-medium text-text block truncate group-hover:text-accent transition-colors">
                 {session.topicTitle}
               </span>
-              <span className="text-xs text-text-muted">
+              <span className="text-xs text-text-muted mt-1 block">
                 {formatDistanceToNow(new Date(session.completedAt), { addSuffix: true })}
               </span>
             </div>
-            <div className="flex items-center gap-2 ml-4">
-              <span
-                className={cn(
-                  'text-sm font-medium tabular-nums',
-                  session.score / session.total >= 0.75
-                    ? 'text-correct'
-                    : 'text-text-muted'
-                )}
-              >
-                {session.score}/{session.total}
-              </span>
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="flex flex-col items-end">
+                <span
+                  className={cn(
+                    'text-sm font-bold tabular-nums',
+                    session.score / session.total >= 0.75
+                      ? 'text-correct drop-shadow-[0_0_8px_rgba(var(--correct),0.4)]'
+                      : 'text-text-muted'
+                  )}
+                >
+                  {session.score}/{session.total}
+                </span>
+                <span className="text-[10px] text-text-muted uppercase font-medium tracking-wider">Score</span>
+              </div>
             </div>
           </button>
         ))}

@@ -451,7 +451,7 @@ function ActiveDashboard() {
       </AnimatePresence>
 
       {/* Active Subjects List */}
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {activePaths.map((path) => {
           const progress = getPathProgress(path);
           const isActive = path.id === learningPath.id;
@@ -467,33 +467,33 @@ function ActiveDashboard() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className={cn(
-                "relative p-5 bg-surface border rounded-xl transition-all",
+                "relative p-6 flex flex-col justify-between bg-surface border border-border rounded-2xl transition-all duration-300",
                 isActive 
-                  ? "border-accent/40 shadow-sm ring-1 ring-accent/20" 
-                  : "border-border hover:border-text-muted/30"
+                  ? "ring-1 ring-accent/30 shadow-[0_4px_24px_rgba(var(--accent),0.1)] hover:shadow-[0_8px_32px_rgba(var(--accent),0.15)]" 
+                  : "hover:bg-surface/80 hover:border-border/80 hover:-translate-y-0.5 hover:shadow-md"
               )}
             >
               {/* Active indicator */}
               {isActive && (
-                <div className="absolute top-3 right-3 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide 
-                                bg-accent/10 text-accent rounded-full">
+                <div className="absolute top-4 right-4 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider 
+                                bg-accent/10 border border-accent/20 text-accent rounded-full shadow-sm">
                   Active
                 </div>
               )}
               
               {/* Completed badge */}
               {progress.isComplete && (
-                <div className="absolute top-3 right-3 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide 
-                                bg-correct/10 text-correct rounded-full flex items-center gap-1">
-                  <Check size={10} />
+                <div className="absolute top-4 right-4 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider 
+                                bg-correct/10 text-correct rounded-full flex items-center gap-1 shadow-sm">
+                  <Check size={12} strokeWidth={3} />
                   Complete
                 </div>
               )}
               
-              <div className="flex items-start gap-4">
+              <div className="flex items-start gap-4 mb-6">
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-display text-lg text-text truncate pr-20">{path.subject}</h3>
-                  <p className="text-sm text-text-soft mt-0.5">
+                  <h3 className="font-display text-2xl text-text truncate pr-20">{path.subject}</h3>
+                  <p className="text-sm font-medium text-text-soft mt-1">
                     {progress.isComplete 
                       ? `All ${progress.total} topics completed`
                       : `Next: ${nextTopic?.title}`
@@ -522,45 +522,41 @@ function ActiveDashboard() {
               </div>
               
               {/* Actions */}
-              <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
+              <div className="mt-auto flex items-center justify-between pt-4 border-t border-border">
                 <button
                   onClick={() => {
                     handleSwitchSubject(path.id);
                     navigate('/learn');
                   }}
                   className={cn(
-                    "px-6 py-2 rounded-lg text-sm font-medium transition-all",
+                    "px-7 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 active:scale-95 shadow-sm",
                     progress.isComplete
-                      ? "bg-surface border border-border text-text hover:border-text-muted"
-                      : "bg-accent text-accent-text hover:opacity-90"
+                      ? "bg-bg-2 text-text hover:bg-bg-2/80"
+                      : "bg-accent text-accent-text hover:brightness-110 hover:shadow-accent/20"
                   )}
                 >
                   {progress.isComplete ? 'Review' : 'Continue'}
                 </button>
                 
                 {/* Desktop: Show buttons directly */}
-                <div className="hidden md:flex items-center gap-2">
+                <div className="hidden sm:flex items-center gap-2">
                   <button
                     onClick={() => handleArchiveSubject(path.id)}
-                    className="flex items-center gap-1.5 px-3 py-2 text-sm text-text-muted hover:text-text 
-                               bg-surface border border-border rounded-lg hover:border-text-muted transition-colors"
+                    className="flex flex-col sm:flex-row items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-text-muted hover:text-text hover:bg-bg-2 rounded-lg transition-colors active:scale-95"
                   >
-                    <Archive size={14} />
-                    <span>Archive</span>
+                    <Archive size={16} />
                   </button>
                   <button
                     onClick={() => handleDeleteSubject(path.id)}
-                    className="flex items-center gap-1.5 px-3 py-2 text-sm text-incorrect/80 hover:text-incorrect 
-                               bg-surface border border-border rounded-lg hover:border-incorrect/50 transition-colors"
+                    className="flex flex-col sm:flex-row items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-incorrect/70 hover:text-incorrect hover:bg-incorrect/10 rounded-lg transition-colors active:scale-95"
                   >
-                    <Trash2 size={14} />
-                    <span>Delete</span>
+                    <Trash2 size={16} />
                   </button>
                 </div>
 
                 {/* Mobile: Show dropdown menu */}
                 <DropdownMenu>
-                  <DropdownMenuTrigger className="md:hidden p-2 text-text-muted hover:text-text hover:bg-bg-2 rounded-lg transition-colors">
+                  <DropdownMenuTrigger className="sm:hidden p-2 text-text-muted hover:text-text hover:bg-bg-2 rounded-lg transition-colors active:scale-95">
                     <ChevronDown size={16} />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">

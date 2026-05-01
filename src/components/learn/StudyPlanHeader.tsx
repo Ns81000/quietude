@@ -62,7 +62,7 @@ export function StudyPlanHeader({
               {plan.subject}
             </span>
           </div>
-          <h1 className="font-display text-2xl md:text-3xl text-text font-bold truncate">
+          <h1 className="font-display text-2xl md:text-3xl text-text truncate">
             {plan.title}
           </h1>
         </div>

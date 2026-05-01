@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useRef } from 'react';
+import { motion } from 'framer-motion';
 import { MoodControl } from './MoodControl';
 import { useUserStore } from '@/store/user';
 import { useAuthStore } from '@/store/auth';
@@ -104,19 +105,19 @@ export function TopNav() {
           quietude
         </Link>
         <nav className="flex items-center gap-1">
-          {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`px-3 py-1.5 rounded-md text-sm transition-colors duration-150
-                ${location.pathname === item.path
-                  ? 'text-text font-medium bg-bg-2'
-                  : 'text-text-soft hover:text-text hover:bg-bg-2'
-                }`}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-out
+                  ${isActive ? 'text-accent bg-accent/5 shadow-[inset_0_-2px_0_0_rgba(var(--accent),1)]' : 'text-text-soft hover:text-text hover:bg-bg-2/50'}`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
       </div>
       <div className="flex items-center gap-4">

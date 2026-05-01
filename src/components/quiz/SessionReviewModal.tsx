@@ -80,34 +80,37 @@ export function SessionReviewModal({
           </div>
 
           {/* Footer Navigation */}
-          <div className="flex items-center justify-between p-4 border-t border-border bg-surface">
+          <div className="flex items-center justify-between gap-2 sm:gap-4 p-4 border-t border-border bg-surface">
             <Button
               variant="outline"
               size="sm"
               onClick={goPrevious}
               disabled={currentIndex === 0}
-              className="gap-2"
+              className="gap-1 sm:gap-2 shrink-0 px-2 sm:px-3"
             >
               <ChevronLeft className="w-4 h-4" />
-              Previous
+              <span className="hidden sm:inline">Previous</span>
             </Button>
 
             {/* Progress dots */}
-            <div className="flex gap-1.5">
-              {session.questions.map((q, i) => {
-                const a = session.answers.find((ans) => ans.question_id === q.id);
-                return (
-                  <button
-                    key={q.id}
-                    onClick={() => setCurrentIndex(i)}
-                    className={cn(
-                      'w-2.5 h-2.5 rounded-full transition-all',
-                      i === currentIndex && 'ring-2 ring-accent ring-offset-2 ring-offset-bg',
-                      a?.correct ? 'bg-correct' : 'bg-incorrect'
-                    )}
-                  />
-                );
-              })}
+            <div className="flex-1 overflow-x-auto flex items-center justify-start sm:justify-center gap-2 px-2 py-3 scrollbar-none [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+              <div className="flex items-center gap-2 mx-auto min-w-max px-2">
+                {session.questions.map((q, i) => {
+                  const a = session.answers.find((ans) => ans.question_id === q.id);
+                  const isCurrent = i === currentIndex;
+                  return (
+                    <button
+                      key={q.id}
+                      onClick={() => setCurrentIndex(i)}
+                      className={cn(
+                        'w-2.5 h-2.5 rounded-full transition-all duration-200 shrink-0',
+                        isCurrent ? 'ring-2 ring-accent ring-offset-2 ring-offset-bg scale-125' : 'hover:scale-125',
+                        a?.correct ? 'bg-correct' : 'bg-incorrect'
+                      )}
+                    />
+                  );
+                })}
+              </div>
             </div>
 
             <Button
@@ -115,9 +118,9 @@ export function SessionReviewModal({
               size="sm"
               onClick={goNext}
               disabled={currentIndex === session.questions.length - 1}
-              className="gap-2"
+              className="gap-1 sm:gap-2 shrink-0 px-2 sm:px-3"
             >
-              Next
+              <span className="hidden sm:inline">Next</span>
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
