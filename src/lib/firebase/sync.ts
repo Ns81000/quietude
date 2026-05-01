@@ -38,8 +38,48 @@ export function subscribeSyncStatus(listener: (status: SyncStatus) => void): () 
   };
 }
 
+let activeSyncs = 0;
+let syncTimer: ReturnType<typeof setTimeout> | null = null;
+let currentStatus: SyncStatus = 'idle';
+
 function notifySyncStatus(status: SyncStatus): void {
-  syncListeners.forEach(l => l(status));
+  if (status === 'syncing') {
+    activeSyncs++;
+    if (activeSyncs === 1) {
+      if (syncTimer) clearTimeout(syncTimer);
+      syncTimer = setTimeout(() => {
+        currentStatus = 'syncing';
+        syncListeners.forEach((l) => l('syncing'));
+        syncTimer = null;
+      }, 400); // 400ms delay to prevent quick yellow dot flashes
+    }
+  } else if (status === 'idle') {
+    if (activeSyncs > 0) activeSyncs--;
+    
+    if (activeSyncs === 0) {
+      if (syncTimer) {
+        clearTimeout(syncTimer);
+        syncTimer = null;
+      }
+      if (currentStatus !== 'idle') {
+        currentStatus = 'idle';
+        syncListeners.forEach((l) => l('idle'));
+      }
+    }
+  } else if (status === 'error') {
+    if (activeSyncs > 0) activeSyncs--;
+    
+    if (syncTimer) {
+      clearTimeout(syncTimer);
+      syncTimer = null;
+    }
+    
+    currentStatus = 'error';
+    syncListeners.forEach((l) => l('error'));
+  } else {
+    currentStatus = status;
+    syncListeners.forEach((l) => l(status));
+  }
 }
 
 // ============================================
