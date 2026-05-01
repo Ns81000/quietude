@@ -187,7 +187,7 @@ export function BottomNav() {
 }
 
 // Theme selector component for mobile dropdown
-const MOODS: (MoodTheme | null)[] = [null, 'sage', 'storm', 'sand', 'plum', 'ink'];
+const MOODS: (MoodTheme | null)[] = [null, 'sage', 'storm', 'sand', 'plum', 'ink', 'midnight'];
 
 function ThemeSelector() {
   const { activeMood, setMood } = useUIStore();
@@ -209,6 +209,7 @@ function ThemeSelector() {
             key={mood || 'auto'}
             onClick={() => handleSelect(mood)}
             className={`px-2 py-1.5 text-xs rounded-md transition-colors flex items-center justify-center gap-1
+              ${mood === 'midnight' ? 'col-span-3 mt-1' : ''}
               ${activeMood === mood 
                 ? 'bg-accent text-accent-text' 
                 : 'bg-bg-2 text-text-muted hover:text-text'}`}
