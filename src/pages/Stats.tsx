@@ -238,8 +238,13 @@ export default function StatsPage() {
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
         className="max-w-content mx-auto"
       >
-        <h1 className="font-display text-3xl text-text tracking-tight mb-2">Stats</h1>
-        <p className="text-text-soft text-base mb-8">Your learning progress at a glance.</p>
+        <div className="relative rounded-2xl bg-gradient-to-br from-accent/8 via-transparent to-transparent border border-accent/8 p-6 mb-8 overflow-hidden">
+          <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-accent/6 blur-2xl" />
+          <div className="relative">
+            <h1 className="font-display text-3xl text-text tracking-tight mb-1">Stats</h1>
+            <p className="text-text-soft text-sm">Your learning progress at a glance.</p>
+          </div>
+        </div>
 
         {/* Summary numbers */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
@@ -247,7 +252,7 @@ export default function StatsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-surface border border-border rounded-xl p-5"
+            className="bg-surface border border-border rounded-xl p-5 hover:shadow-md hover:border-accent/20 transition-all duration-300"
           >
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
@@ -262,11 +267,11 @@ export default function StatsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className="bg-surface border border-border rounded-xl p-5"
+            className="bg-surface border border-border rounded-xl p-5 hover:shadow-md hover:border-accent/20 transition-all duration-300"
           >
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                <FileText className="w-5 h-5 text-accent" />
+              <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                <FileText className="w-5 h-5 text-blue-500" />
               </div>
             </div>
             <p className="font-display text-3xl text-text">{stats.notesGenerated}</p>
@@ -277,7 +282,7 @@ export default function StatsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-surface border border-border rounded-xl p-5"
+            className="bg-surface border border-border rounded-xl p-5 hover:shadow-md hover:border-correct/20 transition-all duration-300"
           >
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-lg bg-correct/10 flex items-center justify-center">
@@ -292,7 +297,7 @@ export default function StatsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25 }}
-            className="bg-surface border border-border rounded-xl p-5"
+            className="bg-surface border border-border rounded-xl p-5 hover:shadow-md hover:border-orange-500/20 transition-all duration-300"
           >
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
@@ -307,11 +312,11 @@ export default function StatsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-surface border border-border rounded-xl p-5"
+            className="bg-surface border border-border rounded-xl p-5 hover:shadow-md hover:border-accent/20 transition-all duration-300"
           >
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                <Layers className="w-5 h-5 text-accent" />
+              <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                <Layers className="w-5 h-5 text-violet-500" />
               </div>
             </div>
             <p className="font-display text-3xl text-text">{flashcardStats.total}</p>
@@ -470,21 +475,35 @@ export default function StatsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-surface border border-border rounded-xl p-10 text-center"
+            className="relative bg-surface border border-border rounded-2xl p-10 text-center overflow-hidden"
           >
-            <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
-              <BookOpen className="w-8 h-8 text-accent" />
+            {/* Decorative elements */}
+            <div className="absolute top-6 left-8 text-accent/10">
+              <Target size={20} />
             </div>
+            <div className="absolute bottom-6 right-10 text-accent/8">
+              <Flame size={22} />
+            </div>
+            <div className="absolute top-1/2 right-6 w-16 h-16 rounded-full bg-accent/5 -translate-y-1/2" />
+            
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-accent/15 to-accent/5 flex items-center justify-center mx-auto mb-5"
+            >
+              <BookOpen className="w-7 h-7 text-accent" />
+            </motion.div>
             <h3 className="font-display text-xl text-text mb-2">
               No stats yet
             </h3>
-            <p className="text-text-soft text-sm mb-6 max-w-sm mx-auto">
+            <p className="text-text-soft text-sm mb-6 max-w-sm mx-auto leading-relaxed">
               Complete your first quiz to start tracking your learning progress. We'll show you detailed charts and insights here.
             </p>
             <button
               onClick={() => navigate('/dashboard')}
               className="px-6 py-2.5 rounded-lg bg-accent text-accent-text text-sm font-medium
-                         hover:opacity-90 transition-opacity duration-150"
+                         hover:opacity-90 transition-opacity duration-150 shadow-sm"
             >
               Start Learning
             </button>

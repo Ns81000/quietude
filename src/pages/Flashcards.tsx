@@ -50,10 +50,15 @@ export default function Flashcards() {
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
         className="max-w-content mx-auto"
       >
-        <h1 className="font-display text-3xl text-text tracking-tight mb-2">Flashcards</h1>
-        <p className="text-text-soft text-base mb-8">
-          Master your subjects with spaced repetition.
-        </p>
+        <div className="relative rounded-2xl bg-gradient-to-br from-accent/8 via-transparent to-transparent border border-accent/8 p-6 mb-8 overflow-hidden">
+          <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-accent/6 blur-2xl" />
+          <div className="relative">
+            <h1 className="font-display text-3xl text-text tracking-tight mb-1">Flashcards</h1>
+            <p className="text-text-soft text-sm">
+              Master your subjects with spaced repetition.
+            </p>
+          </div>
+        </div>
 
         {/* Filters and search */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -90,13 +95,22 @@ export default function Flashcards() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-surface border border-border rounded-xl p-12 text-center"
+            className="relative bg-surface border border-border rounded-2xl p-12 text-center overflow-hidden"
           >
-            <Layers className="w-12 h-12 text-text-muted mx-auto mb-4" />
+            {/* Decorative elements */}
+            <div className="absolute top-6 right-8 text-accent/10">
+              <Layers size={24} />
+            </div>
+            <div className="absolute bottom-8 left-10 w-14 h-14 rounded-full bg-accent/5" />
+            <div className="absolute top-1/3 right-6 w-8 h-8 rounded-full bg-correct/5" />
+            
             {searchQuery || subjectFilter !== 'all' ? (
               <>
-                <h3 className="font-medium text-text mb-2">No decks found</h3>
-                <p className="text-text-soft text-sm mb-4">
+                <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-accent/15 to-accent/5 flex items-center justify-center mx-auto mb-5">
+                  <Layers className="w-6 h-6 text-accent" />
+                </div>
+                <h3 className="font-display text-lg text-text mb-2">No decks found</h3>
+                <p className="text-text-soft text-sm mb-5 max-w-xs mx-auto">
                   Try adjusting your search or filters.
                 </p>
                 <button
@@ -112,14 +126,17 @@ export default function Flashcards() {
               </>
             ) : (
               <>
-                <h3 className="font-medium text-text mb-2">No flashcard decks yet</h3>
-                <p className="text-text-soft text-sm mb-4">
+                <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-accent/15 to-accent/5 flex items-center justify-center mx-auto mb-5">
+                  <Layers className="w-6 h-6 text-accent" />
+                </div>
+                <h3 className="font-display text-lg text-text mb-2">No flashcard decks yet</h3>
+                <p className="text-text-soft text-sm mb-5 max-w-xs mx-auto leading-relaxed">
                   Create flashcards from your learning topics to practice with spaced repetition.
                 </p>
                 <button
                   onClick={() => navigate('/learn')}
                   className="px-6 py-2.5 rounded-lg bg-accent text-accent-text text-sm font-medium
-                             hover:opacity-90 transition-opacity duration-150"
+                             hover:opacity-90 transition-opacity duration-150 shadow-sm"
                 >
                   Browse Topics
                 </button>

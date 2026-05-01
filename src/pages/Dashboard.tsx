@@ -66,14 +66,20 @@ export default function DashboardPage() {
   return (
     <Shell>
       <div>
-        {/* Greeting */}
-        <div className="mb-8">
-          <h1 className="font-display text-3xl text-text tracking-tight">
-            {getGreeting(studyTime)}, {name || 'there'}
-          </h1>
-          <p className="text-text-soft text-base mt-1">
-            {getSubGreeting(hasActivePath, studyTime)}
-          </p>
+        {/* Greeting Hero */}
+        <div className="relative mb-8 rounded-2xl bg-gradient-to-br from-accent/10 via-accent/5 to-transparent border border-accent/10 p-8 overflow-hidden">
+          {/* Decorative ambient shapes */}
+          <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-accent/8 blur-2xl" />
+          <div className="absolute -bottom-6 -left-6 w-32 h-32 rounded-full bg-accent/5 blur-xl" />
+          
+          <div className="relative">
+            <h1 className="font-display text-3xl md:text-4xl text-text tracking-tight">
+              {getGreeting(studyTime)}, {name || 'there'}
+            </h1>
+            <p className="text-text-soft text-base mt-2 max-w-md">
+              {getSubGreeting(hasActivePath, studyTime)}
+            </p>
+          </div>
         </div>
 
         {hasActivePath ? (

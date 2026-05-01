@@ -99,9 +99,9 @@ export function TopNav() {
   };
 
   return (
-    <header className="hidden md:flex items-center justify-between px-8 py-4 border-b border-border bg-surface themed">
+    <header className="hidden md:flex items-center justify-between px-8 py-4 border-b border-border/60 bg-surface/80 backdrop-blur-xl sticky top-0 z-30 themed">
       <div className="flex items-center gap-10">
-        <Link to="/dashboard" className="font-display text-xl text-text tracking-tight">
+        <Link to="/dashboard" className="font-display text-xl text-accent tracking-tight">
           quietude
         </Link>
         <nav className="flex items-center gap-1">

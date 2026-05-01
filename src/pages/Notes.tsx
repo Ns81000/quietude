@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Filter, ArrowLeft, FileText, Trash2, Download } from "lucide-react";
+import { Search, Filter, ArrowLeft, FileText, Trash2, Download, Sparkles, BookOpen } from "lucide-react";
 import { useNotesStore, Note } from "@/store/notes";
 import { exportNoteToPDF } from "@/lib/pdfExport";
 import { toast } from "sonner";
@@ -172,8 +172,13 @@ export default function NotesPage() {
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
         className="max-w-content mx-auto"
       >
-        <h1 className="font-display text-3xl text-text tracking-tight mb-2">Notes</h1>
-        <p className="text-text-soft text-base mb-8">All your generated study notes.</p>
+        <div className="relative rounded-2xl bg-gradient-to-br from-accent/8 via-transparent to-transparent border border-accent/8 p-6 mb-8 overflow-hidden">
+          <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-accent/6 blur-2xl" />
+          <div className="relative">
+            <h1 className="font-display text-3xl text-text tracking-tight mb-1">Notes</h1>
+            <p className="text-text-soft text-sm">All your generated study notes.</p>
+          </div>
+        </div>
         
         {/* Filters and search */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -235,13 +240,24 @@ export default function NotesPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-surface border border-border rounded-xl p-12 text-center"
+            className="relative bg-surface border border-border rounded-2xl p-12 text-center overflow-hidden"
           >
-            <FileText className="w-12 h-12 text-text-muted mx-auto mb-4" />
+            {/* Decorative elements */}
+            <div className="absolute top-6 right-10 text-accent/10">
+              <Sparkles size={22} />
+            </div>
+            <div className="absolute bottom-6 left-8 text-accent/8">
+              <BookOpen size={26} />
+            </div>
+            <div className="absolute top-1/3 left-6 w-12 h-12 rounded-full bg-accent/5" />
+            
             {searchQuery || subjectFilter !== "all" ? (
               <>
-                <h3 className="font-medium text-text mb-2">No notes found</h3>
-                <p className="text-text-soft text-sm mb-4">
+                <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-accent/15 to-accent/5 flex items-center justify-center mx-auto mb-5">
+                  <FileText className="w-6 h-6 text-accent" />
+                </div>
+                <h3 className="font-display text-lg text-text mb-2">No notes found</h3>
+                <p className="text-text-soft text-sm mb-5 max-w-xs mx-auto">
                   Try adjusting your search or filters.
                 </p>
                 <Button
@@ -256,9 +272,12 @@ export default function NotesPage() {
               </>
             ) : (
               <>
-                <h3 className="font-medium text-text mb-2">No notes yet</h3>
-                <p className="text-text-soft text-sm mb-4">
-                  Notes are generated when you don't pass a quiz. They help you learn the material you missed.
+                <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-accent/15 to-accent/5 flex items-center justify-center mx-auto mb-5">
+                  <FileText className="w-6 h-6 text-accent" />
+                </div>
+                <h3 className="font-display text-lg text-text mb-2">No notes yet</h3>
+                <p className="text-text-soft text-sm mb-5 max-w-xs mx-auto leading-relaxed">
+                  Notes are generated when you don't pass a quiz. They capture exactly what you need to review.
                 </p>
                 <Button onClick={() => navigate("/dashboard")}>
                   Start Learning

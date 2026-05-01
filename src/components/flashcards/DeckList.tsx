@@ -68,6 +68,13 @@ export function DeckList({ decks }: DeckListProps) {
             ? (deck.stats.knownCards / deck.stats.totalCards) * 100
             : 0;
 
+          // SVG ring dimensions
+          const ringSize = 44;
+          const strokeWidth = 3.5;
+          const radius = (ringSize - strokeWidth) / 2;
+          const circumference = 2 * Math.PI * radius;
+          const strokeDashoffset = circumference - (progressPercent / 100) * circumference;
+
           return (
             <motion.div
               key={deck.id}
@@ -79,8 +86,8 @@ export function DeckList({ decks }: DeckListProps) {
               className="relative"
             >
               <div
-                className="w-full bg-surface border border-border/80 rounded-2xl p-5 
-                           hover:border-accent/50 hover:shadow-md hover:-translate-y-1 shadow-sm transition-all duration-300 group relative"
+                className="w-full bg-surface border border-border/80 rounded-2xl p-5
+                           hover:border-accent/40 hover:shadow-md hover:-translate-y-1 shadow-sm transition-all duration-300 group relative"
               >
                 {/* Delete Button */}
                 <button
@@ -97,38 +104,69 @@ export function DeckList({ decks }: DeckListProps) {
                   onClick={() => handleDeckClick(deck.id)}
                   className="cursor-pointer"
                 >
-                  {/* Header */}
-                  <div className="mb-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-accent/10 text-accent">
-                        {deck.subject}
-                      </span>
-                      {dueCount > 0 && (
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-500">
-                          {dueCount} due
+                  {/* Header with progress ring */}
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-accent/10 text-accent">
+                          {deck.subject}
                         </span>
-                      )}
+                        {dueCount > 0 && (
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-500">
+                            {dueCount} due
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="font-medium text-text text-lg truncate">
+                        {deck.name}
+                      </h3>
                     </div>
-                    <h3 className="font-medium text-text text-lg truncate">
-                      {deck.name}
-                    </h3>
+
+                    {/* Mini progress ring */}
+                    <div className="flex-shrink-0 relative">
+                      <svg width={ringSize} height={ringSize} className="-rotate-90">
+                        <circle
+                          cx={ringSize / 2}
+                          cy={ringSize / 2}
+                          r={radius}
+                          fill="none"
+                          stroke="hsl(var(--bg-2))"
+                          strokeWidth={strokeWidth}
+                        />
+                        <circle
+                          cx={ringSize / 2}
+                          cy={ringSize / 2}
+                          r={radius}
+                          fill="none"
+                          stroke="hsl(var(--correct))"
+                          strokeWidth={strokeWidth}
+                          strokeDasharray={circumference}
+                          strokeDashoffset={strokeDashoffset}
+                          strokeLinecap="round"
+                          className="transition-all duration-700 ease-out"
+                        />
+                      </svg>
+                      <span className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-text">
+                        {Math.round(progressPercent)}%
+                      </span>
+                    </div>
                   </div>
 
                   {/* Stats */}
                   <div className="grid grid-cols-3 gap-2 mb-3">
-                    <div className="text-center">
+                    <div className="text-center p-2 rounded-lg bg-bg-2/50">
                       <p className="text-xs text-text-muted mb-0.5">Cards</p>
                       <p className="text-sm font-semibold text-text">
                         {deck.stats.totalCards}
                       </p>
                     </div>
-                    <div className="text-center">
+                    <div className="text-center p-2 rounded-lg bg-correct/5">
                       <p className="text-xs text-text-muted mb-0.5">Known</p>
                       <p className="text-sm font-semibold text-correct">
                         {deck.stats.knownCards}
                       </p>
                     </div>
-                    <div className="text-center">
+                    <div className="text-center p-2 rounded-lg bg-bg-2/50">
                       <p className="text-xs text-text-muted mb-0.5">Score</p>
                       <p className="text-sm font-semibold text-text">
                         {deck.stats.averageScore.toFixed(0)}%
@@ -136,10 +174,10 @@ export function DeckList({ decks }: DeckListProps) {
                     </div>
                   </div>
 
-                  {/* Practice Button - Always Visible */}
+                  {/* Practice CTA */}
                   <div className="flex items-center justify-center gap-2 mt-4 pt-3 border-t border-border 
-                                  text-accent transition-all">
-                    <Play size={14} />
+                                  text-accent group-hover:text-accent transition-all">
+                    <Play size={14} className="group-hover:translate-x-0.5 transition-transform duration-200" />
                     <span className="text-sm font-medium">Practice Now</span>
                   </div>
                 </div>

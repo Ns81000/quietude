@@ -26,7 +26,7 @@
 @layer base {
   /* ── Default: Morning Mist ── */
   :root {
-    --bg: 0 0% 100%;
+    --bg: 30 30% 96%;
     --bg-2: 30 35% 92%;
     --surface: 0 0% 100%;
     --border: 25 30% 84%;
@@ -61,9 +61,9 @@
 
   /* ── Morning Mist (05:00–10:59) ── */
   [data-theme="morning"] {
-    --bg: 0 0% 100%;
+    --bg: 30 30% 96%;
     --bg-2: 30 35% 92%;
-    --surface: 0 0% 100%;
+    --surface: 30 20% 99%;
     --border: 25 30% 84%;
     --text: 20 40% 13%;
     --text-soft: 20 22% 46%;
@@ -78,9 +78,9 @@
 
   /* ── Afternoon Focus (11:00–15:59) ── */
   [data-theme="afternoon"] {
-    --bg: 0 0% 100%;
+    --bg: 220 6% 96%;
     --bg-2: 40 3% 92%;
-    --surface: 0 0% 100%;
+    --surface: 220 4% 99%;
     --border: 40 3% 84%;
     --text: 60 6% 10%;
     --text-soft: 50 3% 43%;
@@ -95,9 +95,9 @@
 
   /* ── Golden Hour (16:00–18:59) ── */
   [data-theme="golden"] {
-    --bg: 0 0% 100%;
+    --bg: 38 40% 95%;
     --bg-2: 38 50% 88%;
-    --surface: 0 0% 100%;
+    --surface: 38 25% 99%;
     --border: 38 40% 80%;
     --text: 30 60% 11%;
     --text-soft: 35 50% 37%;
@@ -112,9 +112,9 @@
 
   /* ── Evening Wind (19:00–21:59) ── */
   [data-theme="evening"] {
-    --bg: 0 0% 100%;
+    --bg: 335 14% 96%;
     --bg-2: 335 18% 92%;
-    --surface: 0 0% 100%;
+    --surface: 335 10% 99%;
     --border: 335 12% 84%;
     --text: 330 45% 11%;
     --text-soft: 330 24% 45%;
@@ -146,9 +146,9 @@
 
   /* ── Mood Overrides ── */
   [data-mood="sage"] {
-    --bg: 0 0% 100%;
+    --bg: 105 12% 96%;
     --bg-2: 105 15% 91%;
-    --surface: 0 0% 100%;
+    --surface: 105 8% 99%;
     --border: 100 14% 82%;
     --text: 105 20% 10%;
     --text-soft: 105 18% 42%;
@@ -162,9 +162,9 @@
   }
 
   [data-mood="storm"] {
-    --bg: 0 0% 100%;
+    --bg: 218 10% 96%;
     --bg-2: 218 12% 91%;
-    --surface: 0 0% 100%;
+    --surface: 218 6% 99%;
     --border: 215 10% 83%;
     --text: 220 20% 10%;
     --text-soft: 218 12% 39%;
@@ -178,9 +178,9 @@
   }
 
   [data-mood="sand"] {
-    --bg: 0 0% 100%;
+    --bg: 32 20% 96%;
     --bg-2: 32 24% 91%;
-    --surface: 0 0% 100%;
+    --surface: 32 12% 99%;
     --border: 30 16% 83%;
     --text: 28 28% 13%;
     --text-soft: 28 18% 46%;
@@ -194,9 +194,9 @@
   }
 
   [data-mood="plum"] {
-    --bg: 0 0% 100%;
+    --bg: 290 10% 96%;
     --bg-2: 290 12% 90%;
-    --surface: 0 0% 100%;
+    --surface: 290 6% 99%;
     --border: 285 10% 82%;
     --text: 290 50% 8%;
     --text-soft: 288 14% 44%;
@@ -210,9 +210,9 @@
   }
 
   [data-mood="ink"] {
-    --bg: 0 0% 100%;
+    --bg: 40 6% 95%;
     --bg-2: 40 8% 88%;
-    --surface: 0 0% 100%;
+    --surface: 40 4% 99%;
     --border: 0 2% 80%;
     --text: 30 20% 5%;
     --text-soft: 25 8% 35%;
@@ -335,9 +335,11 @@ body::before {
   position: fixed;
   inset: 0;
   z-index: -2;
-  background: radial-gradient(circle at 50% 0%, hsl(var(--accent) / 0.15) 0%, transparent 60%),
-              radial-gradient(circle at 100% 100%, hsl(var(--accent) / 0.1) 0%, transparent 50%);
+  background: radial-gradient(ellipse 80% 50% at 50% -10%, hsl(var(--accent) / 0.18) 0%, transparent 60%),
+              radial-gradient(ellipse 60% 40% at 100% 100%, hsl(var(--accent) / 0.12) 0%, transparent 50%),
+              radial-gradient(ellipse 50% 60% at 0% 60%, hsl(var(--accent) / 0.06) 0%, transparent 50%);
   pointer-events: none;
+  transition: background var(--duration-theme) var(--ease);
 }
 
 body::after {
@@ -346,7 +348,7 @@ body::after {
   inset: 0;
   z-index: -1;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.04;
+  opacity: 0.06;
   pointer-events: none;
   mix-blend-mode: overlay;
 }

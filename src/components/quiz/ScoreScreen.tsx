@@ -56,29 +56,60 @@ export function ScoreScreen({
       </p>
       <h1 className="font-display text-2xl text-text mb-8">{topicTitle}</h1>
 
-      {/* Score display */}
+      {/* Score display with ring */}
       <div className="mb-6">
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2, ease: [0.4, 0, 0.2, 1] }}
-          className={cn(
-            'inline-flex items-baseline gap-1',
-            'font-display text-5xl',
-            passed ? 'text-text' : 'text-text'
-          )}
+          className="relative inline-flex items-center justify-center"
         >
-          <span>{score}</span>
-          <span className="text-2xl text-text-soft">/ {total}</span>
+          {/* SVG Score Ring */}
+          <svg width="140" height="140" className="-rotate-90">
+            {/* Background ring */}
+            <circle
+              cx="70"
+              cy="70"
+              r="58"
+              fill="none"
+              stroke="hsl(var(--bg-2))"
+              strokeWidth="6"
+            />
+            {/* Progress ring */}
+            <motion.circle
+              cx="70"
+              cy="70"
+              r="58"
+              fill="none"
+              stroke={passed ? "hsl(var(--correct))" : "hsl(var(--incorrect))"}
+              strokeWidth="6"
+              strokeLinecap="round"
+              strokeDasharray={2 * Math.PI * 58}
+              initial={{ strokeDashoffset: 2 * Math.PI * 58 }}
+              animate={{ strokeDashoffset: 2 * Math.PI * 58 * (1 - percentage / 100) }}
+              transition={{ duration: 1, delay: 0.4, ease: [0.4, 0, 0.2, 1] }}
+            />
+          </svg>
+          
+          {/* Score text inside ring */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center rotate-0">
+            <span className={cn(
+              'font-display text-4xl',
+              'text-text'
+            )}>
+              {percentage}
+            </span>
+            <span className="text-sm text-text-muted -mt-1">%</span>
+          </div>
         </motion.div>
 
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.4 }}
-          className="text-lg text-text-soft mt-2"
+          transition={{ duration: 0.3, delay: 0.6 }}
+          className="text-sm text-text-soft mt-3"
         >
-          {percentage}%
+          {score} of {total} correct
         </motion.p>
       </div>
 
