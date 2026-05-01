@@ -90,11 +90,11 @@ export function TopicNode({
         ],
         // Available
         topic.status === "available" && [
-          "bg-surface border-border hover:border-accent hover:shadow-md",
+          "bg-surface border-border hover:border-accent hover:shadow-md hover:-translate-y-1",
         ],
         // In progress
         topic.status === "in-progress" && [
-          "bg-accent/5 border-accent shadow-md",
+          "bg-accent/5 border-accent shadow-md hover:-translate-y-1",
           "ring-2 ring-accent/20",
         ],
         // Completed

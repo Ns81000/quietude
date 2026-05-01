@@ -111,7 +111,7 @@ export function ActivityCalendar({
   // Show placeholder message when empty
   if (data.length === 0) {
     return (
-      <div className="bg-surface rounded-xl p-4 border border-border">
+      <div className="bg-surface rounded-2xl p-4 border border-border/80 shadow-sm transition-all duration-300 hover:shadow-md hover:border-border">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-medium text-text">Activity</h3>
         </div>
@@ -125,7 +125,7 @@ export function ActivityCalendar({
   }
 
   return (
-    <div className="bg-surface rounded-xl p-5 border border-border">
+    <div className="bg-surface rounded-2xl p-6 border border-border/80 shadow-sm transition-all duration-300 hover:shadow-md hover:border-border">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <h3 className="font-medium text-text">Activity</h3>

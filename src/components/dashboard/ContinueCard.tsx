@@ -29,7 +29,7 @@ export function ContinueCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className={cn(
-        'bg-surface border border-border rounded-2xl p-8 shadow-sm transition-all duration-300 hover:shadow-md hover:border-border/80 relative overflow-hidden group',
+        'bg-surface border border-border/80 rounded-3xl p-8 shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-border relative overflow-hidden group',
         className
       )}
     >

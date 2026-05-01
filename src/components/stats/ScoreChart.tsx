@@ -103,7 +103,7 @@ export function ScoreChart({
   if (filteredData.length === 0) {
     return (
       <div 
-        className="flex items-center justify-center bg-bg-2 rounded-xl"
+        className="flex items-center justify-center bg-bg-2/50 rounded-2xl border border-border/50 border-dashed"
         style={{ height }}
       >
         <p className="text-text-muted">No quiz data for this period</p>
@@ -112,7 +112,7 @@ export function ScoreChart({
   }
 
   return (
-    <div className="bg-surface rounded-xl p-4 border border-border">
+    <div className="bg-surface rounded-2xl p-6 border border-border/80 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>

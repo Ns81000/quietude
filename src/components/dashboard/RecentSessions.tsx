@@ -34,9 +34,9 @@ export function RecentSessions({
             onClick={() => onSessionClick?.(session.id)}
             className={cn(
               'w-full flex items-center justify-between p-4',
-              'bg-surface border border-border rounded-xl',
-              'hover:bg-surface/80 hover:shadow-md hover:border-border/80 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300 text-left group',
-              !onSessionClick && 'cursor-default'
+              'bg-surface border border-border/80 rounded-2xl shadow-sm',
+              'hover:bg-surface/80 hover:shadow-md hover:border-border hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300 text-left group',
+              !onSessionClick && 'cursor-default hover:translate-y-0 hover:shadow-sm'
             )}
           >
             <div className="flex-1 min-w-0 pr-4">

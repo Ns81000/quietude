@@ -49,7 +49,7 @@ export function FlashcardCard({
       >
         {/* Front of Card */}
         <div
-          className="absolute inset-0 rounded-[2rem] overflow-hidden bg-surface border border-border shadow-sm hover:shadow-md transition-shadow"
+          className="absolute inset-0 rounded-[2rem] overflow-hidden bg-surface border-2 border-border shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
           style={{
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',

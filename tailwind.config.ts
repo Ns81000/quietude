@@ -86,9 +86,11 @@ export default {
         "2xl": "20px",
       },
       boxShadow: {
-        sm: "0 1px 3px hsl(var(--shadow) / 0.08)",
-        md: "0 4px 12px hsl(var(--shadow) / 0.08)",
-        lg: "0 8px 24px hsl(var(--shadow) / 0.08)",
+        // Deep 3D-touch shadows
+        sm: "0 2px 4px 0 hsl(var(--shadow) / 0.06), 0 1px 2px -1px hsl(var(--shadow) / 0.08), 0 2px 0 0 hsl(var(--shadow) / 0.05)",
+        md: "0 6px 12px -2px hsl(var(--shadow) / 0.1), 0 3px 6px -3px hsl(var(--shadow) / 0.12), 0 4px 0 0 hsl(var(--shadow) / 0.06)",
+        lg: "0 12px 24px -4px hsl(var(--shadow) / 0.15), 0 6px 12px -4px hsl(var(--shadow) / 0.12), 0 6px 0 0 hsl(var(--shadow) / 0.08)",
+        xl: "0 20px 32px -4px hsl(var(--shadow) / 0.18), 0 8px 16px -4px hsl(var(--shadow) / 0.14), 0 8px 0 0 hsl(var(--shadow) / 0.08)",
       },
       transitionTimingFunction: {
         DEFAULT: "cubic-bezier(0.4, 0, 0.2, 1)",

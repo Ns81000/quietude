@@ -36,11 +36,11 @@ export function NoteCard({
   return (
     <motion.button
       onClick={() => onClick(id)}
-      whileHover={{ scale: 1.01 }}
-      whileTap={{ scale: 0.99 }}
+      whileHover={{ y: -4 }}
+      whileTap={{ scale: 0.98 }}
       className={cn(
-        'w-full text-left p-5 rounded-xl border border-border bg-surface',
-        'hover:border-text-muted transition-colors duration-150',
+        'w-full text-left p-5 rounded-2xl border border-border bg-surface shadow-sm',
+        'hover:border-border/80 hover:shadow-md transition-all duration-300',
         className
       )}
     >

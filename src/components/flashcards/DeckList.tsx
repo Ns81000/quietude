@@ -79,8 +79,8 @@ export function DeckList({ decks }: DeckListProps) {
               className="relative"
             >
               <div
-                className="w-full bg-surface border border-border rounded-xl p-5 
-                           hover:border-accent/40 hover:shadow-sm transition-all group relative"
+                className="w-full bg-surface border border-border/80 rounded-2xl p-5 
+                           hover:border-accent/50 hover:shadow-md hover:-translate-y-1 shadow-sm transition-all duration-300 group relative"
               >
                 {/* Delete Button */}
                 <button

@@ -116,8 +116,8 @@ export function SubjectTable({
   }
 
   return (
-    <div className="bg-surface rounded-xl border border-border overflow-hidden">
-      <div className="p-4 border-b border-border">
+    <div className="bg-surface rounded-2xl border border-border/80 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+      <div className="p-6 border-b border-border/60">
         <h3 className="font-medium text-text">Subjects Performance</h3>
       </div>
       
