@@ -118,7 +118,7 @@ export default function FlashcardPracticePage() {
         // Session complete
         updateDeckStats(finalCorrectCount, finalReviewedCount);
       }
-    }, 450); // Gives user enough time to perceive the consequence.
+    }, 300); // Gives user enough time to perceive the consequence.
 
     // Sync to Firebase in the background (Non-blocking)
     if (userId) {
@@ -358,12 +358,12 @@ export default function FlashcardPracticePage() {
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ 
               opacity: isShuffling ? 0 : exitDirection ? 0 : 1, 
-              scale: isShuffling ? 0.9 : exitDirection ? 0.9 : 1,
-              y: isShuffling ? -40 : exitDirection === 'left' ? 40 : exitDirection === 'right' ? -40 : 0,
-              x: exitDirection === 'left' ? -200 : exitDirection === 'right' ? 200 : 0,
-              rotateZ: isShuffling ? Math.random() * 10 - 5 : exitDirection === 'left' ? -10 : exitDirection === 'right' ? 10 : 0 
+              scale: isShuffling ? 0.95 : exitDirection ? 0.95 : 1,
+              y: isShuffling ? -20 : 0,
+              x: exitDirection === 'left' ? -150 : exitDirection === 'right' ? 150 : 0,
             }}
-            transition={{ type: "spring", stiffness: 150, damping: 20 }}
+            transition={{ type: "spring", stiffness: 260, damping: 30 }}
+            className="will-change-transform"
           >
             <FlashcardCard
               card={currentCard}

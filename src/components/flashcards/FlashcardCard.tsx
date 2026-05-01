@@ -36,35 +36,20 @@ export function FlashcardCard({
       className="relative w-full min-h-[400px] h-[60vh] max-h-[500px] touch-manipulation select-none [perspective:1500px] pb-6 md:pb-0" 
       onClick={onFlip}
     >
-      {/* Decorative Stack layers beneath the main card to indicate remaining cards */}
-      {cardNumber < totalCards && (
-        <div 
-          className="absolute inset-0 bg-surface border-2 border-border/60 rounded-2xl shadow-sm -z-20 transition-all duration-300"
-          style={{ transform: 'translateY(12px) scale(0.94) translateZ(-40px)' }}
-        />
-      )}
-      {cardNumber < totalCards - 1 && (
-        <div 
-          className="absolute inset-0 bg-surface border-2 border-border/40 rounded-2xl shadow-sm -z-30 transition-all duration-300"
-          style={{ transform: 'translateY(24px) scale(0.88) translateZ(-80px)' }}
-        />
-      )}
-
       {/* Main Draggable/Flip Container */}
       <motion.div
-        className="relative w-full h-full cursor-pointer touch-manipulation focus:outline-none rounded-2xl"
-        style={{ transformStyle: 'preserve-3d' }}
+        className="relative w-full h-full cursor-pointer touch-manipulation focus:outline-none rounded-2xl shadow-lg"
+        style={{ transformStyle: 'preserve-3d', willChange: 'transform' }}
         initial={false}
         animate={{ 
           rotateY: isFlipped ? 180 : 0,
-          boxShadow: isFlipped ? "0 20px 40px -10px rgba(0,0,0,0.2)" : "0 10px 30px -10px rgba(0,0,0,0.1)",
         }}
         whileTap={{ scale: 0.98 }}
-        transition={{ type: "spring", stiffness: 200, damping: 25, mass: 0.8 }}
+        transition={{ type: "spring", stiffness: 260, damping: 30, mass: 0.8 }}
       >
         {/* Front of Card */}
         <div
-          className="absolute inset-0 rounded-2xl overflow-hidden"
+          className="absolute inset-0 rounded-2xl overflow-hidden bg-surface border-2 border-border"
           style={{
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
@@ -72,9 +57,9 @@ export function FlashcardCard({
             transform: 'translateZ(1px)', // Forces hardware text-crispness
           }}
         >
-          <div className="w-full h-full bg-surface border-2 border-border p-6 md:p-8 flex flex-col">
+          <div className="w-full h-full p-6 md:p-8 flex flex-col">
             {/* Header */}
-            <div className="flex items-start justify-between mb-6">
+            <div className="flex items-start justify-between mb-2 shrink-0">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-text-muted">
                   {cardNumber} / {totalCards}
@@ -98,8 +83,8 @@ export function FlashcardCard({
             </div>
 
             {/* Question */}
-            <div className="flex-1 flex items-center justify-center px-4">
-              <p className="text-2xl md:text-3xl font-medium text-text text-center leading-relaxed">
+            <div className="flex-1 flex items-center justify-center px-2 md:px-4 my-2">
+              <p className="text-xl md:text-2xl font-medium text-text text-center leading-relaxed line-clamp-6">
                 {card.front}
               </p>
             </div>
@@ -109,7 +94,7 @@ export function FlashcardCard({
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-6 p-4 bg-accent/5 border border-accent/20 rounded-xl"
+                className="mb-2 mt-auto p-3 md:p-4 bg-accent/5 border border-accent/20 rounded-xl shrink-0"
               >
                 <div className="flex items-start gap-2">
                   <Lightbulb size={16} className="text-accent mt-1 flex-shrink-0" />
@@ -119,7 +104,7 @@ export function FlashcardCard({
             )}
 
             {/* Tap to flip indicator */}
-            <div className="mt-auto pt-6 text-center">
+            <div className="mt-auto pt-4 text-center shrink-0">
               <p className="text-sm text-text-muted">Tap to flip</p>
             </div>
           </div>
@@ -127,7 +112,7 @@ export function FlashcardCard({
 
         {/* Back of Card */}
         <div
-          className="absolute inset-0 rounded-2xl overflow-hidden"
+          className="absolute inset-0 rounded-2xl overflow-hidden bg-surface border-2 border-accent/40"
           style={{
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
@@ -135,9 +120,9 @@ export function FlashcardCard({
             transform: 'rotateY(180deg) translateZ(1px)',
           }}
         >
-          <div className="w-full h-full bg-surface border-2 border-accent/40 p-6 md:p-8 flex flex-col">
+          <div className="w-full h-full p-6 md:p-8 flex flex-col">
             {/* Header */}
-            <div className="flex items-start justify-between mb-6">
+            <div className="flex items-start justify-between mb-2 shrink-0">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-text-muted">
                   {cardNumber} / {totalCards}
@@ -161,15 +146,15 @@ export function FlashcardCard({
             </div>
 
             {/* Answer */}
-            <div className="flex-1 flex flex-col justify-center px-4">
-              <p className="text-3xl md:text-4xl font-bold text-correct text-center mb-6">
+            <div className="flex-1 flex flex-col justify-center px-2 md:px-4 my-2">
+              <p className="text-2xl md:text-3xl font-bold text-correct text-center mb-4 line-clamp-4 shrink-0">
                 {card.back}
               </p>
 
               {/* Explanation */}
               {card.explanation && (
-                <div className="mt-4 p-4 bg-bg-2 rounded-xl">
-                  <p className="text-sm text-text-soft leading-relaxed">
+                <div className="mt-2 p-3 md:p-4 bg-bg-2 rounded-xl shrink-0">
+                  <p className="text-sm md:text-base text-text-soft leading-relaxed line-clamp-5">
                     {card.explanation}
                   </p>
                 </div>
@@ -178,7 +163,7 @@ export function FlashcardCard({
 
             {/* Related Cards */}
             {card.relatedCards && card.relatedCards.length > 0 && (
-              <div className="mt-6 pt-4 border-t border-border">
+              <div className="mt-auto pt-4 border-t border-border shrink-0">
                 <p className="text-xs text-text-muted mb-2">Related Topics</p>
                 <div className="flex flex-wrap gap-2">
                   {card.relatedCards.slice(0, 3).map((relatedId) => (
@@ -194,7 +179,7 @@ export function FlashcardCard({
             )}
 
             {/* Tap to flip back indicator */}
-            <div className="mt-auto pt-6 text-center">
+            <div className="mt-auto pt-4 text-center shrink-0">
               <p className="text-sm text-text-muted">Tap to flip back</p>
             </div>
           </div>

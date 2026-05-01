@@ -136,15 +136,6 @@ export function DeckList({ decks }: DeckListProps) {
                     </div>
                   </div>
 
-
-                  {/* Last Practiced */}
-                  {deck.stats.lastPracticed && (
-                    <p className="text-xs text-text-muted">
-                      Last practiced{' '}
-                      {new Date(deck.stats.lastPracticed).toLocaleDateString()}
-                    </p>
-                  )}
-
                   {/* Practice Button - Always Visible */}
                   <div className="flex items-center justify-center gap-2 mt-4 pt-3 border-t border-border 
                                   text-accent transition-all">
