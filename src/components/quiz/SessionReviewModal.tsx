@@ -54,7 +54,7 @@ export function SessionReviewModal({
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="relative bg-bg border border-border rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden mx-4"
+          className="relative bg-surface border border-border rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden mx-4"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border">
