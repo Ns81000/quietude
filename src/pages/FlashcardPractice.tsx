@@ -299,7 +299,7 @@ export default function FlashcardPracticePage() {
   }
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full mt-4 bg-bg overflow-hidden text-text">
+    <div className="flex flex-col h-[100dvh] w-full bg-bg overflow-hidden text-text">
       <div className="flex-1 flex flex-col w-full max-w-3xl mx-auto px-4 py-4 md:py-6 min-h-0">
         {/* Header */}
         <div className="flex items-center justify-between mb-4 shrink-0">
