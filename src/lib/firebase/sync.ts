@@ -218,10 +218,29 @@ export async function syncFlashcardsBatch(cards: AppFlashcard[], userId: string)
 }
 
 /**
+ * Sync a discussion to Firestore
+ */
+export async function syncDiscussion(discussion: import('./types').AppDiscussion, userId: string): Promise<void> {
+  if (!isFirebaseConfigured() || !navigator.onLine) {
+    return;
+  }
+  
+  try {
+    notifySyncStatus('syncing');
+    const { saveDiscussion } = await import('./firestore');
+    await saveDiscussion(userId, discussion);
+    notifySyncStatus('idle');
+  } catch (err) {
+    console.error('[Sync] Failed to sync discussion:', err);
+    notifySyncStatus('error');
+  }
+}
+
+/**
  * Sync deletion to Firestore
  */
 export async function syncDelete(
-  table: 'learning_paths' | 'quiz_sessions' | 'notes' | 'flashcard_decks' | 'flashcards',
+  table: 'learning_paths' | 'quiz_sessions' | 'notes' | 'flashcard_decks' | 'flashcards' | 'discussions',
   id: string,
   userId?: string
 ): Promise<void> {
@@ -248,6 +267,10 @@ export async function syncDelete(
         break;
       case 'flashcards':
         await deleteFlashcard(userId, id);
+        break;
+      case 'discussions':
+        const { deleteDiscussion } = await import('./firestore');
+        await deleteDiscussion(userId, id);
         break;
     }
     

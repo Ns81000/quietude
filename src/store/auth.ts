@@ -142,6 +142,10 @@ export const useAuthStore = create<AuthState>()(
         useNotesStore.getState().clearAll();
         useFlashcardsStore.getState().clearAll();
         
+        // Use require/dynamic import or directly if imported
+        const { useDiscussStore } = await import('./discuss');
+        useDiscussStore.getState().clearAll();
+        
         // Clear sync queue to prevent old user's pending operations from syncing
         await clearSyncQueue();
         

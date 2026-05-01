@@ -117,22 +117,47 @@ export default function QuizzesPage() {
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
         className="max-w-content mx-auto"
       >
-        <div className="relative rounded-2xl bg-gradient-to-br from-accent/8 via-transparent to-transparent border border-accent/8 p-6 mb-2 overflow-hidden">
+        <div className="relative rounded-2xl bg-gradient-to-br from-accent/8 via-transparent to-transparent border border-accent/8 p-6 mb-6 overflow-hidden">
           <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-accent/6 blur-2xl" />
-          <div className="flex items-center justify-between relative">
-          <div>
+          <div className="relative">
             <h1 className="font-display text-3xl text-text tracking-tight mb-1">Quizzes</h1>
             <p className="text-text-soft text-sm">
               {sessions.length} session{sessions.length !== 1 ? 's' : ''} total
             </p>
           </div>
+        </div>
 
-          {/* Filter dropdown */}
+        {/* Quick Stats Bar & Filter */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          {sessions.length > 0 ? (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="flex flex-wrap items-center gap-3"
+            >
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-correct/10 text-correct text-xs font-medium">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                {totalPassed} passed
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-incorrect/10 text-incorrect text-xs font-medium">
+                <XCircle className="h-3.5 w-3.5" />
+                {totalFailed} failed
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-xs font-medium">
+                <Trophy className="h-3.5 w-3.5" />
+                {avgScore}% avg
+              </div>
+            </motion.div>
+          ) : (
+            <div /> // Spacer if no sessions
+          )}
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button variant="outline" size="sm" className="gap-2 shrink-0">
                 <Filter className="h-4 w-4" />
-                {filter === 'all' ? 'All' : filter.charAt(0).toUpperCase() + filter.slice(1)}
+                {filter === 'all' ? 'All Sessions' : filter.charAt(0).toUpperCase() + filter.slice(1)}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -162,31 +187,7 @@ export default function QuizzesPage() {
               </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          </div>
         </div>
-
-        {/* Quick Stats Bar */}
-        {sessions.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="flex items-center gap-3 mb-6 mt-4"
-          >
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-correct/10 text-correct text-xs font-medium">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              {totalPassed} passed
-            </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-incorrect/10 text-incorrect text-xs font-medium">
-              <XCircle className="h-3.5 w-3.5" />
-              {totalFailed} failed
-            </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-xs font-medium">
-              <Trophy className="h-3.5 w-3.5" />
-              {avgScore}% avg
-            </div>
-          </motion.div>
-        )}
 
         {sessions.length === 0 ? (
           <EmptyState />

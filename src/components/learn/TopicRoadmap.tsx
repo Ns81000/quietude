@@ -268,6 +268,7 @@ export function TopicRoadmap({
                   onClick={() => handleTopicClick(topic)}
                   onFlashcardClick={() => handleFlashcardClick(topic)}
                   onNotesClick={() => handleNotesClick(topic)}
+                  onDiscussClick={() => navigate(`/discuss?topic=${topic.id}&path=${plan.id}`)}
                 />
               ))}
             </div>
@@ -292,6 +293,7 @@ export function TopicRoadmap({
               onClick={() => handleTopicClick(currentTopic)}
               onFlashcardClick={() => handleFlashcardClick(currentTopic)}
               onNotesClick={() => handleNotesClick(currentTopic)}
+              onDiscussClick={() => navigate(`/discuss?topic=${currentTopic.id}&path=${plan.id}`)}
             />
           </motion.section>
         )}

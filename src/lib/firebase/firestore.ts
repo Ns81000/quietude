@@ -24,15 +24,19 @@ import {
   type FirestoreLearningPath,
   type FirestoreQuizSession,
   type FirestoreNote,
+  type FirestoreDiscussion,
   type AppLearningPath,
   type AppQuizSession,
   type AppNote,
+  type AppDiscussion,
   firestorePathToApp,
   appPathToFirestore,
   firestoreSessionToApp,
   appSessionToFirestore,
   firestoreNoteToApp,
   appNoteToFirestore,
+  firestoreDiscussionToApp,
+  appDiscussionToFirestore,
   stringToTimestamp,
 } from './types';
 
@@ -592,31 +596,100 @@ export async function deleteFlashcard(userId: string, cardId: string): Promise<b
 }
 
 // ============================================
+// Discussions
+// ============================================
+
+/**
+ * Get all discussions for a user
+ */
+export async function getDiscussions(userId: string): Promise<AppDiscussion[]> {
+  if (!isFirebaseConfigured() || !canAccessUserData(userId)) return [];
+  
+  try {
+    const db = getFirebaseDb();
+    const discussionsRef = collection(db, 'users', userId, 'discussions');
+    const q = query(discussionsRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    
+    return snapshot.docs.map(doc => 
+      firestoreDiscussionToApp(doc.id, doc.data() as FirestoreDiscussion)
+    );
+  } catch (err) {
+    console.error('[Firestore] Failed to get discussions:', err);
+    return [];
+  }
+}
+
+/**
+ * Create or update a discussion
+ */
+export async function saveDiscussion(userId: string, discussion: AppDiscussion): Promise<boolean> {
+  if (!isFirebaseConfigured() || !canAccessUserData(userId)) return false;
+  
+  try {
+    const db = getFirebaseDb();
+    const discussionRef = doc(db, 'users', userId, 'discussions', discussion.id);
+    
+    const firestoreData = appDiscussionToFirestore(discussion);
+    
+    const existing = await getDoc(discussionRef);
+    if (!existing.exists()) {
+      (firestoreData as any).createdAt = stringToTimestamp(discussion.createdAt);
+    }
+    
+    await setDoc(discussionRef, firestoreData, { merge: true });
+    return true;
+  } catch (err) {
+    console.error('[Firestore] Failed to save discussion:', err);
+    return false;
+  }
+}
+
+/**
+ * Delete a discussion
+ */
+export async function deleteDiscussion(userId: string, discussionId: string): Promise<boolean> {
+  if (!isFirebaseConfigured() || !userId || !discussionId || !canAccessUserData(userId)) return false;
+  
+  try {
+    const db = getFirebaseDb();
+    const discussionRef = doc(db, 'users', userId, 'discussions', discussionId);
+    await deleteDoc(discussionRef);
+    return true;
+  } catch (err) {
+    console.error('[Firestore] Failed to delete discussion:', err);
+    return false;
+  }
+}
+
+// ============================================
 // Bulk Operations
 // ============================================
 
 /**
- * Fetch all user data (paths, sessions, notes, flashcards) in parallel
+ * Fetch all user data (paths, sessions, notes, flashcards, discussions) in parallel
  */
 export async function fetchAllUserData(userId: string): Promise<{
   paths: AppLearningPath[];
   sessions: AppQuizSession[];
   notes: AppNote[];
+  discussions: AppDiscussion[];
   flashcardDecks: import('./types').AppFlashcardDeck[];
   flashcards: import('./types').AppFlashcard[];
 } | null> {
   if (!isFirebaseConfigured() || !canAccessUserData(userId)) return null;
   
   try {
-    const [paths, sessions, notes, flashcardDecks, flashcards] = await Promise.all([
+    const [paths, sessions, notes, discussions, flashcardDecks, flashcards] = await Promise.all([
       getLearningPaths(userId),
       getQuizSessions(userId),
       getNotes(userId),
+      getDiscussions(userId),
       getFlashcardDecks(userId),
       getFlashcards(userId),
     ]);
     
-    return { paths, sessions, notes, flashcardDecks, flashcards };
+    return { paths, sessions, notes, discussions, flashcardDecks, flashcards };
   } catch (err) {
     console.error('[Firestore] Failed to fetch all user data:', err);
     return null;

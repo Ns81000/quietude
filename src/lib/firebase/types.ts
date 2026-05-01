@@ -99,6 +99,20 @@ export interface FirestoreQuizSession {
 }
 
 /**
+ * Discussion session document
+ * Path: /users/{userId}/discussions/{discussionId}
+ */
+export interface FirestoreDiscussion {
+  topicId: string;
+  pathId: string;
+  subject: string;
+  topicTitle: string;
+  blocks: Array<any>;
+  createdAt: Timestamp;
+  completedAt: Timestamp | null;
+}
+
+/**
  * Note document
  * Path: /users/{userId}/notes/{noteId}
  */
@@ -245,6 +259,17 @@ export interface AppQuizSession {
   started_at: string;
   submitted_at: string | null;
   time_taken_secs: number | null;
+}
+
+export interface AppDiscussion {
+  id: string;
+  topicId: string;
+  pathId: string;
+  subject: string;
+  topicTitle: string;
+  blocks: Array<any>;
+  createdAt: string;
+  completedAt: string | null;
 }
 
 export interface AppNote {
@@ -463,6 +488,39 @@ export function appSessionToFirestore(session: AppQuizSession): Omit<FirestoreQu
     passed: session.passed,
     submittedAt: session.submitted_at ? stringToTimestamp(session.submitted_at) : null,
     timeTakenSecs: session.time_taken_secs,
+  };
+}
+
+/**
+ * Convert Firestore discussion to app format
+ */
+export function firestoreDiscussionToApp(id: string, data: FirestoreDiscussion): AppDiscussion {
+  return {
+    id,
+    topicId: data.topicId,
+    pathId: data.pathId,
+    subject: data.subject,
+    topicTitle: data.topicTitle,
+    blocks: data.blocks,
+    createdAt: timestampToString(data.createdAt),
+    completedAt: data.completedAt ? timestampToString(data.completedAt) : null,
+  };
+}
+
+/**
+ * Convert app discussion to Firestore format
+ */
+export function appDiscussionToFirestore(discussion: AppDiscussion): Omit<FirestoreDiscussion, 'createdAt'> & { createdAt?: Timestamp } {
+  // Deep clone to strip undefined values which Firestore rejects
+  const cleanBlocks = JSON.parse(JSON.stringify(discussion.blocks));
+
+  return {
+    topicId: discussion.topicId,
+    pathId: discussion.pathId,
+    subject: discussion.subject,
+    topicTitle: discussion.topicTitle,
+    blocks: cleanBlocks,
+    completedAt: discussion.completedAt ? stringToTimestamp(discussion.completedAt) : null,
   };
 }
 

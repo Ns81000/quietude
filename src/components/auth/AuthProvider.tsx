@@ -5,6 +5,7 @@ import { usePathsStore } from '@/store/paths';
 import { useSessionsStore } from '@/store/sessions';
 import { useNotesStore } from '@/store/notes';
 import { useFlashcardsStore } from '@/store/flashcards';
+import { useDiscussStore } from '@/store/discuss';
 import { useUIStore } from '@/store/ui';
 import { isFirebaseConfigured } from '@/lib/firebase/client';
 import { 
@@ -12,6 +13,7 @@ import {
   syncLearningPath, 
   syncQuizSession, 
   syncNote,
+  syncDiscussion,
   syncFlashcardDeck,
   syncFlashcardsBatch,
   syncDelete,
@@ -164,6 +166,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const pathsStore = usePathsStore();
   const sessionsStore = useSessionsStore();
   const notesStore = useNotesStore();
+  const discussStore = useDiscussStore();
   const uiStore = useUIStore();
   
   const syncedRef = useRef(false);
@@ -316,6 +319,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             sessionsStore.clearAll();
             notesStore.clearAll();
             useFlashcardsStore.getState().clearAll();
+            discussStore.clearAll();
           }
           
           // Merge server paths with local - always get fresh state to avoid duplicates
@@ -323,10 +327,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
             const currentPaths = usePathsStore.getState().paths;
             const localPath = currentPaths.find(p => p.id === serverPath.id);
             if (!localPath) {
-              pathsStore.addPath(serverPath);
+              pathsStore.addPath(serverPath as any);
             } else {
               // Update local path with server data (e.g. status, current_topic_id changes)
-              pathsStore.updatePath(serverPath.id, serverPath);
+              pathsStore.updatePath(serverPath.id, serverPath as any);
             }
           });
           
@@ -343,10 +347,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
             const currentSessions = useSessionsStore.getState().sessions;
             const localSession = currentSessions.find(s => s.id === serverSession.id);
             if (!localSession) {
-              sessionsStore.addSession(serverSession);
+              sessionsStore.addSession(serverSession as any);
             } else if (serverSession.submitted_at && !localSession.submitted_at) {
               // Server has a completed version but local doesn't — update it
-              sessionsStore.updateSession(serverSession.id, serverSession);
+              sessionsStore.updateSession(serverSession.id, serverSession as any);
             }
           });
           
@@ -399,9 +403,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
             const currentCards = useFlashcardsStore.getState().cards;
             const localCard = currentCards.find(c => c.id === serverCard.id);
             if (!localCard) {
-              useFlashcardsStore.getState().addCard(serverCard);
+              useFlashcardsStore.getState().addCard(serverCard as any);
             } else {
-              useFlashcardsStore.getState().updateCard(serverCard.id, serverCard);
+              useFlashcardsStore.getState().updateCard(serverCard.id, serverCard as any);
             }
           });
 
@@ -412,6 +416,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
           if (missingCards.length > 0) {
             syncFlashcardsBatch(missingCards, userId);
           }
+          
+          // Merge server discussions with local
+          serverData.discussions.forEach(serverDiscussion => {
+            const currentDiscussions = discussStore.discussions;
+            const localDiscussion = currentDiscussions.find(d => d.id === serverDiscussion.id);
+            if (!localDiscussion) {
+              discussStore.addDiscussion(serverDiscussion);
+            } else {
+              // Assuming server has latest state, if needed we can compare updated timestamp but normally it's fine
+              discussStore.updateBlocks(serverDiscussion.id, serverDiscussion.blocks);
+              if (serverDiscussion.completedAt) {
+                discussStore.updateDiscussion(serverDiscussion.id, { completedAt: serverDiscussion.completedAt });
+              }
+            }
+          });
+          
+          const serverDiscussionIds = new Set(serverData.discussions.map(d => d.id));
+          const currentDiscussionsAfterMerge = useDiscussStore.getState().discussions;
+          currentDiscussionsAfterMerge.forEach(localDiscussion => {
+            if (!serverDiscussionIds.has(localDiscussion.id)) {
+              syncDiscussion(localDiscussion, userId);
+            }
+          });
           
           setLastSyncTime(new Date());
         }
@@ -546,6 +573,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     });
     
+    const unsubDiscuss = useDiscussStore.subscribe((state, prevState) => {
+      // CRITICAL: Don't sync deletes during logout
+      const isBeingCleared = state.discussions.length === 0 && prevState.discussions.length > 0;
+      
+      if (state.discussions !== prevState.discussions) {
+        const newDiscussions = state.discussions.filter(
+          d => !prevState.discussions.find(pd => pd.id === d.id)
+        );
+        const updatedDiscussions = state.discussions.filter(d => {
+          const prev = prevState.discussions.find(pd => pd.id === d.id);
+          return prev && JSON.stringify(d) !== JSON.stringify(prev);
+        });
+        
+        [...newDiscussions, ...updatedDiscussions].forEach(discussion => {
+          safeSync(() => syncDiscussion(discussion, userId));
+        });
+        
+        if (!isBeingCleared) {
+          const deletedDiscussions = prevState.discussions.filter(
+            d => !state.discussions.find(sd => sd.id === d.id)
+          );
+          deletedDiscussions.forEach(discussion => {
+            safeSync(() => syncDelete('discussions', discussion.id, userId));
+          });
+        }
+        
+        getPendingSyncCount().then(setPendingSyncCount);
+      }
+    });
+    
     const unsubUser = useUserStore.subscribe((state, prevState) => {
       // CRITICAL: Don't sync to server during logout (when profile is being cleared)
       // This prevents corrupting server data with isOnboarded: false
@@ -583,12 +640,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     });
     
     // Store unsubscribers for cleanup on user change
-    unsubscribersRef.current = [unsubPaths, unsubSessions, unsubNotes, unsubUser, unsubUI];
+    unsubscribersRef.current = [unsubPaths, unsubSessions, unsubNotes, unsubDiscuss, unsubUser, unsubUI];
     
     return () => {
       unsubPaths();
       unsubSessions();
       unsubNotes();
+      unsubDiscuss();
       unsubUser();
       unsubUI();
       unsubscribersRef.current = [];

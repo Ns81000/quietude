@@ -6,7 +6,8 @@ import {
   Play, 
   FileText,
   ChevronRight,
-  Layers
+  Layers,
+  Brain
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +30,7 @@ interface TopicNodeProps {
   onClick?: () => void;
   onFlashcardClick?: () => void;
   onNotesClick?: () => void;
+  onDiscussClick?: () => void;
 }
 
 export function TopicNode({
@@ -38,10 +40,10 @@ export function TopicNode({
   onClick,
   onFlashcardClick,
   onNotesClick,
+  onDiscussClick,
 }: TopicNodeProps) {
   const isClickable = topic.status !== "locked";
-  // Show action buttons for all non-locked topics
-  const showActionButtons = topic.status !== "locked" && (onFlashcardClick || onNotesClick);
+  const showActionButtons = topic.status !== "locked" && (onFlashcardClick || onNotesClick || onDiscussClick);
 
   const getStatusIcon = () => {
     switch (topic.status) {
@@ -163,7 +165,7 @@ export function TopicNode({
 
         {/* Action buttons for all non-locked topics */}
         {showActionButtons && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3 pt-3 border-t border-border">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3 pt-3 border-t border-border">
             {/* Main action button (Start/Continue/Retake) */}
             <button
               onClick={(e) => {
@@ -209,6 +211,22 @@ export function TopicNode({
                 <FileText className="w-4 h-4" />
                 <span className="hidden sm:inline">Generate Notes</span>
                 <span className="sm:hidden">Notes</span>
+              </button>
+            )}
+
+            {/* Discuss button */}
+            {onDiscussClick && topic.status !== "locked" && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDiscussClick();
+                }}
+                className="flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg
+                           bg-accent/10 border border-accent/20 text-accent 
+                           hover:bg-accent/20 transition-colors"
+              >
+                <Brain className="w-4 h-4" />
+                <span>Discuss</span>
               </button>
             )}
           </div>

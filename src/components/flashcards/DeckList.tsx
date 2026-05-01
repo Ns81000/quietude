@@ -89,16 +89,6 @@ export function DeckList({ decks }: DeckListProps) {
                 className="w-full bg-surface border border-border/80 rounded-2xl p-5
                            hover:border-accent/40 hover:shadow-md hover:-translate-y-1 shadow-sm transition-all duration-300 group relative"
               >
-                {/* Delete Button */}
-                <button
-                  onClick={(e) => handleDeleteDeck(e, deck)}
-                  className="absolute top-3 right-3 p-2 rounded-lg bg-wrong/10 hover:bg-wrong/20 
-                             text-wrong opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                  title="Delete deck"
-                >
-                  <Trash2 size={16} />
-                </button>
-
                 {/* Clickable area for practice */}
                 <div
                   onClick={() => handleDeckClick(deck.id)}
@@ -122,33 +112,45 @@ export function DeckList({ decks }: DeckListProps) {
                       </h3>
                     </div>
 
-                    {/* Mini progress ring */}
-                    <div className="flex-shrink-0 relative">
-                      <svg width={ringSize} height={ringSize} className="-rotate-90">
-                        <circle
-                          cx={ringSize / 2}
-                          cy={ringSize / 2}
-                          r={radius}
-                          fill="none"
-                          stroke="hsl(var(--bg-2))"
-                          strokeWidth={strokeWidth}
-                        />
-                        <circle
-                          cx={ringSize / 2}
-                          cy={ringSize / 2}
-                          r={radius}
-                          fill="none"
-                          stroke="hsl(var(--correct))"
-                          strokeWidth={strokeWidth}
-                          strokeDasharray={circumference}
-                          strokeDashoffset={strokeDashoffset}
-                          strokeLinecap="round"
-                          className="transition-all duration-700 ease-out"
-                        />
-                      </svg>
-                      <span className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-text">
-                        {Math.round(progressPercent)}%
-                      </span>
+                    <div className="flex items-center gap-2">
+                      {/* Mini progress ring */}
+                      <div className="flex-shrink-0 relative">
+                        <svg width={ringSize} height={ringSize} className="-rotate-90">
+                          <circle
+                            cx={ringSize / 2}
+                            cy={ringSize / 2}
+                            r={radius}
+                            fill="none"
+                            stroke="hsl(var(--bg-2))"
+                            strokeWidth={strokeWidth}
+                          />
+                          <circle
+                            cx={ringSize / 2}
+                            cy={ringSize / 2}
+                            r={radius}
+                            fill="none"
+                            stroke="hsl(var(--correct))"
+                            strokeWidth={strokeWidth}
+                            strokeDasharray={circumference}
+                            strokeDashoffset={strokeDashoffset}
+                            strokeLinecap="round"
+                            className="transition-all duration-700 ease-out"
+                          />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-text">
+                          {Math.round(progressPercent)}%
+                        </span>
+                      </div>
+                      
+                      {/* Delete Button */}
+                      <button
+                        onClick={(e) => handleDeleteDeck(e, deck)}
+                        className="p-1.5 rounded-lg bg-wrong/10 hover:bg-wrong/20 
+                                   text-wrong transition-opacity flex-shrink-0"
+                        title="Delete deck"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   </div>
 

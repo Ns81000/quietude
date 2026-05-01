@@ -85,6 +85,7 @@ export {
   syncLearningPath,
   syncQuizSession,
   syncNote,
+  syncDiscussion,
   syncDelete,
   removeFromSyncQueueByPathId,
   forceSync,
