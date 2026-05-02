@@ -184,7 +184,7 @@ export default function QuizPage() {
     } catch (error) {
       console.error('Failed to generate quiz:', error);
       toast.error('Failed to generate quiz. Please try again.');
-      setPhase('config');
+      setPhase('CONFIGURING');
     } finally {
       setIsGenerating(false);
     }
@@ -299,6 +299,7 @@ export default function QuizPage() {
 
   const handleGenerateNotes = async () => {
     setIsGeneratingNotes(true);
+    toast.loading("Generating study notes...", { id: "notes-gen" });
     // Don't call setNotesPhase() - it changes phase and blanks the screen
     // We handle the loading state locally with isGeneratingNotes
 
@@ -329,6 +330,16 @@ export default function QuizPage() {
             console.warn('Firebase sync failed for note:', syncError);
           }
         }
+        
+        toast.success("Notes generated successfully!", { id: "notes-gen" });
+        
+        // Auto-navigate to the generated note
+        setTimeout(() => {
+          navigate(`/notes?note=${newNote.id}`);
+        }, 500);
+    } catch (error) {
+        console.error('Failed to generate notes:', error);
+        toast.error("Failed to generate notes. Please try again.", { id: "notes-gen" });
     } finally {
       setIsGeneratingNotes(false);
     }
@@ -336,7 +347,7 @@ export default function QuizPage() {
 
   const handleDigDeeper = async () => {
     setIsDiggingDeeper(true);
-    toast.info('Generating harder questions...');
+    toast.loading('Generating harder questions...', { id: "dig-deeper-gen" });
 
     const latestConfig = useQuizStore.getState().config;
 
@@ -379,10 +390,10 @@ export default function QuizPage() {
       };
 
       startQuiz(session, generatedQuestions);
-      toast.success('Dig deeper quiz started!');
+      toast.success('Dig deeper quiz started!', { id: "dig-deeper-gen" });
     } catch (error) {
       console.error('Failed to generate dig deeper quiz:', error);
-      toast.error('Failed to generate quiz. Please try again.');
+      toast.error('Failed to generate quiz. Please try again.', { id: "dig-deeper-gen" });
     } finally {
       setIsDiggingDeeper(false);
     }

@@ -156,9 +156,9 @@ export function TopicRoadmap({
 
       toast.success(`Generated ${generatedCards.length} flashcards!`, { id: "flashcards-gen" });
       
-      // Navigate to flashcards page
+      // Navigate to flashcards practice session
       setTimeout(() => {
-        navigate('/flashcards');
+        navigate(`/flashcards/${newDeck.id}/practice`);
       }, 500);
     } catch (error) {
       console.error('Failed to generate flashcards:', error);
@@ -219,9 +219,9 @@ export function TopicRoadmap({
 
       toast.success("Notes generated successfully!", { id: "notes-gen" });
       
-      // Navigate to notes page
+      // Navigate to the direct note view
       setTimeout(() => {
-        navigate('/notes');
+        navigate(`/notes?note=${newNote.id}`);
       }, 500);
     } catch (error) {
       console.error('Failed to generate notes:', error);
