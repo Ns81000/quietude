@@ -172,7 +172,7 @@ export function TopNav() {
                   <User size={20} />
                 </button>
               </SheetTrigger>
-              <SheetContent side="bottom" className="h-auto flex flex-col rounded-t-2xl border-t pt-4">
+              <SheetContent side="bottom" className="h-auto max-h-[85dvh] px-0 pb-0 flex flex-col rounded-t-2xl border-t pt-4">
                 <SheetHeader className="px-4 relative z-10">
                   <SheetTitle className="text-lg font-display font-semibold text-text">{name}</SheetTitle>
                   <SheetDescription className="text-sm text-text-muted">Account Menu</SheetDescription>

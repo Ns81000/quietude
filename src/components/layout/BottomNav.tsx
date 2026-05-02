@@ -26,9 +26,6 @@ export function BottomNav() {
               ${isActive ? 'text-accent' : 'text-text-muted hover:text-text'}`}
           >
             <Icon size={24} strokeWidth={isActive ? 2.5 : 1.75} />
-            {isActive && (
-              <div className="absolute top-5 w-0.5 h-0.5 rounded-full bg-accent" />
-            )}
           </Link>
         );
       })}
