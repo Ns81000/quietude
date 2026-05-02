@@ -65,7 +65,7 @@ export default function Flashcards() {
           description="Master your subjects with spaced repetition and AI-powered memory aids."
           icon={Layers}
           stats={[
-            { label: 'Total Cards', value: totalCards, icon: Brain },
+            { label: 'Total Cards', value: totalCards, icon: Brain, color: 'text-purple-500' },
             { label: 'Mastered', value: knownCards, icon: Trophy, color: 'text-correct' },
             { label: 'Needs Review', value: cardsDue, icon: Zap, color: 'text-accent' },
           ]}

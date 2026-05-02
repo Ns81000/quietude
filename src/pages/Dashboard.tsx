@@ -71,9 +71,15 @@ export default function DashboardPage() {
           title={`${getGreeting(studyTime)}, ${name || 'there'}`}
           description={getSubGreeting(hasActivePath, studyTime)}
           stats={[
-            { label: 'Active Paths', value: paths.filter(p => p.status === 'active').length, icon: BookOpen },
+            { label: 'Active Paths', value: paths.filter(p => p.status === 'active').length, icon: BookOpen, color: 'text-emerald-500' },
             { label: 'Quizzes', value: sessions.length, icon: Trophy, color: 'text-accent' },
+            { label: 'Goals', value: name ? 'Daily' : 'Set goal', icon: Star, color: 'text-yellow-500' },
           ]}
+          statLayout={{
+            gapDesktop: 12,
+            iconGapDesktop: 4,
+            offsets: [-3, -4, -24, -11],
+          }}
         />
 
         {hasActivePath ? (

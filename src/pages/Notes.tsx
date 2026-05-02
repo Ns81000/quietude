@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Filter, ArrowLeft, FileText, Trash2, Download, Sparkles, BookOpen } from "lucide-react";
+import { Search, Filter, ArrowLeft, FileText, Trash2, Download, Sparkles, BookOpen, Clock } from "lucide-react";
 import { useNotesStore, Note } from "@/store/notes";
 import { exportNoteToPDF } from "@/lib/pdfExport";
 import { toast } from "sonner";
@@ -176,9 +176,15 @@ export default function NotesPage() {
           description="Your personal knowledge base. Review, export, and organize your learning materials."
           icon={FileText}
           stats={[
-            { label: 'Total Notes', value: notes.length, icon: FileText },
-            { label: 'Subjects', value: subjects.length, icon: BookOpen },
+            { label: 'Total Notes', value: notes.length, icon: FileText, color: 'text-blue-500' },
+            { label: 'Subjects', value: subjects.length, icon: BookOpen, color: 'text-indigo-500' },
+            { label: 'Recent', value: notes.filter(n => (Date.now() - n.created_at) < 7 * 24 * 60 * 60 * 1000).length, icon: Clock, color: 'text-accent' },
           ]}
+          statLayout={{
+            gapDesktop: 12,
+            iconGapDesktop: 4,
+            offsets: [-8, 0, -19, -24],
+          }}
         />
         
         {/* Filters and search */}

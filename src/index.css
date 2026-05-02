@@ -73,6 +73,13 @@
     --ease: cubic-bezier(0.4, 0, 0.2, 1);
 
     --radius: 0.5rem;
+
+    --header-stat-gap-desktop: 12px;
+    --header-icon-gap-desktop: 4px;
+    --header-stat-offset-1: 0px;
+    --header-stat-offset-2: 0px;
+    --header-stat-offset-3: 0px;
+    --header-stat-offset-4: 0px;
   }
 
   /* ── Morning Mist (05:00–10:59) ── */

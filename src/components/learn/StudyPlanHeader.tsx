@@ -64,7 +64,7 @@ export function StudyPlanHeader({
               {plan.subject}
             </span>
           </div>
-          <h1 className="font-display text-2xl md:text-3xl text-text leading-tight truncate">
+          <h1 className="font-display font-normal text-2xl md:text-3xl text-text leading-tight truncate">
             {plan.title}
           </h1>
         </div>
@@ -94,44 +94,64 @@ export function StudyPlanHeader({
       </div>
 
       {/* Modern Stats Grid */}
-      <div className="relative grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+      <div className="relative grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-[var(--header-stat-gap-desktop)] mb-8">
+        <div className="flex items-center gap-3 md:ml-[var(--header-stat-offset-1)]">
+          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0 md:hidden">
             <BookOpen className="w-5 h-5 text-accent" />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-wider text-text-muted font-bold leading-none mb-1">Topics</p>
-            <p className="text-xl font-display text-text">{plan.totalTopics}</p>
+            <p className="text-[10px] uppercase tracking-wider text-text-muted font-display font-normal leading-none mb-1 md:mb-1.5">Topics</p>
+            <div className="flex items-center gap-1.5 md:gap-[var(--header-icon-gap-desktop)]">
+              <BookOpen className="hidden md:block w-4 h-4 md:w-5 md:h-5 text-accent" />
+              <p className="text-xl md:text-[22px] font-display font-normal text-text md:tabular-nums md:leading-none">
+                {plan.totalTopics}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+        <div className="flex items-center gap-3 md:ml-[var(--header-stat-offset-2)]">
+          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0 md:hidden">
             <Clock className="w-5 h-5 text-accent" />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-wider text-text-muted font-bold leading-none mb-1">Est. Time</p>
-            <p className="text-xl font-display text-text">{plan.estimatedHours}h</p>
+            <p className="text-[10px] uppercase tracking-wider text-text-muted font-display font-normal leading-none mb-1 md:mb-1.5">Est. Time</p>
+            <div className="flex items-center gap-1.5 md:gap-[var(--header-icon-gap-desktop)]">
+              <Clock className="hidden md:block w-4 h-4 md:w-5 md:h-5 text-accent" />
+              <p className="text-xl md:text-[22px] font-display font-normal text-text md:tabular-nums md:leading-none">
+                {plan.estimatedHours}h
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+        <div className="flex items-center gap-3 md:ml-[var(--header-stat-offset-3)]">
+          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0 md:hidden">
             <TrendingUp className="w-5 h-5 text-accent" />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-wider text-text-muted font-bold leading-none mb-1">Mastery</p>
-            <p className="text-xl font-display text-text">{progress}%</p>
+            <p className="text-[10px] uppercase tracking-wider text-text-muted font-display font-normal leading-none mb-1 md:mb-1.5">Mastery</p>
+            <div className="flex items-center gap-1.5 md:gap-[var(--header-icon-gap-desktop)]">
+              <TrendingUp className="hidden md:block w-4 h-4 md:w-5 md:h-5 text-accent" />
+              <p className="text-xl md:text-[22px] font-display font-normal text-text md:tabular-nums md:leading-none">
+                {progress}%
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+        <div className="flex items-center gap-3 md:ml-[var(--header-stat-offset-4)]">
+          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0 md:hidden">
             <Clock className="w-5 h-5 text-accent" />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-wider text-text-muted font-bold leading-none mb-1">Last seen</p>
-            <p className="text-xl font-display text-text truncate">{formatLastStudied(plan.lastStudied)}</p>
+            <p className="text-[10px] uppercase tracking-wider text-text-muted font-display font-normal leading-none mb-1 md:mb-1.5">Last seen</p>
+            <div className="flex items-center gap-1.5 md:gap-[var(--header-icon-gap-desktop)]">
+              <Clock className="hidden md:block w-4 h-4 md:w-5 md:h-5 text-accent" />
+              <p className="text-xl md:text-[22px] font-display font-normal text-text truncate md:tabular-nums md:leading-none">
+                {formatLastStudied(plan.lastStudied)}
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -163,7 +183,6 @@ export function StudyPlanHeader({
       <div className="absolute bottom-0 left-0 h-[3px] w-full bg-gradient-to-r from-transparent via-accent/20 to-transparent opacity-50" />
     </motion.div>
   );
-}
 }
 
 export default StudyPlanHeader;

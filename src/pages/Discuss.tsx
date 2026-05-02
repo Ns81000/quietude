@@ -390,7 +390,7 @@ export default function DiscussPage() {
           stats={[
             { label: 'Completed', value: completedDiscussions, icon: CheckCircle2, color: 'text-correct' },
             { label: 'Interactions', value: totalInteractions, icon: MessageSquare, color: 'text-accent' },
-            { label: 'In Progress', value: activeCount, icon: Clock, color: 'text-text-soft' },
+            { label: 'In Progress', value: activeCount, icon: Clock, color: 'text-orange-400' },
           ]}
         />
 

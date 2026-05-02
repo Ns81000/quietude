@@ -127,6 +127,11 @@ export default function QuizzesPage() {
             { label: 'Failed', value: totalFailed, icon: XCircle, color: 'text-incorrect' },
             { label: 'Avg Score', value: `${avgScore}%`, icon: Trophy, color: 'text-accent' },
           ]}
+          statLayout={{
+            gapDesktop: 12,
+            iconGapDesktop: 4,
+            offsets: [0, -9, 0, 0],
+          }}
         />
 
         {/* Filters and Search Bar */}
