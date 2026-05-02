@@ -64,16 +64,6 @@ export function DeckList({ decks }: DeckListProps) {
       <AnimatePresence mode="popLayout">
         {decks.map((deck, index) => {
           const dueCount = getDueCount(deck.id);
-          const progressPercent = deck.stats.totalCards > 0
-            ? (deck.stats.knownCards / deck.stats.totalCards) * 100
-            : 0;
-
-          // SVG ring dimensions
-          const ringSize = 44;
-          const strokeWidth = 3.5;
-          const radius = (ringSize - strokeWidth) / 2;
-          const circumference = 2 * Math.PI * radius;
-          const strokeDashoffset = circumference - (progressPercent / 100) * circumference;
 
           return (
             <motion.div
@@ -113,35 +103,6 @@ export function DeckList({ decks }: DeckListProps) {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {/* Mini progress ring */}
-                      <div className="flex-shrink-0 relative">
-                        <svg width={ringSize} height={ringSize} className="-rotate-90">
-                          <circle
-                            cx={ringSize / 2}
-                            cy={ringSize / 2}
-                            r={radius}
-                            fill="none"
-                            stroke="hsl(var(--bg-2))"
-                            strokeWidth={strokeWidth}
-                          />
-                          <circle
-                            cx={ringSize / 2}
-                            cy={ringSize / 2}
-                            r={radius}
-                            fill="none"
-                            stroke="hsl(var(--correct))"
-                            strokeWidth={strokeWidth}
-                            strokeDasharray={circumference}
-                            strokeDashoffset={strokeDashoffset}
-                            strokeLinecap="round"
-                            className="transition-all duration-700 ease-out"
-                          />
-                        </svg>
-                        <span className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-text">
-                          {Math.round(progressPercent)}%
-                        </span>
-                      </div>
-                      
                       {/* Delete Button */}
                       <button
                         onClick={(e) => handleDeleteDeck(e, deck)}
@@ -171,7 +132,7 @@ export function DeckList({ decks }: DeckListProps) {
                     <div className="text-center p-2 rounded-lg bg-bg-2/50">
                       <p className="text-xs text-text-muted mb-0.5">Score</p>
                       <p className="text-sm font-semibold text-text">
-                        {deck.stats.averageScore.toFixed(0)}%
+                        {Math.min(100, Math.round(deck.stats.averageScore))}%
                       </p>
                     </div>
                   </div>

@@ -148,7 +148,7 @@ export default function FlashcardPracticePage() {
     if (totalReviews > 0) {
       const previousTotalScore = (deck.stats.averageScore || 0) * previousReviews;
       const sessionTotalScore = (finalCorrectCount / finalReviewedCount) * 100 * finalReviewedCount;
-      averageScore = (previousTotalScore + sessionTotalScore) / totalReviews;
+      averageScore = Math.min(100, (previousTotalScore + sessionTotalScore) / totalReviews);
     }
 
     const updatedDeck = {
