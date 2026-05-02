@@ -13,8 +13,8 @@ export function BottomNav() {
   const location = useLocation();
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/90 backdrop-blur-xl border-t border-border/60 shadow-[0_-4px_24px_rgba(0,0,0,0.05)]
-                    flex items-center justify-around px-2 py-3 pb-safe themed">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface border-t border-border/60 shadow-[0_-4px_24px_rgba(0,0,0,0.05)]
+                    flex items-center justify-around px-2 py-2 themed bottom-nav-safe">
       {NAV_ITEMS.map((item) => {
         const Icon = item.icon;
         const isActive = location.pathname === item.path;
@@ -27,7 +27,7 @@ export function BottomNav() {
           >
             <Icon size={24} strokeWidth={isActive ? 2.5 : 1.75} />
             {isActive && (
-              <div className="absolute -bottom-1 w-1 h-1 rounded-full bg-accent animate-in fade-in zoom-in duration-200" />
+              <div className="absolute top-5 w-0.5 h-0.5 rounded-full bg-accent" />
             )}
           </Link>
         );

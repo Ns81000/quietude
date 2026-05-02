@@ -21,6 +21,22 @@
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 16px);
   }
+  
+  .safe-bottom {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+  
+  @supports (bottom: max(0.5rem, env(safe-area-inset-bottom))) {
+    .bottom-nav-safe {
+      padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+    }
+  }
+  
+  @supports not (bottom: max(0.5rem, env(safe-area-inset-bottom))) {
+    .bottom-nav-safe {
+      padding-bottom: 0.5rem;
+    }
+  }
 }
 
 @layer base {
