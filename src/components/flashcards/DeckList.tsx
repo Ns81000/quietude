@@ -97,17 +97,17 @@ export function DeckList({ decks }: DeckListProps) {
                   {/* Header with progress ring */}
                   <div className="flex items-start gap-3 mb-3">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-accent/10 text-accent">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-accent/10 text-accent truncate max-w-[150px]">
                           {deck.subject}
                         </span>
                         {dueCount > 0 && (
-                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-500">
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-500 flex-shrink-0">
                             {dueCount} due
                           </span>
                         )}
                       </div>
-                      <h3 className="font-medium text-text text-lg truncate">
+                      <h3 className="font-medium text-text text-base truncate">
                         {deck.name}
                       </h3>
                     </div>

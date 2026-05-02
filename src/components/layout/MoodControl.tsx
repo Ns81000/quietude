@@ -2,14 +2,14 @@ import { useUIStore } from '@/store/ui';
 import { type MoodTheme, type AnyTheme, THEME_LABELS, getTimeTheme, applyTheme } from '@/lib/theme';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const MOODS: MoodTheme[] = ['sage', 'storm', 'sand', 'plum', 'ink', 'midnight'];
+const MOODS: MoodTheme[] = ['sage', 'storm', 'sand', 'plum', 'golden-glow', 'midnight'];
 
 const MOOD_DOTS: Record<MoodTheme, string> = {
   sage: 'bg-[#4A7A38]',
   storm: '#3058A0',
   sand: '#8A6840',
   plum: '#703888',
-  ink: '#201810',
+  'golden-glow': '#d97706',
   midnight: '#10141a',
 };
 

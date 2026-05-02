@@ -45,8 +45,10 @@ export default function DiscussPage() {
   const [error, setError] = useState<string | null>(null);
   const [reviewDiscussion, setReviewDiscussion] = useState<Discussion | null>(null);
   const [expandedSubject, setExpandedSubject] = useState<string | null>(null);
+  const [showAllDiscussions, setShowAllDiscussions] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
+  const MAX_RECENT_DISCUSSIONS = 5;
 
   useEffect(() => {
     if (blocks.length > 0 && viewMode === 'active') {
@@ -475,8 +477,9 @@ export default function DiscussPage() {
             </h2>
 
             {discussions.length > 0 ? (
-              <div className="space-y-2">
-                {discussions.map((d, idx) => {
+              <>
+                <div className="space-y-2">
+                  {discussions.slice(0, showAllDiscussions ? discussions.length : MAX_RECENT_DISCUSSIONS).map((d, idx) => {
                   const totalInteractions = d.blocks.filter(b => !['text', 'summary'].includes(b.type)).length;
                   const hasSummary = d.blocks.some(b => b.type === 'summary');
 
@@ -535,7 +538,20 @@ export default function DiscussPage() {
                     </motion.div>
                   );
                 })}
-              </div>
+                </div>
+
+                {discussions.length > MAX_RECENT_DISCUSSIONS && (
+                  <motion.button
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    onClick={() => setShowAllDiscussions(!showAllDiscussions)}
+                    className="w-full mt-3 px-4 py-2.5 rounded-lg text-sm font-medium text-accent hover:bg-accent/10
+                               transition-all duration-200 border border-accent/30 hover:border-accent/50"
+                  >
+                    {showAllDiscussions ? 'Show less' : `Show ${discussions.length - MAX_RECENT_DISCUSSIONS} more`}
+                  </motion.button>
+                )}
+              </>
             ) : (
               <div className="text-center py-10 bg-surface/30 rounded-2xl border border-dashed border-border/60">
                 <Brain className="w-8 h-8 mx-auto mb-2 text-text-muted opacity-30" />

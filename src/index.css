@@ -209,20 +209,20 @@
     --shadow: 290 50% 8%;
   }
 
-  [data-mood="ink"] {
-    --bg: 40 6% 95%;
-    --bg-2: 40 8% 88%;
-    --surface: 40 4% 99%;
-    --border: 0 2% 80%;
-    --text: 30 20% 5%;
-    --text-soft: 25 8% 35%;
-    --text-muted: 25 5% 59%;
-    --accent: 30 30% 25%;
-    --accent-soft: 30 8% 82%;
+  [data-mood="golden-glow"] {
+    --bg: 38 40% 95%;
+    --bg-2: 38 50% 88%;
+    --surface: 38 25% 99%;
+    --border: 38 40% 80%;
+    --text: 30 60% 11%;
+    --text-soft: 35 50% 37%;
+    --text-muted: 35 30% 60%;
+    --accent: 35 72% 42%;
+    --accent-soft: 42 60% 82%;
     --accent-text: 0 0% 100%;
     --correct: 145 35% 36%;
     --incorrect: 0 48% 49%;
-    --shadow: 30 20% 5%;
+    --shadow: 30 60% 11%;
   }
   * {
     border-color: hsl(var(--border));
