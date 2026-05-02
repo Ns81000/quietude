@@ -14,7 +14,7 @@ SECURITY_AUDIT_REPORT.md
 dist-ssr
 *.local
 Re-vision-kokothon--main
-
+DISCUSS
 # Environment files
 .env
 .env.local
