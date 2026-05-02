@@ -1,12 +1,14 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shell } from '@/components/layout/Shell';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Filter, Layers, Plus } from 'lucide-react';
+import { Search, Filter, Layers, Plus, Trophy, Zap, Brain } from 'lucide-react';
 import { useFlashcardsStore } from '@/store/flashcards';
 import { usePathsStore } from '@/store/paths';
 import { DeckList } from '@/components/flashcards/DeckList';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -17,10 +19,18 @@ import {
 
 export default function Flashcards() {
   const navigate = useNavigate();
-  const { decks } = useFlashcardsStore();
+  const { decks, cards } = useFlashcardsStore();
   const { paths } = usePathsStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [subjectFilter, setSubjectFilter] = useState<string>('all');
+
+  // Stats for the header
+  const totalCards = cards.length;
+  const knownCards = cards.filter(c => c.status === 'known').length;
+  const cardsDue = useMemo(() => {
+    const now = new Date();
+    return cards.filter(c => new Date(c.nextReview) <= now).length;
+  }, [cards]);
 
   // Get unique subjects from decks
   const subjects = useMemo(() => {
@@ -50,15 +60,16 @@ export default function Flashcards() {
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
         className="max-w-content mx-auto"
       >
-        <div className="relative rounded-2xl bg-gradient-to-br from-accent/8 via-transparent to-transparent border border-accent/8 p-6 mb-8 overflow-hidden">
-          <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-accent/6 blur-2xl" />
-          <div className="relative">
-            <h1 className="font-display text-3xl text-text tracking-tight mb-1">Flashcards</h1>
-            <p className="text-text-soft text-sm">
-              Master your subjects with spaced repetition.
-            </p>
-          </div>
-        </div>
+        <PageHeader 
+          title="Flashcards"
+          description="Master your subjects with spaced repetition and AI-powered memory aids."
+          icon={Layers}
+          stats={[
+            { label: 'Total Cards', value: totalCards, icon: Brain },
+            { label: 'Mastered', value: knownCards, icon: Trophy, color: 'text-correct' },
+            { label: 'Needs Review', value: cardsDue, icon: Zap, color: 'text-accent' },
+          ]}
+        />
 
         {/* Filters and search */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">

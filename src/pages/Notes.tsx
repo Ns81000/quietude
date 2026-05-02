@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Shell } from "@/components/layout/Shell";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { motion, AnimatePresence } from "framer-motion";
 import { NoteCard } from "@/components/notes/NoteCard";
 import { NotesViewer } from "@/components/notes/NotesViewer";
@@ -84,31 +85,29 @@ export default function NotesPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="max-w-prose mx-auto"
+          className="max-w-content mx-auto"
         >
-          {/* Back button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBackToList}
-            className="gap-2 mb-6"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Notes
-          </Button>
-          
           {/* Note header */}
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-accent/10 text-accent">
-                {selectedNote.subject}
-              </span>
-              <span className="text-xs text-text-muted">
-                {new Date(selectedNote.created_at).toLocaleDateString()}
-              </span>
-            </div>
-            <h1 className="font-display text-3xl text-text">{selectedNote.topic_title}</h1>
-          </div>
+          <PageHeader 
+            title={selectedNote.topic_title}
+            description={`Topic in ${selectedNote.subject}`}
+            icon={FileText}
+            actions={
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleBackToList}
+                className="gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Notes
+              </Button>
+            }
+            stats={[
+              { label: 'Words', value: selectedNote.content_html?.replace(/<[^>]*>/g, ' ').split(/\s+/).filter(Boolean).length || 0, icon: FileText },
+              { label: 'Created', value: new Date(selectedNote.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), icon: Sparkles },
+            ]}
+          />
           
           {/* Note content */}
           <div className="bg-surface border border-border rounded-xl p-6">
@@ -172,13 +171,15 @@ export default function NotesPage() {
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
         className="max-w-content mx-auto"
       >
-        <div className="relative rounded-2xl bg-gradient-to-br from-accent/8 via-transparent to-transparent border border-accent/8 p-6 mb-8 overflow-hidden">
-          <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-accent/6 blur-2xl" />
-          <div className="relative">
-            <h1 className="font-display text-3xl text-text tracking-tight mb-1">Notes</h1>
-            <p className="text-text-soft text-sm">All your generated study notes.</p>
-          </div>
-        </div>
+        <PageHeader 
+          title="Notes"
+          description="Your personal knowledge base. Review, export, and organize your learning materials."
+          icon={FileText}
+          stats={[
+            { label: 'Total Notes', value: notes.length, icon: FileText },
+            { label: 'Subjects', value: subjects.length, icon: BookOpen },
+          ]}
+        />
         
         {/* Filters and search */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">

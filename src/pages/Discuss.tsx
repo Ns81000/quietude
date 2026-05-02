@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Brain, ChevronRight, BookOpen, Trash2, Eye, Plus } from 'lucide-react';
+import { ArrowLeft, Brain, ChevronRight, BookOpen, Trash2, Eye, Plus, MessageSquare, CheckCircle2, Clock } from 'lucide-react';
 import { usePathsStore } from '@/store/paths';
 import { Shell } from '@/components/layout/Shell';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { useDiscussStore, type DiscussionBlock, type Discussion } from '@/store/discuss';
 import { generateLessonChunk, type PastBlock } from '@/lib/gemini/socratic';
 import { MouseGlow } from '@/components/layout/MouseGlow';
@@ -368,6 +369,11 @@ export default function DiscussPage() {
   // ── HOME: Topic Select + Past Discussions ──
   const activePaths = paths.filter((p) => p.status === 'active' && p.topics && p.topics.length > 0);
 
+  // Calculate dynamic stats for Discuss
+  const completedDiscussions = discussions.filter(d => d.completedAt).length;
+  const totalInteractions = discussions.reduce((acc, d) => acc + (d.blocks?.length || 0), 0);
+  const activeCount = discussions.filter(d => !d.completedAt).length;
+
   return (
     <Shell>
       <motion.div
@@ -377,15 +383,16 @@ export default function DiscussPage() {
         className="max-w-content mx-auto"
       >
         {/* Hero */}
-        <div className="relative rounded-2xl bg-gradient-to-br from-accent/8 via-transparent to-transparent border border-accent/8 p-6 mb-6 overflow-hidden">
-          <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-accent/6 blur-2xl" />
-          <div className="relative">
-            <h1 className="font-display text-3xl text-text tracking-tight mb-1">Discuss</h1>
-            <p className="text-text-soft text-sm">
-              {discussions.length} discussion{discussions.length !== 1 ? 's' : ''} · Interactive AI-guided exploration
-            </p>
-          </div>
-        </div>
+        <PageHeader 
+          title="Discuss"
+          description="Deepen your understanding through Socratic dialogue and active recall with AI."
+          icon={MessageSquare}
+          stats={[
+            { label: 'Completed', value: completedDiscussions, icon: CheckCircle2, color: 'text-correct' },
+            { label: 'Interactions', value: totalInteractions, icon: MessageSquare, color: 'text-accent' },
+            { label: 'In Progress', value: activeCount, icon: Clock, color: 'text-text-soft' },
+          ]}
+        />
 
         {error && (
           <div className="mb-6 p-3 rounded-xl bg-incorrect/10 text-incorrect text-sm text-center">{error}</div>

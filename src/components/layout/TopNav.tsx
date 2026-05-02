@@ -133,7 +133,6 @@ export function TopNav() {
         </nav>
       </div>
       <div className="flex items-center gap-2 md:gap-4">
-        <QuickStats />
         <div className="hidden md:block">
           <MoodControl />
         </div>

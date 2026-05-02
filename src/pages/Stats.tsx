@@ -5,8 +5,9 @@ import { motion } from "framer-motion";
 import { ScoreChart } from "@/components/stats/ScoreChart";
 import { ActivityCalendar } from "@/components/stats/ActivityCalendar";
 import { SubjectTable } from "@/components/stats/SubjectTable";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, FileText, Target, Flame, Clock, Sun, Moon, Sunrise, Sunset, Layers } from "lucide-react";
+import { BookOpen, FileText, Target, Flame, Clock, Sun, Moon, Sunrise, Sunset, Layers, BarChart2, Star, Zap } from "lucide-react";
 import { useSessionsStore } from "@/store/sessions";
 import { useNotesStore } from "@/store/notes";
 import { useFlashcardsStore } from "@/store/flashcards";
@@ -238,13 +239,16 @@ export default function StatsPage() {
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
         className="max-w-content mx-auto"
       >
-        <div className="relative rounded-2xl bg-gradient-to-br from-accent/8 via-transparent to-transparent border border-accent/8 p-6 mb-8 overflow-hidden">
-          <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-accent/6 blur-2xl" />
-          <div className="relative">
-            <h1 className="font-display text-3xl text-text tracking-tight mb-1">Stats</h1>
-            <p className="text-text-soft text-sm">Your learning progress at a glance.</p>
-          </div>
-        </div>
+        <PageHeader 
+          title="Stats"
+          description="Your learning progress at a glance. Analyze your performance and stay on track."
+          icon={BarChart2}
+          stats={[
+            { label: 'Accuracy', value: `${stats.avgScore}%`, icon: Target, color: 'text-incorrect' },
+            { label: 'Study Time', value: `${Math.round(sessions.length * 3 / 60)}h`, icon: Clock, color: 'text-accent' },
+            { label: 'Efficiency', value: `${Math.min(100, Math.round((stats.notesGenerated * 10) / (sessions.length || 1)))}%`, icon: Zap, color: 'text-correct' },
+          ]}
+        />
 
         {/* Summary numbers */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">

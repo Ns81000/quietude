@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shell } from '@/components/layout/Shell';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { useUserStore } from '@/store/user';
 import { DropZone } from '@/components/upload/DropZone';
 import { PasteArea } from '@/components/upload/PasteArea';
@@ -66,21 +67,14 @@ export default function DashboardPage() {
   return (
     <Shell>
       <div>
-        {/* Greeting Hero */}
-        <div className="relative mb-8 rounded-2xl bg-gradient-to-br from-accent/10 via-accent/5 to-transparent border border-accent/10 p-8 overflow-hidden">
-          {/* Decorative ambient shapes */}
-          <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-accent/8 blur-2xl" />
-          <div className="absolute -bottom-6 -left-6 w-32 h-32 rounded-full bg-accent/5 blur-xl" />
-          
-          <div className="relative">
-            <h1 className="font-display text-3xl md:text-4xl text-text tracking-tight">
-              {getGreeting(studyTime)}, {name || 'there'}
-            </h1>
-            <p className="text-text-soft text-base mt-2 max-w-md">
-              {getSubGreeting(hasActivePath, studyTime)}
-            </p>
-          </div>
-        </div>
+        <PageHeader 
+          title={`${getGreeting(studyTime)}, ${name || 'there'}`}
+          description={getSubGreeting(hasActivePath, studyTime)}
+          stats={[
+            { label: 'Active Paths', value: paths.filter(p => p.status === 'active').length, icon: BookOpen },
+            { label: 'Quizzes', value: sessions.length, icon: Trophy, color: 'text-accent' },
+          ]}
+        />
 
         {hasActivePath ? (
           <ActiveDashboard />
