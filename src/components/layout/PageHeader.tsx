@@ -50,7 +50,7 @@ export function PageHeader({
   return (
     <div 
       className={cn(
-        "relative rounded-2xl bg-gradient-to-br border border-accent/8 p-6 mb-8 overflow-hidden",
+        "relative rounded-2xl bg-gradient-to-br border border-accent/8 p-5 sm:p-6 mb-6 sm:mb-8 overflow-hidden",
         gradient,
         className
       )}
@@ -59,7 +59,7 @@ export function PageHeader({
       <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-accent/5 blur-3xl pointer-events-none" />
       <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full bg-accent/3 blur-2xl pointer-events-none" />
 
-      <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-6">
+      <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
         {/* Title and Description */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 mb-1.5">
@@ -71,7 +71,7 @@ export function PageHeader({
             <motion.h1 
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              className="font-display text-xl sm:text-2xl md:text-3xl font-normal text-text tracking-tight"
+              className="font-display text-2xl md:text-3xl font-normal text-text tracking-tight"
             >
               {title}
             </motion.h1>
@@ -81,7 +81,7 @@ export function PageHeader({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.1 }}
-              className="text-text-soft/80 text-sm sm:text-sm md:text-base font-medium max-w-2xl leading-relaxed"
+              className="text-text-soft/80 text-sm md:text-base font-medium max-w-2xl leading-relaxed"
             >
               {description}
             </motion.p>
