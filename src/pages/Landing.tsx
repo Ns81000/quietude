@@ -544,7 +544,7 @@ function ScrollIndicator() {
 // ─────────────────────────────────────────────────────────────
 // LANDING THEME SELECTOR (self-contained for landing page)
 // ─────────────────────────────────────────────────────────────
-const MOOD_THEMES: MoodTheme[] = ['sage', 'storm', 'sand', 'plum', 'ink'];
+const MOOD_THEMES: MoodTheme[] = ['sage', 'storm', 'sand', 'plum', 'golden-glow', 'morning-mist', 'midnight'];
 
 function LandingThemeSelector() {
   const { activeMood, setMood } = useUIStore();

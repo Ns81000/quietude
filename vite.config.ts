@@ -119,6 +119,21 @@ export default defineConfig(({ mode }) => {
               },
             },
           },
+          // Audio files from GitHub - CacheFirst for offline support
+          {
+            urlPattern: /^https:\/\/raw\.githubusercontent\.com\/.*\/sounds\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'focus-audio-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
         ],
         cleanupOutdatedCaches: true,
         skipWaiting: true,

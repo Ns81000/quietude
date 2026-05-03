@@ -9,7 +9,7 @@ import { useQuizStore } from '@/store/quiz';
 import { usePathsStore } from '@/store/paths';
 import { useSessionsStore } from '@/store/sessions';
 import { useNotesStore } from '@/store/notes';
-import { LogOut, User, Download, Upload, BarChart3, Check, ChevronRight } from 'lucide-react';
+import { LogOut, User, Download, Upload, BarChart3, Check, ChevronRight, Target } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -133,6 +133,16 @@ export function TopNav() {
         </nav>
       </div>
       <div className="flex items-center gap-2 md:gap-4">
+        {/* Focus Mode Button - Desktop with text, Mobile icon only */}
+        <button
+          onClick={() => navigate('/focus')}
+          className="flex items-center gap-2 px-3 py-1.5 md:px-3 md:py-1.5 rounded-lg bg-accent text-accent-text hover:bg-accent/90 transition-all duration-200 text-sm font-medium"
+          title="Enter Focus Mode"
+        >
+          <Target size={16} />
+          <span className="hidden md:inline">Focus</span>
+        </button>
+        
         <div className="hidden md:block">
           <MoodControl />
         </div>
@@ -251,7 +261,7 @@ export function TopNav() {
 import { type MoodTheme, THEME_LABELS, getTimeTheme, applyTheme, persistMood } from '@/lib/theme';
 import { useUIStore } from '@/store/ui';
 
-const MOODS: MoodTheme[] = ['sage', 'storm', 'sand', 'plum', 'golden-glow', 'midnight'];
+const MOODS: MoodTheme[] = ['sage', 'storm', 'sand', 'plum', 'golden-glow', 'morning-mist', 'midnight'];
 
 const MOOD_COLORS: Record<MoodTheme, string> = {
   sage: '#4A7A38',
@@ -259,6 +269,7 @@ const MOOD_COLORS: Record<MoodTheme, string> = {
   sand: '#8A6840',
   plum: '#703888',
   'golden-glow': '#d97706',
+  'morning-mist': '#C2704F',
   midnight: '#10141a',
 };
 

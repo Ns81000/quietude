@@ -4,6 +4,20 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  /* Remove 300ms tap delay on mobile */
+  * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
+  
+  button, a, [role="button"] {
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
 @layer utilities {
   .perspective-1000 {
     perspective: 1000px;
@@ -24,6 +38,15 @@
   
   .safe-bottom {
     padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
   
   @supports (bottom: max(0.5rem, env(safe-area-inset-bottom))) {
@@ -247,6 +270,22 @@
     --incorrect: 0 48% 49%;
     --shadow: 30 60% 11%;
   }
+
+  [data-mood="morning-mist"] {
+    --bg: 30 30% 96%;
+    --bg-2: 30 35% 92%;
+    --surface: 30 20% 99%;
+    --border: 25 30% 84%;
+    --text: 20 40% 13%;
+    --text-soft: 20 22% 46%;
+    --text-muted: 25 18% 67%;
+    --accent: 18 55% 50%;
+    --accent-soft: 18 55% 85%;
+    --accent-text: 0 0% 100%;
+    --correct: 145 35% 36%;
+    --incorrect: 0 48% 49%;
+    --shadow: 20 40% 13%;
+  }
   * {
     border-color: hsl(var(--border));
     box-sizing: border-box;
@@ -438,4 +477,38 @@ body::after {
   .ambient-orbs::after {
     animation: none;
   }
+}
+
+/* Custom Range Slider Styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: hsl(var(--accent));
+  cursor: pointer;
+  border: 3px solid hsl(var(--surface));
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: hsl(var(--accent));
+  cursor: pointer;
+  border: 3px solid hsl(var(--surface));
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.15);
 }

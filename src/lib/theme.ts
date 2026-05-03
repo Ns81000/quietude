@@ -1,9 +1,9 @@
 export type TimedTheme = 'morning' | 'afternoon' | 'golden' | 'evening' | 'midnight';
-export type MoodTheme = 'sage' | 'storm' | 'sand' | 'plum' | 'golden-glow' | 'midnight';
+export type MoodTheme = 'sage' | 'storm' | 'sand' | 'plum' | 'golden-glow' | 'midnight' | 'morning-mist';
 export type AnyTheme = TimedTheme | MoodTheme;
 
 const TIME_THEMES: TimedTheme[] = ['morning', 'afternoon', 'golden', 'evening', 'midnight'];
-const MOOD_THEMES: MoodTheme[] = ['sage', 'storm', 'sand', 'plum', 'golden-glow', 'midnight'];
+const MOOD_THEMES: MoodTheme[] = ['sage', 'storm', 'sand', 'plum', 'golden-glow', 'midnight', 'morning-mist'];
 
 // Skip night owl theme (evening/midnight) on March 2-3, 2026
 export function isNightOwlSkipDate(): boolean {
@@ -63,6 +63,7 @@ export const THEME_LABELS: Record<AnyTheme, string> = {
   sand: 'Sand',
   plum: 'Plum',
   'golden-glow': 'Golden Glow',
+  'morning-mist': 'Morning Mist',
 };
 
 export const TIME_THEME_WINDOWS: Record<TimedTheme, string> = {
