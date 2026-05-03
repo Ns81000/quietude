@@ -390,7 +390,7 @@ export default function Presentation() {
   const CurrentSlideComponent = SLIDES[currentSlide].component;
   const showPlayButton = currentSlide === 8; // Slide 9 (Product Showcase, index 8) has auto-play
   const isFullScreenSlide = currentSlide === 4 || currentSlide === 5; // Slide 5 (Theming, index 4) and Slide 6 (Focus Mode, index 5) are full-screen
-  const needsInternalNav = currentSlide === 1 || currentSlide === 9; // Slide 2 (Problem/Solution) and Slide 10 (Closing)
+  const needsInternalNav = currentSlide === 1 || currentSlide === 5 || currentSlide === 9; // Slide 2 (Problem/Solution), Slide 6 (Focus Mode), and Slide 10 (Closing)
 
   // Mobile blocking screen
   if (isMobile) {

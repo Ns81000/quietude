@@ -471,7 +471,7 @@ export default function Slide7ProductShowcase({}: SlideProps) {
     
     const interval = setInterval(() => {
       setCurrentScreen((prev) => (prev + 1) % screens.length);
-    }, 2500);
+    }, 1800); // Reduced from 2500ms to 1800ms
     
     return () => clearInterval(interval);
   }, [isPaused]);
@@ -530,7 +530,7 @@ export default function Slide7ProductShowcase({}: SlideProps) {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: 0.18 }} // Reduced from 0.25s to 0.18s
             className="flex items-end gap-6"
           >
             {/* Desktop Frame */}
