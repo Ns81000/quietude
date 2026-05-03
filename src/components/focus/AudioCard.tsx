@@ -84,7 +84,7 @@ export const AudioCard = memo(function AudioCard({ sound, isSelected }: AudioCar
       style={{ touchAction: 'manipulation' }}
     >
       {/* Sound Info */}
-      <div className="flex flex-col items-center gap-1 text-center mb-1.5">
+      <div className="flex flex-col items-center justify-center gap-1 text-center flex-1">
         <div className={`text-lg md:text-xl transition-colors ${isSelected ? 'text-accent' : 'text-text-soft group-active:text-text'}`}>
           {isLoading ? (
             <div className="animate-spin">⏳</div>
@@ -92,7 +92,7 @@ export const AudioCard = memo(function AudioCard({ sound, isSelected }: AudioCar
             sound.icon
           )}
         </div>
-        <span className={`text-xs font-medium transition-colors line-clamp-2 min-h-[1.75rem] flex items-center ${isSelected ? 'text-accent' : 'text-text'}`}>
+        <span className={`text-xs font-medium transition-colors line-clamp-2 px-1 ${isSelected ? 'text-accent' : 'text-text'}`}>
           {sound.label}
         </span>
       </div>
