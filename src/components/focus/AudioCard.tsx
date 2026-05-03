@@ -97,11 +97,11 @@ export const AudioCard = memo(function AudioCard({ sound, isSelected }: AudioCar
         </span>
       </div>
       
-      {/* Volume Slider - Always visible, disabled when not selected */}
+      {/* Volume Slider - Hidden on mobile when not selected, always visible on desktop */}
       <div 
         className={`flex items-center pt-1.5 border-t transition-all ${
           isSelected ? 'border-accent/30' : 'border-border/30'
-        } ${!isSelected ? 'pointer-events-none' : ''}`}
+        } ${!isSelected ? 'pointer-events-none md:flex hidden' : ''}`}
         onClick={handleVolumeClick}
         onTouchStart={handleVolumeClick}
       >
