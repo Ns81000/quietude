@@ -80,14 +80,14 @@ export const AudioCard = memo(function AudioCard({ sound, isSelected }: AudioCar
         isSelected
           ? 'border-accent bg-accent/10'
           : 'border-border active:border-accent/50 bg-surface active:bg-accent/5'
-      } p-3 flex flex-col min-h-[100px] md:min-h-[110px]`}
+      } p-2 md:p-3 flex flex-col aspect-square md:aspect-auto md:min-h-[110px]`}
       style={{ touchAction: 'manipulation' }}
     >
       {/* Sound Info - Centered with fixed structure */}
-      <div className="flex flex-col items-center justify-center gap-2 flex-1">
+      <div className="flex flex-col items-center justify-center gap-1 md:gap-2 flex-1 w-full">
         {/* Icon - Fixed size container */}
-        <div className="flex items-center justify-center h-8 w-8">
-          <div className={`text-xl transition-colors ${isSelected ? 'text-accent' : 'text-text-soft group-active:text-text'}`}>
+        <div className="flex items-center justify-center h-6 md:h-8 w-8">
+          <div className={`text-xl md:text-2xl transition-colors ${isSelected ? 'text-accent' : 'text-text-soft group-active:text-text'}`}>
             {isLoading ? (
               <div className="animate-spin">⏳</div>
             ) : (
@@ -98,31 +98,31 @@ export const AudioCard = memo(function AudioCard({ sound, isSelected }: AudioCar
         
         {/* Label - Fixed height container for consistent alignment */}
         <div className="flex items-center justify-center h-8 w-full">
-          <span className={`text-xs font-medium transition-colors line-clamp-2 text-center leading-tight ${isSelected ? 'text-accent' : 'text-text'}`}>
+          <span className={`text-[10px] md:text-xs font-medium transition-colors line-clamp-2 text-center leading-tight ${isSelected ? 'text-accent' : 'text-text'}`}>
             {sound.label}
           </span>
         </div>
       </div>
       
-      {/* Volume Slider - Hidden on mobile when not selected, always visible on desktop */}
-      {(isSelected || window.innerWidth >= 768) && (
-        <div 
-          className={`flex items-center pt-2 mt-2 border-t transition-all ${
-            isSelected ? 'border-accent/30' : 'border-border/30'
-          } ${!isSelected ? 'pointer-events-none' : ''}`}
-          onClick={handleVolumeClick}
-          onTouchStart={handleVolumeClick}
-        >
-          <Slider
-            value={[soundVolume * 100]}
-            onValueChange={handleVolumeChange}
-            max={100}
-            step={1}
-            disabled={!isSelected}
-            className={`flex-1 ${!isSelected ? 'opacity-40' : 'opacity-100'}`}
-          />
-        </div>
-      )}
+      {/* Volume Slider - Hidden via CSS on mobile when not selected, to prevent JS-based hydration issues */}
+      <div 
+        className={`flex w-full items-center pt-1.5 md:pt-2 mt-1 md:mt-2 border-t transition-all ${
+          isSelected 
+            ? 'flex border-accent/30 opacity-100' 
+            : 'hidden md:flex border-border/30 opacity-40 pointer-events-none'
+        }`}
+        onClick={handleVolumeClick}
+        onTouchStart={handleVolumeClick}
+      >
+        <Slider
+          value={[soundVolume * 100]}
+          onValueChange={handleVolumeChange}
+          max={100}
+          step={1}
+          disabled={!isSelected}
+          className="flex-1"
+        />
+      </div>
     </button>
   );
 }, (prevProps, nextProps) => {
