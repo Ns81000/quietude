@@ -1,5 +1,5 @@
 import { useFocusHistoryStore } from '@/store/focusHistory';
-import { getSoundById } from '@/lib/focus/audioData';
+import { getSoundById } from '@/lib/focus/audioData.tsx';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

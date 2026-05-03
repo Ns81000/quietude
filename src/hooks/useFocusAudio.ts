@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { Howl } from 'howler';
 import { useFocusStore } from '@/store/focus';
-import { getSoundById } from '@/lib/focus/audioData';
+import { getSoundById } from '@/lib/focus/audioData.tsx';
 
 // Simplified audio hook - AudioCard components manage their own Howl instances
 // This hook only provides utility functions for the session
