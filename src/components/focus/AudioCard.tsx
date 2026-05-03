@@ -80,40 +80,49 @@ export const AudioCard = memo(function AudioCard({ sound, isSelected }: AudioCar
         isSelected
           ? 'border-accent bg-accent/10'
           : 'border-border active:border-accent/50 bg-surface active:bg-accent/5'
-      } p-2 md:p-2.5 flex flex-col`}
+      } p-3 flex flex-col min-h-[100px] md:min-h-[110px]`}
       style={{ touchAction: 'manipulation' }}
     >
-      {/* Sound Info */}
-      <div className="flex flex-col items-center justify-center gap-1 text-center flex-1">
-        <div className={`text-lg md:text-xl transition-colors ${isSelected ? 'text-accent' : 'text-text-soft group-active:text-text'}`}>
-          {isLoading ? (
-            <div className="animate-spin">⏳</div>
-          ) : (
-            sound.icon
-          )}
+      {/* Sound Info - Centered with fixed structure */}
+      <div className="flex flex-col items-center justify-center gap-2 flex-1">
+        {/* Icon - Fixed size container */}
+        <div className="flex items-center justify-center h-8 w-8">
+          <div className={`text-xl transition-colors ${isSelected ? 'text-accent' : 'text-text-soft group-active:text-text'}`}>
+            {isLoading ? (
+              <div className="animate-spin">⏳</div>
+            ) : (
+              sound.icon
+            )}
+          </div>
         </div>
-        <span className={`text-xs font-medium transition-colors line-clamp-2 px-1 ${isSelected ? 'text-accent' : 'text-text'}`}>
-          {sound.label}
-        </span>
+        
+        {/* Label - Fixed height container for consistent alignment */}
+        <div className="flex items-center justify-center h-8 w-full">
+          <span className={`text-xs font-medium transition-colors line-clamp-2 text-center leading-tight ${isSelected ? 'text-accent' : 'text-text'}`}>
+            {sound.label}
+          </span>
+        </div>
       </div>
       
       {/* Volume Slider - Hidden on mobile when not selected, always visible on desktop */}
-      <div 
-        className={`flex items-center pt-1.5 border-t transition-all ${
-          isSelected ? 'border-accent/30' : 'border-border/30'
-        } ${!isSelected ? 'pointer-events-none md:flex hidden' : ''}`}
-        onClick={handleVolumeClick}
-        onTouchStart={handleVolumeClick}
-      >
-        <Slider
-          value={[soundVolume * 100]}
-          onValueChange={handleVolumeChange}
-          max={100}
-          step={1}
-          disabled={!isSelected}
-          className={`flex-1 ${!isSelected ? 'opacity-40' : 'opacity-100'}`}
-        />
-      </div>
+      {(isSelected || window.innerWidth >= 768) && (
+        <div 
+          className={`flex items-center pt-2 mt-2 border-t transition-all ${
+            isSelected ? 'border-accent/30' : 'border-border/30'
+          } ${!isSelected ? 'pointer-events-none' : ''}`}
+          onClick={handleVolumeClick}
+          onTouchStart={handleVolumeClick}
+        >
+          <Slider
+            value={[soundVolume * 100]}
+            onValueChange={handleVolumeChange}
+            max={100}
+            step={1}
+            disabled={!isSelected}
+            className={`flex-1 ${!isSelected ? 'opacity-40' : 'opacity-100'}`}
+          />
+        </div>
+      )}
     </button>
   );
 }, (prevProps, nextProps) => {
