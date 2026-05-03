@@ -104,25 +104,23 @@ export const AudioCard = memo(function AudioCard({ sound, isSelected }: AudioCar
         </div>
       </div>
       
-      {/* Volume Slider - Hidden on mobile when not selected, always visible on desktop */}
-      {(isSelected || window.innerWidth >= 768) && (
-        <div 
-          className={`flex items-center pt-2 mt-2 border-t transition-all ${
-            isSelected ? 'border-accent/30' : 'border-border/30'
-          } ${!isSelected ? 'pointer-events-none' : ''}`}
-          onClick={handleVolumeClick}
-          onTouchStart={handleVolumeClick}
-        >
-          <Slider
-            value={[soundVolume * 100]}
-            onValueChange={handleVolumeChange}
-            max={100}
-            step={1}
-            disabled={!isSelected}
-            className={`flex-1 ${!isSelected ? 'opacity-40' : 'opacity-100'}`}
-          />
-        </div>
-      )}
+      {/* Volume Slider - Always in DOM for alignment, invisible on mobile when unselected, visible on desktop */}
+      <div 
+        className={`w-full flex items-center pt-2 mt-2 border-t transition-all ${
+          isSelected ? 'border-accent/30 opacity-100 flex' : 'border-border/30 opacity-0 md:opacity-100 pointer-events-none'
+        }`}
+        onClick={handleVolumeClick}
+        onTouchStart={handleVolumeClick}
+      >
+        <Slider
+          value={[soundVolume * 100]}
+          onValueChange={handleVolumeChange}
+          max={100}
+          step={1}
+          disabled={!isSelected}
+          className={`flex-1 ${!isSelected ? 'md:opacity-40' : 'opacity-100'}`}
+        />
+      </div>
     </button>
   );
 }, (prevProps, nextProps) => {
