@@ -26,6 +26,7 @@ import {
   Slide7Architecture,
   Slide8ProductShowcase,
   Slide9Closing,
+  Slide10NewFeatures,
 } from './slides';
 
 // Storage key for persisting slide
@@ -37,10 +38,11 @@ const SLIDES = [
   { id: 3, component: Slide3HowItWorks, title: 'How It Works' },
   { id: 4, component: Slide4QuizExperience, title: 'Quiz Experience' },
   { id: 5, component: Slide5Theming, title: 'Theming' },
-  { id: 6, component: Slide6OfflineSecurity, title: 'Offline & Security' },
-  { id: 7, component: Slide7Architecture, title: 'Architecture' },
-  { id: 8, component: Slide8ProductShowcase, title: 'Product Showcase' },
-  { id: 9, component: Slide9Closing, title: 'Closing' },
+  { id: 6, component: Slide10NewFeatures, title: 'Focus Mode' },
+  { id: 7, component: Slide6OfflineSecurity, title: 'Offline & Security' },
+  { id: 8, component: Slide7Architecture, title: 'Architecture' },
+  { id: 9, component: Slide8ProductShowcase, title: 'Product Showcase' },
+  { id: 10, component: Slide9Closing, title: 'Closing' },
 ];
 
 // Floating background shapes
@@ -386,9 +388,9 @@ export default function Presentation() {
 
   // Current slide component
   const CurrentSlideComponent = SLIDES[currentSlide].component;
-  const showPlayButton = currentSlide === 7; // Slide 8 (Product Showcase, index 7) has auto-play
-  const isFullScreenSlide = currentSlide === 4; // Slide 5 (Theming, index 4) is full-screen
-  const needsInternalNav = currentSlide === 1 || currentSlide === 8; // Slide 2 (Problem/Solution) and Slide 9 (Closing)
+  const showPlayButton = currentSlide === 8; // Slide 9 (Product Showcase, index 8) has auto-play
+  const isFullScreenSlide = currentSlide === 4 || currentSlide === 5; // Slide 5 (Theming, index 4) and Slide 6 (Focus Mode, index 5) are full-screen
+  const needsInternalNav = currentSlide === 1 || currentSlide === 9; // Slide 2 (Problem/Solution) and Slide 10 (Closing)
 
   // Mobile blocking screen
   if (isMobile) {
