@@ -21,9 +21,9 @@ const architectureLayers = [
   },
   {
     name: 'Services',
-    tech: 'Gemini + Firebase',
+    tech: 'Gemini + Firebase + Render',
     color: 'bg-orange-500',
-    items: ['AI Engine', 'Sync', 'Auth'],
+    items: ['AI Engine', 'Markitdown Parser', 'Sync', 'Auth'],
   },
   {
     name: 'Storage',
@@ -38,6 +38,7 @@ const techStack = [
   { category: 'State', items: ['Zustand', 'Persist', 'Selectors'] },
   { category: 'AI', items: ['Gemini 2.5 Flash', 'Multi-modal', 'Prompt Engineering'] },
   { category: 'Backend', items: ['Firebase', 'Firestore', 'Auth', 'OTP'] },
+  { category: 'Parsing', items: ['Markitdown', 'Render Pipeline', 'Python'] },
   { category: 'PWA', items: ['Workbox', 'IndexedDB', 'Service Worker'] },
 ];
 

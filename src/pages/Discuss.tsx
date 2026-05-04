@@ -7,6 +7,9 @@ import { Shell } from '@/components/layout/Shell';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useDiscussStore, type DiscussionBlock, type Discussion } from '@/store/discuss';
 import { generateLessonChunk, type PastBlock } from '@/lib/gemini/socratic';
+import { generateQuiz } from '@/lib/gemini';
+import { useQuizStore, Question } from '@/store/quiz';
+import { toast } from 'sonner';
 import { MouseGlow } from '@/components/layout/MouseGlow';
 import { TextBlock } from '@/components/discuss/blocks/TextBlock';
 import { YesNoBlock } from '@/components/discuss/blocks/YesNoBlock';
@@ -47,6 +50,9 @@ export default function DiscussPage() {
   const [reviewDiscussion, setReviewDiscussion] = useState<Discussion | null>(null);
   const [expandedSubject, setExpandedSubject] = useState<string | null>(null);
   const [showAllDiscussions, setShowAllDiscussions] = useState(false);
+  const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
+
+  const { startQuiz } = useQuizStore();
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const MAX_RECENT_DISCUSSIONS = 5;
@@ -108,13 +114,45 @@ export default function DiscussPage() {
     rawBlocks.map((b: any, i: number) => ({
       id: `block-${Date.now()}-${i}`,
       type: b.type, content: b.content, question: b.question, statement: b.statement,
-      options: b.options, blankSentence: b.blankSentence, blankAnswer: b.blankAnswer,
+      options: b.options, 
+      correctAnswer: b.correctAnswer, // Store correct answer from AI
+      blankSentence: b.blankSentence, blankAnswer: b.blankAnswer,
       sortItems: b.sortItems, correctOrder: b.correctOrder,
       isAnswered: false, timestamp: new Date().toISOString(),
     }));
 
   const handleAnswer = useCallback(async (blockId: string, answer: string | number | boolean) => {
     if (!topic || !discussionId || isGenerating) return;
+
+    const currentBlock = blocks.find(b => b.id === blockId);
+    if (!currentBlock) return;
+
+    // Calculate correctness
+    let wasCorrect: boolean | undefined;
+    let confidence: 'low' | 'medium' | 'high' = 'medium';
+
+    if (currentBlock.type === 'yes_no' || currentBlock.type === 'true_false') {
+      wasCorrect = answer === currentBlock.correctAnswer;
+    } else if (currentBlock.type === 'choice') {
+      wasCorrect = answer === currentBlock.correctAnswer;
+    } else if (currentBlock.type === 'fill_blank') {
+      const userAns = String(answer).trim().toLowerCase();
+      const correctAns = String(currentBlock.blankAnswer || '').trim().toLowerCase();
+      wasCorrect = userAns === correctAns || userAns.includes(correctAns) || correctAns.includes(userAns);
+    } else if (currentBlock.type === 'confidence' || currentBlock.type === 'rating') {
+      const val = Number(answer);
+      confidence = val <= 2 ? 'low' : val >= 4 ? 'high' : 'medium';
+    } else if (currentBlock.type === 'text_input') {
+      confidence = String(answer).length < 20 ? 'low' : 'high';
+    } else if (currentBlock.type === 'sorting') {
+      try {
+        const userOrder = JSON.parse(String(answer));
+        const correctOrder = currentBlock.correctOrder || [];
+        wasCorrect = JSON.stringify(userOrder) === JSON.stringify(correctOrder);
+      } catch {
+        wasCorrect = false;
+      }
+    }
 
     const updatedBlocks = blocks.map((b) =>
       b.id === blockId ? { ...b, userAnswer: answer, isAnswered: true } : b
@@ -125,9 +163,42 @@ export default function DiscussPage() {
     const newCount = interactionCount + 1;
     setInteractionCount(newCount);
 
+    // Build richer context with correctness
     const pastBlocks: PastBlock[] = updatedBlocks
       .filter((b) => b.type !== 'summary')
-      .map((b) => ({ type: b.type, question: b.question || b.statement || b.content?.slice(0, 100), userAnswer: b.userAnswer }));
+      .map((b) => {
+        const block: PastBlock = { 
+          type: b.type, 
+          question: b.question || b.statement || b.content?.slice(0, 100), 
+          userAnswer: b.userAnswer 
+        };
+        
+        // Add correctness for validatable questions
+        if (b.type === 'yes_no' || b.type === 'true_false' || b.type === 'choice' || b.type === 'fill_blank' || b.type === 'sorting') {
+          if (b.id === blockId) {
+            block.wasCorrect = wasCorrect;
+          } else {
+            // Recalculate for previous blocks
+            if (b.type === 'yes_no' || b.type === 'true_false' || b.type === 'choice') {
+              block.wasCorrect = b.userAnswer === b.correctAnswer;
+            } else if (b.type === 'fill_blank') {
+              const uAns = String(b.userAnswer || '').trim().toLowerCase();
+              const cAns = String(b.blankAnswer || '').trim().toLowerCase();
+              block.wasCorrect = uAns === cAns || uAns.includes(cAns) || cAns.includes(uAns);
+            }
+          }
+        }
+        
+        // Add confidence level
+        if (b.type === 'confidence' || b.type === 'rating') {
+          const val = Number(b.userAnswer);
+          block.confidence = val <= 2 ? 'low' : val >= 4 ? 'high' : 'medium';
+        } else if (b.type === 'text_input') {
+          block.confidence = String(b.userAnswer || '').length < 20 ? 'low' : 'high';
+        }
+        
+        return block;
+      });
 
     setIsGenerating(true);
     setError(null);
@@ -155,7 +226,7 @@ export default function DiscussPage() {
     }
   }, [topic, discussionId, blocks, interactionCount, isGenerating, updateBlocks, updateDiscussion]);
 
-  const renderBlock = (block: DiscussionBlock, readOnly = false) => {
+  const renderBlock = (block: DiscussionBlock, readOnly = false, discussionForQuiz?: Discussion) => {
     const answered = readOnly ? true : block.isAnswered;
     switch (block.type) {
       case 'text':
@@ -188,8 +259,20 @@ export default function DiscussPage() {
           onAnswer={(v) => handleAnswer(block.id, v)} />;
       case 'summary':
         return block.summaryData ? (
-          <SummaryCard key={block.id} strengths={block.summaryData.strengths}
-            areasToExplore={block.summaryData.areasToExplore} closingThought={block.summaryData.closingThought} />
+          <SummaryCard 
+            key={block.id} 
+            strengths={block.summaryData.strengths}
+            areasToExplore={block.summaryData.areasToExplore} 
+            closingThought={block.summaryData.closingThought}
+            onGenerateQuiz={
+              discussionForQuiz 
+                ? () => handleGenerateQuizFromReview(discussionForQuiz)
+                : !readOnly 
+                  ? handleGenerateQuiz 
+                  : undefined
+            }
+            isGeneratingQuiz={isGeneratingQuiz}
+          />
         ) : null;
       default:
         return null;
@@ -220,7 +303,161 @@ export default function DiscussPage() {
     setIsComplete(false);
     setError(null);
     setReviewDiscussion(null);
+    setIsGeneratingQuiz(false);
   };
+
+  const handleGenerateQuizFromReview = useCallback(async (discussion: Discussion) => {
+    const summaryBlock = discussion.blocks.find(b => b.type === 'summary');
+    if (!summaryBlock?.summaryData) return;
+
+    const weakAreas = summaryBlock.summaryData.areasToExplore;
+    if (weakAreas.length === 0) {
+      toast.error('No weak areas identified to practice');
+      return;
+    }
+
+    // Find the path and topic from the discussion
+    const path = paths.find(p => p.id === discussion.pathId);
+    const topicFromPath = path?.topics?.find(t => t.id === discussion.topicId);
+
+    if (!path || !topicFromPath) {
+      toast.error('Could not find topic information');
+      return;
+    }
+
+    setIsGeneratingQuiz(true);
+    toast.loading('Generating targeted quiz...', { id: 'quiz-gen' });
+
+    try {
+      const focusPrompt = `Focus on these areas where the student needs improvement:\n${weakAreas.map((area, i) => `${i + 1}. ${area}`).join('\n')}`;
+      
+      const rawQuestions = await generateQuiz({
+        topicTitle: discussion.topicTitle,
+        topicSummary: `${topicFromPath.summary}\n\n${focusPrompt}`,
+        questionCount: 8,
+        types: ['mcq', 'true_false', 'fill_blank'],
+        difficulty: 'intermediate',
+        isDigDeeper: false,
+        isRetake: false,
+        sourceContent: topicFromPath.source_content?.slice(0, 10000),
+      });
+
+      const generatedQuestions = rawQuestions.map((q, i) => ({
+        ...q,
+        id: `q${i + 1}`,
+      })) as Question[];
+
+      const session = {
+        id: `session-${Date.now()}`,
+        user_id: 'local-user',
+        topic_id: discussion.topicId,
+        path_id: discussion.pathId,
+        subject: discussion.subject,
+        is_dig_deeper: false,
+        is_retake: false,
+        config: {
+          count: 8,
+          types: ['mcq', 'true_false', 'fill_blank'] as any,
+          difficulty: 'intermediate' as any,
+          timeLimit: null,
+        },
+        questions: generatedQuestions,
+        answers: [],
+        score: null,
+        total: generatedQuestions.length,
+        score_pct: null,
+        passed: null,
+        started_at: new Date().toISOString(),
+        submitted_at: null,
+        time_taken_secs: null,
+      };
+
+      startQuiz(session, generatedQuestions);
+      toast.success('Quiz ready! Starting now...', { id: 'quiz-gen' });
+      
+      setTimeout(() => {
+        navigate(`/learn/${discussion.pathId}/${discussion.topicId}/quiz`);
+      }, 500);
+    } catch (error) {
+      console.error('Failed to generate quiz:', error);
+      toast.error('Failed to generate quiz. Please try again.', { id: 'quiz-gen' });
+    } finally {
+      setIsGeneratingQuiz(false);
+    }
+  }, [paths, startQuiz, navigate]);
+
+  const handleGenerateQuiz = useCallback(async () => {
+    if (!topic || !blocks.length) return;
+
+    const summaryBlock = blocks.find(b => b.type === 'summary');
+    if (!summaryBlock?.summaryData) return;
+
+    const weakAreas = summaryBlock.summaryData.areasToExplore;
+    if (weakAreas.length === 0) {
+      toast.error('No weak areas identified to practice');
+      return;
+    }
+
+    setIsGeneratingQuiz(true);
+    toast.loading('Generating targeted quiz...', { id: 'quiz-gen' });
+
+    try {
+      const focusPrompt = `Focus on these areas where the student needs improvement:\n${weakAreas.map((area, i) => `${i + 1}. ${area}`).join('\n')}`;
+      
+      const rawQuestions = await generateQuiz({
+        topicTitle: topic.title,
+        topicSummary: `${topic.summary}\n\n${focusPrompt}`,
+        questionCount: 8,
+        types: ['mcq', 'true_false', 'fill_blank'],
+        difficulty: 'intermediate',
+        isDigDeeper: false,
+        isRetake: false,
+        sourceContent: topic.sourceContent?.slice(0, 10000),
+      });
+
+      const generatedQuestions = rawQuestions.map((q, i) => ({
+        ...q,
+        id: `q${i + 1}`,
+      })) as Question[];
+
+      const session = {
+        id: `session-${Date.now()}`,
+        user_id: 'local-user',
+        topic_id: topic.id,
+        path_id: topic.pathId,
+        subject: topic.subject,
+        is_dig_deeper: false,
+        is_retake: false,
+        config: {
+          count: 8,
+          types: ['mcq', 'true_false', 'fill_blank'] as any,
+          difficulty: 'intermediate' as any,
+          timeLimit: null,
+        },
+        questions: generatedQuestions,
+        answers: [],
+        score: null,
+        total: generatedQuestions.length,
+        score_pct: null,
+        passed: null,
+        started_at: new Date().toISOString(),
+        submitted_at: null,
+        time_taken_secs: null,
+      };
+
+      startQuiz(session, generatedQuestions);
+      toast.success('Quiz ready! Starting now...', { id: 'quiz-gen' });
+      
+      setTimeout(() => {
+        navigate(`/learn/${topic.pathId}/${topic.id}/quiz`);
+      }, 500);
+    } catch (error) {
+      console.error('Failed to generate quiz:', error);
+      toast.error('Failed to generate quiz. Please try again.', { id: 'quiz-gen' });
+    } finally {
+      setIsGeneratingQuiz(false);
+    }
+  }, [topic, blocks, startQuiz, navigate]);
 
   // ── REVIEW MODE (viewing a past discussion) ──
   if (viewMode === 'review' && reviewDiscussion) {
@@ -259,7 +496,7 @@ export default function DiscussPage() {
               <div className="h-px flex-1 bg-border/40" />
             </div>
 
-            {reviewDiscussion.blocks.map((block) => renderBlock(block, true))}
+            {reviewDiscussion.blocks.map((block) => renderBlock(block, true, reviewDiscussion))}
 
             <motion.div
               initial={{ opacity: 0, y: 10 }}

@@ -8,6 +8,7 @@ export interface DiscussionBlock {
   question?: string;
   statement?: string;
   options?: string[];
+  correctAnswer?: number | boolean | string; // Store correct answer for validation
   blankSentence?: string;
   blankAnswer?: string;
   sortItems?: string[];

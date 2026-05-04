@@ -6,6 +6,7 @@ export interface LessonBlock {
   question?: string;
   statement?: string;
   options?: string[];
+  correctAnswer?: number | boolean | string; // AI provides correct answer
   blankSentence?: string;
   blankAnswer?: string;
   sortItems?: string[];
@@ -26,68 +27,54 @@ export interface PastBlock {
   type: string;
   question?: string;
   userAnswer?: string | number | boolean;
+  wasCorrect?: boolean; // For true/false, choice questions
+  confidence?: 'low' | 'medium' | 'high'; // Derived from answer type
 }
 
-const SYSTEM_PROMPT = `You are an interactive Socratic tutor creating a flowing, adaptive lesson.
+const SYSTEM_PROMPT = `You are a Socratic tutor. Be conversational, direct, and adaptive.
 
-CRITICAL RULES:
-- Generate EXACTLY 2 blocks per chunk: one "text" block + one interaction block
-- The "text" block: 2-4 sentences explaining a concept. Use **bold** for key terms.
-- The interaction block: ONE question using a DIFFERENT type than the last one used
-- NEVER put explanatory text inside an interaction block — text goes in "text" blocks only
-- NEVER generate a summary alongside an unanswered interaction — summary comes in its OWN chunk with NO interaction
-- Adapt the lesson based on previous answers
+RULES:
+1. Generate 2 blocks: "text" (1 sentence) + interaction
+2. Text must reference their LAST answer:
+   - If ✓: "Right!" or "Correct!" then 1 new sentence
+   - If ✗: "Not quite. The answer is [X]. Here's why: [1 sentence]"
+3. NEVER repeat concepts they already demonstrated
+4. Use different interaction types
 
-INTERACTION TYPES (you have 9 types — use as many different ones as possible across the lesson):
+CRITICAL - AFTER WRONG ANSWER:
+- State the CORRECT answer explicitly
+- Give 1 sentence explanation
+- Move to DIFFERENT concept (don't ask about same thing again)
 
-1. "yes_no" — Ask a Yes/No question
-   Required: "question"
-   Example: {"type":"yes_no","question":"Can a firewall alone protect against phishing?"}
+NEVER:
+- Say "You correctly identified..." (just say "Right!")
+- Re-explain after correct answer
+- Ask about same concept twice
+- Start with "Welcome!" or "Let's explore..."
 
-2. "true_false" — Present a STATEMENT, user decides if True or False
-   Required: "statement"
-   Example: {"type":"true_false","statement":"RAM retains data even after the computer is turned off."}
+EXAMPLES:
+✓ Answer: "Right! Now let's see how X differs from Y."
+✗ Answer: "Not quite. The answer is B because [reason]. Let's try something else."
 
-3. "choice" — Multiple choice with 3-4 options
-   Required: "question", "options" (array of 3-4 strings)
-   Example: {"type":"choice","question":"Which protocol is used for secure web browsing?","options":["HTTP","FTP","HTTPS","SMTP"]}
+INTERACTION TYPES (9 types - vary usage):
 
-4. "text_input" — Open-ended short answer (1-2 sentences)
-   Required: "question"
-   Example: {"type":"text_input","question":"In your own words, why is encryption important?"}
+1. yes_no: {"type":"yes_no","question":"...","correctAnswer":true}
+2. true_false: {"type":"true_false","statement":"...","correctAnswer":true}
+3. choice: {"type":"choice","question":"...","options":["A","B","C"],"correctAnswer":1}
+4. text_input: {"type":"text_input","question":"..."} (no correctAnswer - subjective)
+5. confidence: {"type":"confidence","question":"How confident..."} (no correctAnswer - self-assessment)
+6. fill_blank: {"type":"fill_blank","blankSentence":"A ___ is...","blankAnswer":"word"}
+7. rating: {"type":"rating","question":"How well..."} (no correctAnswer - self-assessment)
+8. sorting: {"type":"sorting","question":"Order these:","sortItems":["A","B","C"],"correctOrder":[2,0,1]}
+9. yes_no (reuse after 4+ other types)
 
-5. "confidence" — Ask how confident they feel about a concept
-   Required: "question"
-   Example: {"type":"confidence","question":"How confident are you in explaining the difference between TCP and UDP?"}
+IMPORTANT: For yes_no, true_false, choice - MUST include correctAnswer field so we can validate responses.
 
-6. "fill_blank" — A sentence with ONE gap marked as ___ and the correct answer
-   Required: "blankSentence" (must contain exactly one ___), "blankAnswer" (single word or short phrase)
-   WRONG: {"blankSentence":"A virus is a type of malware..."} — this has no blank!
-   CORRECT: {"blankSentence":"A ___ is a type of malware that attaches to programs.","blankAnswer":"virus"}
+RESPONSE FORMAT (JSON only, no markdown):
+{"blocks":[{"type":"text","content":"..."},{"type":"choice","question":"...","options":["A","B","C"],"correctAnswer":1}],"isComplete":false}
 
-7. "rating" — Rate understanding of a specific concept on 1-5
-   Required: "question"
-   Example: {"type":"rating","question":"How well do you understand how DNS resolution works?"}
-
-8. "sorting" — Put 3-5 items in the correct order
-   Required: "question", "sortItems" (array of 3-5 strings in SHUFFLED order), "correctOrder" (array of indices for correct order)
-   Example: {"type":"sorting","question":"Arrange these network layers from lowest to highest:","sortItems":["Application","Transport","Network","Physical"],"correctOrder":[3,2,1,0]}
-
-9. "yes_no" can be reused if needed after using 4+ other types
-
-VARIETY ENFORCEMENT:
-- Track which types you've used and PRIORITIZE unused types
-- In a 6-interaction lesson, use AT LEAST 5 different types
-- Never use the same type twice in a row
-
-RESPONSE FORMAT (strict JSON, NO markdown fences, NO extra text):
-{"blocks":[{"type":"text","content":"..."},{"type":"choice","question":"...","options":["A","B","C"]}],"isComplete":false}
-
-WHEN isComplete IS TRUE (final chunk):
-- Generate ONLY a "text" block wrapping up — NO interaction block
-- Include the summary object
-- Do NOT pair summary with an unanswered question
-{"blocks":[{"type":"text","content":"Great exploration! Let's see how you did..."}],"isComplete":true,"summary":{"strengths":["..."],"areasToExplore":["..."],"closingThought":"..."}}`;
+WHEN isComplete=true (final):
+{"blocks":[{"type":"text","content":"Wrap up..."}],"isComplete":true,"summary":{"strengths":["specific observation from answers"],"areasToExplore":["specific gaps from answers"],"closingThought":"..."}}`;
 
 export async function generateLessonChunk(
   topicTitle: string,
@@ -97,18 +84,27 @@ export async function generateLessonChunk(
   sourceContent?: string
 ): Promise<LessonChunk> {
   const contextSnippet = sourceContent
-    ? sourceContent.slice(0, 2000)
+    ? sourceContent.slice(0, 1500)
     : topicSummary;
 
+  // Build concise history with clear correctness indicators
   const historyText = pastBlocks.length > 0
     ? pastBlocks
-        .map((b, i) => {
+        .slice(-3) // Only last 3 interactions for token efficiency
+        .map((b) => {
           if (b.type === 'text') return '';
-          return `[${b.type}] Q: ${b.question || '?'} → Answer: ${b.userAnswer ?? 'N/A'}`;
+          
+          let indicator = '';
+          if (b.wasCorrect === true) indicator = ' ✓';
+          else if (b.wasCorrect === false) indicator = ' ✗';
+          else if (b.confidence === 'low') indicator = ' (uncertain)';
+          else if (b.confidence === 'high') indicator = ' (confident)';
+          
+          return `${b.type}: "${b.question?.slice(0, 60)}" → ${b.userAnswer}${indicator}`;
         })
         .filter(Boolean)
         .join('\n')
-    : 'No interactions yet.';
+    : 'Starting conversation.';
 
   const usedTypes = pastBlocks
     .filter(b => b.type !== 'text' && b.type !== 'summary')
@@ -119,6 +115,22 @@ export async function generateLessonChunk(
 
   const shouldEnd = interactionCount >= 6;
 
+  // Get last answer for context
+  const lastBlock = pastBlocks[pastBlocks.length - 1];
+  const lastAnswerContext = lastBlock ? 
+    `Their LAST answer: ${lastBlock.userAnswer} ${lastBlock.wasCorrect === true ? '✓ CORRECT' : lastBlock.wasCorrect === false ? '✗ WRONG' : lastBlock.confidence === 'low' ? '(LOW confidence)' : ''}` 
+    : '';
+
+  // Track wrong answers to avoid repeating same concept
+  const wrongConcepts = pastBlocks
+    .filter(b => b.wasCorrect === false)
+    .map(b => b.question?.slice(0, 30))
+    .slice(-2); // Last 2 wrong answers
+
+  const wrongConceptsText = wrongConcepts.length > 0 
+    ? `\nThey struggled with: ${wrongConcepts.join(', ')}. DON'T ask about these again - move to different concept.`
+    : '';
+
   return safeGeminiCall(async (model) => {
     const result = await model.generateContent([
       {
@@ -127,25 +139,26 @@ export async function generateLessonChunk(
 Topic: "${topicTitle}"
 Context: ${contextSnippet}
 
-Interactions completed: ${interactionCount}
-Previous interactions:
-${historyText}
+Interaction #${interactionCount}
+Recent history:
+${historyText}${wrongConceptsText}
 
-Last interaction type: "${lastType}" — DO NOT use this type.
-Types already used: [${usedTypes.join(', ')}]
-Types NOT yet used (PREFER these): [${unusedTypes.join(', ')}]
+${lastAnswerContext}
+
+Last type used: "${lastType}" (DON'T use again)
+Unused types: [${unusedTypes.join(', ')}]
 
 ${shouldEnd
-  ? 'This is the FINAL chunk. Set isComplete: true. Include ONLY a closing text block and a summary. Do NOT include any interaction block.'
-  : `Generate the next chunk: 1 text block + 1 interaction block. Use one of the unused types: [${unusedTypes.join(', ')}]`
+  ? `FINAL. Set isComplete:true. Count their ✓ and ✗ from history above. Summary strengths = concepts with ✓, areasToExplore = concepts with ✗. Be specific and honest.`
+  : `Next: 1 text (${lastBlock?.wasCorrect === true ? '"Right!" then 1 new sentence' : lastBlock?.wasCorrect === false ? '"Not quite. Answer is [X] because [reason]." then move to DIFFERENT concept' : '1 sentence'}) + 1 interaction (unused type).`
 }
 
-Return ONLY valid JSON:`,
+JSON only:`,
       },
     ]);
 
     const text = result.response.text();
     const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     return JSON.parse(cleaned) as LessonChunk;
-  }, 2, 45000);
+  }, 2, 30000);
 }

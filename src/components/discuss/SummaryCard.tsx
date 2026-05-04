@@ -1,13 +1,15 @@
 import { motion } from 'framer-motion';
-import { Sparkles, Lightbulb } from 'lucide-react';
+import { Sparkles, Lightbulb, Zap, Loader2 } from 'lucide-react';
 
 interface SummaryCardProps {
   strengths: string[];
   areasToExplore: string[];
   closingThought: string;
+  onGenerateQuiz?: () => void;
+  isGeneratingQuiz?: boolean;
 }
 
-export function SummaryCard({ strengths, areasToExplore, closingThought }: SummaryCardProps) {
+export function SummaryCard({ strengths, areasToExplore, closingThought, onGenerateQuiz, isGeneratingQuiz }: SummaryCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -86,6 +88,38 @@ export function SummaryCard({ strengths, areasToExplore, closingThought }: Summa
       >
         &ldquo;{closingThought}&rdquo;
       </motion.p>
+
+      {/* Generate Quiz Button */}
+      {onGenerateQuiz && areasToExplore.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1 }}
+          className="flex justify-center pt-6"
+        >
+          <button
+            onClick={onGenerateQuiz}
+            disabled={isGeneratingQuiz}
+            className="flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-gradient-to-r from-accent to-accent/80
+                       text-accent-text font-medium text-sm shadow-lg shadow-accent/20
+                       hover:shadow-xl hover:shadow-accent/30 hover:scale-[1.02]
+                       active:scale-[0.98] transition-all duration-200
+                       disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+          >
+            {isGeneratingQuiz ? (
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                <span>Generating Quiz...</span>
+              </>
+            ) : (
+              <>
+                <Zap size={18} />
+                <span>Practice Weak Areas</span>
+              </>
+            )}
+          </button>
+        </motion.div>
+      )}
     </motion.div>
   );
 }
