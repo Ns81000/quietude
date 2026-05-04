@@ -31,6 +31,12 @@ const architectureLayers = [
     color: 'bg-green-500',
     items: ['localStorage', 'IndexedDB', 'Firestore'],
   },
+  {
+    name: 'PWA',
+    tech: 'Progressive Web App',
+    color: 'bg-cyan-500',
+    items: ['Workbox', 'IndexedDB', 'Service Worker'],
+  },
 ];
 
 const techStack = [
@@ -39,7 +45,6 @@ const techStack = [
   { category: 'AI', items: ['Gemini 2.5 Flash', 'Multi-modal', 'Prompt Engineering'] },
   { category: 'Backend', items: ['Firebase', 'Firestore', 'Auth', 'OTP'] },
   { category: 'Parsing', items: ['Markitdown', 'Render Pipeline', 'Python'] },
-  { category: 'PWA', items: ['Workbox', 'IndexedDB', 'Service Worker'] },
 ];
 
 export default function Slide6Architecture({}: SlideProps) {
