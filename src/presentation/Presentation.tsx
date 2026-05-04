@@ -27,6 +27,7 @@ import {
   Slide8ProductShowcase,
   Slide9Closing,
   Slide10NewFeatures,
+  Slide11BusinessPlan,
 } from './slides';
 
 // Storage key for persisting slide
@@ -42,7 +43,8 @@ const SLIDES = [
   { id: 7, component: Slide6OfflineSecurity, title: 'Offline & Security' },
   { id: 8, component: Slide7Architecture, title: 'Architecture' },
   { id: 9, component: Slide8ProductShowcase, title: 'Product Showcase' },
-  { id: 10, component: Slide9Closing, title: 'Closing' },
+  { id: 10, component: Slide11BusinessPlan, title: 'Business Plan' },
+  { id: 11, component: Slide9Closing, title: 'Closing' },
 ];
 
 // Floating background shapes

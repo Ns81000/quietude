@@ -8,3 +8,4 @@ export { default as Slide7Architecture } from './Slide6Architecture';
 export { default as Slide8ProductShowcase } from './Slide7ProductShowcase';
 export { default as Slide9Closing } from './Slide8Closing';
 export { default as Slide10NewFeatures } from './Slide9NewFeatures';
+export { default as Slide11BusinessPlan } from './Slide10BusinessPlan';
