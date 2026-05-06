@@ -2,7 +2,7 @@
 
 # Quietude
 
-### Your Calm, Intelligent Learning Partner
+### Your Calm, Intelligent Learning Partn
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18.3-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
