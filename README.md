@@ -1,6 +1,6 @@
 <div align="center">
 
-# Quietude
+# Quietud
 
 ### Your Calm, Intelligent Learning Partner
 
