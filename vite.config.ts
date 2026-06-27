@@ -37,7 +37,7 @@ export default defineConfig(({ mode }) => {
         name: 'Quietude',
         short_name: 'Quietude',
         description: 'Your calm, intelligent learning partner',
-        theme_color: '#faf7f3',
+        theme_color: '#c26838',
         background_color: '#faf7f3',
         display: 'standalone',
         orientation: 'portrait',

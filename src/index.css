@@ -134,6 +134,7 @@
     --accent: 205 40% 40%;
     --accent-soft: 205 40% 87%;
     --accent-text: 0 0% 100%;
+    --theme-color: 20.87 55.2% 49.02%;
     --correct: 145 35% 36%;
     --incorrect: 0 48% 49%;
     --shadow: 60 6% 10%;
@@ -279,9 +280,10 @@
     --text: 20 40% 13%;
     --text-soft: 20 22% 46%;
     --text-muted: 25 18% 67%;
-    --accent: 18 55% 50%;
-    --accent-soft: 18 55% 85%;
+    --accent: 20.87 55.2% 49.02%;
+    --accent-soft: 20.87 55.2% 85%;
     --accent-text: 0 0% 100%;
+    --theme-color: 20.87 55.2% 49.02%;
     --correct: 145 35% 36%;
     --incorrect: 0 48% 49%;
     --shadow: 20 40% 13%;

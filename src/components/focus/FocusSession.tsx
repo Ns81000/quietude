@@ -508,7 +508,7 @@ export function FocusSession() {
                     sand: '#8A6840',
                     plum: '#703888',
                     'golden-glow': '#d97706',
-                    'morning-mist': '#C2704F',
+                    'morning-mist': '#c26838',
                     midnight: '#10141a',
                   };
                   

@@ -50,7 +50,10 @@ function hslToHex(hslValue: string): string | null {
 function updateThemeColorMeta(target: HTMLElement): void {
   if (typeof document === 'undefined') return;
 
-  const themeColor = hslToHex(getComputedStyle(target).getPropertyValue('--bg')) ?? '#faf7f3';
+  const computedStyle = getComputedStyle(target);
+  const themeColor = hslToHex(computedStyle.getPropertyValue('--theme-color'))
+    ?? hslToHex(computedStyle.getPropertyValue('--bg'))
+    ?? '#c26838';
   let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
 
   if (!meta) {
